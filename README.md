@@ -82,6 +82,6 @@ You can build a QEMU image using the following steps:
    > $ PATH_TO_POKY/poky/scripts/runqemu agl-image-ivi qemux86-64
 
    For large screen:
-   > $ PATH_TO_POKY/poky/scripts/runqemu agl-image-ivi qemux86-64 bootparams="uvesafb.mode=1280x720-32"
+   > $ PATH_TO_POKY/poky/scripts/runqemu agl-image-ivi qemux86-64 bootparams="uvesafb.mode_option=1280x720-32"
 
 5. Some weston samples are available from weston terminal.
