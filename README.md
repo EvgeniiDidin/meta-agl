@@ -17,7 +17,7 @@ URI: git://git.openembedded.org/meta-openembedded
 
 ## The Renesas R-Car Gen2 (Porter) board depends in addition on: ##
 
-URI: https://gerrit.automotivelinux.org/gerrit/p/AGL/meta-renesas.git
+URI: https://gerrit.automotivelinux.org/gerrit/AGL/meta-renesas
 > branch:   agl-1.0-bsp-1.8.0
 > revision: 0a69b07cfca17d1435f2bc7bf779139c5fac09a3
 
@@ -116,53 +116,129 @@ Build a R-Car M2 (porter) image
 
 ### Software setup
 
+NOTE: These instructions are based on GENIVI wiki, [here](http://wiki.projects.genivi.org/index.php/Hardware_Setup_and_Software_Installation/koelsch%26porter). If these didn't work correctly especially around Renesas Binary Packages, please check there and updated instructions.
+
+#### Getting Source Code and Build image
+
+1. Create a directory for working, then go to there.
+        $ mkdir -p $HOME/ANYWHERE_YOU_WANT_TO_WORK_THERE
+        $ cd $HOME/ANYWHERE_YOU_WANT_TO_WORK_THERE
+        $ export AGL_TOP=`pwd`
+
+2. Get the meta data and checkout
+        $ git clone git://git.yoctoproject.org/poky
+        $ cd poky
+        $ git checkout 5f0d25152bac2d3798663a4ebfdd2df24060f153
+        $ cd -
+        $ git clone git://git.openembedded.org/meta-openembedded
+        $ cd meta-openembedded
+        $ git checkout 853dcfa0d618dc26bd27b3a1b49494b98d6eee97
+        $ cd -
+        $ git clone https://gerrit.automotivelinux.org/gerrit/AGL/meta-renesas
+        $ cd meta-renesas
+        $ git checkout 0a69b07cfca17d1435f2bc7bf779139c5fac09a3
+        $ cd -
+        $ git clone https://gerrit.automotivelinux.org/gerrit/AGL/meta-agl
+
 #### Obtain and Install Renesas Graphics Drivers
 
-See [here](http://wiki.projects.genivi.org/index.php/Hardware_Setup_and_Software_Installation/koelsch%26porter#M2_Porter_low_cost_board) and get 2 ZIP files from the link there.
+1. Download packages from Renesas
 
-Note: You have to copy files manually because there is no shell-script
-in the current meta-renesas.
+  The graphics and multimedia acceleration packages for the R-Car M2 Porter board
+  can be download directory from [here](http://www.renesas.com/secret/r_car_download/rcar_demoboard.jsp).
 
-1. Unzip the two downloads into a folder. In this example a temporary directory is used.
-        $ cd $HOME/AGL
+  There are 2 ZIP files can be downloaded.
+    * Multimedia and Graphics library which require registeration and click through license
+    > r-car_series_evaluation_software_package_for_linux-*.zip
+    * Related Linux drivers
+    > r-car_series_evaluation_software_package_of_linux_drivers-*.zip
+
+2. Unzip the two downloads into a temporary directory.
+        $ cd $AGL_TOP
         $ mkdir binary-tmp
-        $ <unzip the two downloads into binary-tmp>
+        $ cd binary-tmp
+        $ unzip PATH_TO_DOWNLOAD/r-car_series_evaluation_software_package_for_linux-*.zip
+        $ unzip PATH_TO_DOWNLOAD/r-car_series_evaluation_software_package_of_linux_drivers-*.zip
 
    After this step there should be two files in binary-tmp:
-        R-Car_Series_Evaluation_Software_Package_for_Linux-*.tar.gz
-        R-Car_Series_Evaluation_Software_Package_of_Linux_Drivers-*.tar.gz
+   * Multimedia and Graphics library
+   > R-Car_Series_Evaluation_Software_Package_for_Linux-*.tar.gz
+   * Related Linux drivers
+   > R-Car_Series_Evaluation_Software_Package_of_Linux_Drivers-*.tar.gz
 
-2. Extract 2 tar.gz
-        tar xf R-Car_Series_Evaluation_Software_Package_for_Linux-*.tar.gz
-        tar xf R-Car_Series_Evaluation_Software_Package_of_Linux_Drivers-*.tar.gz
+3. Extract 2 tar archives
+        $ tar xf R-Car_Series_Evaluation_Software_Package_for_Linux-*.tar.gz
+        $ tar xf R-Car_Series_Evaluation_Software_Package_of_Linux_Drivers-*.tar.gz
 
-3. Copy 2 files manually
-   1. Locate EVA_r8a7791_linux_sgx_binaries_gles2.tar.bz2 in the graphics
-   driver deliverable and copy it into the BSP layer. (need rename)
-          cp <path_to_file>/EVA_r8a7791_linux_sgx_binaries_gles2.tar.bz2 \
+4. Copy 2 files manually
+   1. Locate `EVA_r8a7791_linux_sgx_binaries_gles2.tar.bz2` in the Multimedia and Graphics library deliverable and copy it into the BSP layer.
+          $ cd $AGL_TOP
+          $ cp <path_to_file>/EVA_r8a7791_linux_sgx_binaries_gles2.tar.bz2 \
           meta-renesas/meta-rcar-gen2/recipes-graphics/gles-module/\
           gles-user-module/r8a7791_linux_sgx_binaries_gles2.tar.bz2
 
-   2. Locate SGX_KM_M2.tar.bz2 in the graphics driver deliverable and copy
-   it into the BSP layer.
-          cp <path_to_file>SGX_KM_M2.tar.bz2 \
-          meta-renesas/meta-rcar-gen2/recipes-kernel/gles-module/gles-kernel-module
+   2. Locate `SGX_KM_M2.tar.bz2` in the related linux drivers deliverable and copy it into the BSP layer.
+          $ cp <path_to_file>SGX_KM_M2.tar.bz2 \
+          $ meta-renesas/meta-rcar-gen2/recipes-kernel/gles-module/gles-kernel-module
 
 #### Build from the Source code
 
 You can build a R-Car2 M2 (porter) image using the following steps:
 
 1. Export TEMPLATECONF to pick up correct configuration for the build
-   > $ export TEMPLATECONF=/full/path/to/meta-renesas/meta-rcar-gen2/conf
+        $ export TEMPLATECONF=$AGL_TOP/meta-renesas/meta-rcar-gen2/conf
 
 2. Run the following command:
-   > $ source poky/oe-init-build-env
+        $ cd $AGL_TOP
+        $ source poky/oe-init-build-env
 
 3. Build the minimal image of AGL Distribution
-   > $ bitbake agl-image-ivi
+        $ bitbake agl-image-ivi
 
 ### Deployment (SDCARD)
 
-Follow the instructions [here](http://wiki.projects.genivi.org/index.php/Hardware_Setup_and_Software_Installation/koelsch%26porter#Deployment_.28SDCARD.29)
+NOTE: These instructions are based on GENIVI wiki, [here](http://wiki.projects.genivi.org/index.php/Hardware_Setup_and_Software_Installation/koelsch%26porter#Deployment_.28SDCARD.29).
 
-Note: Use `agl-image-ivi-porter.tar.bz2` as name of root file system archive.
+#### Instructions on the host
+
+1. Format SD-Card and then, create single EXT3 partition on it.
+
+2. Mount the SD-Card, for example `/media/$SDCARD_LABEL`.
+
+3. Copy AGL root file system onto the SD-Card
+   1. Go to build directory
+           $ cd $AGL_TOP/build/tmp/deploy/images/porter
+   2. Extract the root file system into the SD-Card
+           $ sudo tar --extract --numeric-owner --preserve-permissions --preserve-order \
+           --totals --directory=/media/$SDCARD_LABEL --file=agl-image-ivi-porter.tar.bz2
+   3. Copy kernel and DTB into the `/boot` of the SD-Card
+           $ sudo cp uImage uImage-r8a7791-porter.dtb /media/$SDCARD_LABEL
+
+4. After the copy finished, unmount SD-Card and insert it into the SD-Card slot of the porter board.
+
+#### Instructions on the host
+
+NOTE: There is details about porter board [here](http://elinux.org/R-Car/Boards/Porter).
+
+NOTE: To boot weston on porter board, we need keyboard and mouse. (USB2.0 can be use for this)
+
+##### Change U-Boot parameters to boot from SD card
+
+1. Power up the board and, using your preferred terminal emulator, stop the board's autoboot by hitting any key.
+
+  > Debug serial settings are 38400 8N1. Any standard terminal emulator program can be used.
+
+2. Set the follow environment variables and save them
+        => setenv bootargs_console console=ttySC6,${baudrate}
+        => setenv bootargs_video vmalloc=384M video=HDMI-A-1:1024x768-32@60
+        => setenv bootcmd_sd 'ext4load mmc 0:1 0x40007fc0 boot/uImage;ext4load mmc 0:1 0x40f00000 boot/uImage-r8a7791-porter.dtb'
+        => setenv bootcmd 'setenv bootargs ${bootargs_console} ${bootargs_video} root=/dev/mmcblk0p1 rw rootfstype=ext3;run bootcmd_sd;bootm 0x40007fc0 - 0x40f00000'
+        => saveenv
+
+##### Boot from SD card
+
+1. After board reset, U-Boot is started and after a countdown, ...
+   Linux boot message should be displayed. Please wait a moment.
+2. Then weston is booted automatically, and weston-terminal appears.
+
+3. Have fun! :)
