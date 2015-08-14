@@ -19,7 +19,7 @@ URI: git://git.openembedded.org/meta-openembedded
 
 URI: https://gerrit.automotivelinux.org/gerrit/AGL/meta-renesas
 > branch:   agl-1.0-bsp-1.8.0
-> revision: 0a69b07cfca17d1435f2bc7bf779139c5fac09a3
+> revision: c28172567a6325f5692e5d33b1ae1c1e64e59ddf
 
 Layers
 ------
@@ -136,7 +136,7 @@ NOTE: These instructions are based on GENIVI wiki, [here](http://wiki.projects.g
         $ cd -
         $ git clone https://gerrit.automotivelinux.org/gerrit/AGL/meta-renesas
         $ cd meta-renesas
-        $ git checkout 0a69b07cfca17d1435f2bc7bf779139c5fac09a3
+        $ git checkout c28172567a6325f5692e5d33b1ae1c1e64e59ddf
         $ cd -
         $ git clone https://gerrit.automotivelinux.org/gerrit/AGL/meta-agl
 
