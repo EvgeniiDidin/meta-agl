@@ -9,9 +9,10 @@ BBLAYERS ?= " \
   ##OEROOT##/meta \
   ##OEROOT##/meta-yocto \
   ##OEROOT##/meta-yocto-bsp \
-  ##OEROOT##/../meta-openembedded/meta-oe \
+  ##OEROOT##/../meta-agl/meta-ivi-common \
   ##OEROOT##/../meta-agl/meta-agl \
   ##OEROOT##/../meta-agl/meta-agl-bsp \
+  ##OEROOT##/../meta-openembedded/meta-oe \
   "
 BBLAYERS_NON_REMOVABLE ?= " \
   ##OEROOT##/meta \

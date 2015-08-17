@@ -10,5 +10,5 @@ PACKAGES = "\
 ALLOW_EMPTY_${PN} = "1"
 
 RDEPENDS_${PN} += "\
-    weston weston-init weston-examples \
+    weston-init \
     "

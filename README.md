@@ -19,12 +19,16 @@ URI: git://git.openembedded.org/meta-openembedded
 
 URI: https://gerrit.automotivelinux.org/gerrit/AGL/meta-renesas
 > branch:   agl-1.0-bsp-1.8.0
-> revision: c28172567a6325f5692e5d33b1ae1c1e64e59ddf
+> revision: 13a2551505942808752a1721c9a27ce7d35cec33
 
 Layers
 ------
 
-There are 2 sub-layers in top-level `meta-agl`.
+There are 3 layers in top-level `meta-agl`.
+
+`meta-ivi-common` is a layer which contains common packages to AGL
+Distribution and other platforms for In-Vehicle Infotainment system.
+> meta-agl/meta-ivi-common
 
 `meta-agl` is a layer which contains AGL common and middleware packages.
 > meta-agl/meta-agl
@@ -38,8 +42,9 @@ Packagegroups
 AGL package group design:
 
 These are the top-level packagegroups for AGL Distribution.
-> packagegroup-agl-core  (basic/common packages out of oe-core)
+> packagegroup-agl-core  (minimal packages to boot system)
 > packagegroup-agl-ivi   (middlewares for AGL IVI)
+> packagegroup-ivi-common (common packages to AGL and others)
 
 Each package group can contain sub-package groups like these.
 > packagegroup-agl-core-multimedia
@@ -48,10 +53,13 @@ Each package group can contain sub-package groups like these.
 > packagegroup-agl-ivi-multimedia
 > packagegroup-agl-ivi-connectivity
 > ...
+> packagegroup-ivi-common-multimedia
+> packagegroup-ivi-common-connectivity
 
-The recipe for `packagegroup-agl-core-*.bb` will contain common packages between meta-agl, meta-ivi and meta-tizen.
-> directory: meta-agl/meta-agl/recipes-core/packagegroups
-> recipes  : packagegroup-agl-core-[subsystem].bb
+The recipe for `packagegroup-ivi-common-*.bb` will contain common packages to
+AGL Distribution(meta-agl) and other In-Vehicle Infotainment system(e.g. meta-ivi and meta-tizen).
+> directory: meta-agl/meta-ivi-common/recipes-core/packagegroups
+> recipes  : packagegroup-ivi-common-[subsystem].bb
 
 The "packagegroups-agl-ivi-*" will contain AGL specific middleware packages.
 > directory: meta-agl/meta-agl/recipes-ivi/packagegroups
