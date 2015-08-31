@@ -1,0 +1,5 @@
+Common targets are:
+    agl-image-ivi
+
+    agl-image-minimal
+    agl-image-weston
