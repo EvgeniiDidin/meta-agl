@@ -12,4 +12,7 @@ PACKAGES = "\
 ALLOW_EMPTY_${PN} = "1"
 
 RDEPENDS_${PN} += "\
+    alsa-lib \
+    alsa-utils \
+    gstreamer1.0-meta-base \
     "
