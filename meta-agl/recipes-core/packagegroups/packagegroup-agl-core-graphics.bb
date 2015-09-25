@@ -10,5 +10,5 @@ PACKAGES = "\
 ALLOW_EMPTY_${PN} = "1"
 
 RDEPENDS_${PN} += "\
-    weston-init \
+    ${@bb.utils.contains("DISTRO_FEATURES", "sysvinit", "weston-init", "", d)} \
     "
