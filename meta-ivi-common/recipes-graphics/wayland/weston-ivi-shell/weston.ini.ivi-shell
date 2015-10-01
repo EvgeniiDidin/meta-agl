@@ -3,6 +3,7 @@ shell=ivi-shell.so
 
 [ivi-shell]
 ivi-module=hmi-controller.so
+#ivi-module=hmi-controller.so,ivi-controller.so
 ivi-shell-user-interface=/usr/lib/weston/weston-ivi-shell-user-interface
 
 #developermode=true
