@@ -52,7 +52,8 @@ Distribution and other platforms for In-Vehicle Infotainment system.
 `meta-agl` is a layer which contains AGL common and middleware packages.
 > meta-agl/meta-agl
 
-`meta-agl-bsp` is a layer which contains required packages to boot AGL distribution on an emulated machine(QEMU).
+`meta-agl-bsp` is a layer which contains required packages to boot AGL
+distribution on an emulated machine(QEMU).
 > meta-agl/meta-agl-bsp
 
 Packagegroups
@@ -60,29 +61,28 @@ Packagegroups
 
 AGL package group design:
 
-These are the top-level packagegroups for AGL Distribution.
-> packagegroup-agl-core  (minimal packages to boot system)
-> packagegroup-agl-ivi   (middlewares for AGL IVI)
-> packagegroup-ivi-common (common packages to AGL and others)
+* packagegroup-agl-core*
 
-Each package group can contain sub-package groups like these.
-> packagegroup-agl-core-multimedia
-> packagegroup-agl-core-connectivity
-> ...
-> packagegroup-agl-ivi-multimedia
-> packagegroup-agl-ivi-connectivity
-> ...
-> packagegroup-ivi-common-multimedia
-> packagegroup-ivi-common-connectivity
+These are for making image ``agl-image-minimal`` which is small image just
+capable of allowing a device to boot.
 
-The recipe for `packagegroup-ivi-common-*.bb` will contain common packages to
-AGL Distribution(meta-agl) and other In-Vehicle Infotainment system(e.g. meta-ivi and meta-tizen).
-> directory: meta-agl/meta-ivi-common/recipes-core/packagegroups
-> recipes  : packagegroup-ivi-common-[subsystem].bb
+Subsystem should maintain packagegroup-agl-core-[subsystem].bb which should
+hold sufficient packages to build ``agl-image-minimal``.
 
-The "packagegroups-agl-ivi-*" will contain AGL specific middleware packages.
-> directory: meta-agl/meta-agl/recipes-ivi/packagegroups
-> recipes  : packagegroup-agl-ivi-[subsystem].bb
+* packagegroup-agl-ivi*
+
+These are for making image ``agl-image-ivi`` which is baseline for IVI profile
+of AGL distro. 'Baseline' means Service Layer and Operating System Layer defined
+in AGL Spec v1.0. I think this is the same as GENIVI baseline.
+All packages which belong to AppHMI and Application Framework should be put
+into ``meta-agl-demo``.
+
+* packagegroup-ivi-common*
+
+These are for picking up some packages from GENIVI/Tizen/Others. The layer of
+``meta-ivi-common`` has no image to build, all packagegroups are aggregated
+to ``packagegrou-ivi-common-core' and it is included by images,
+``agl-image-ivi.bb`` and ``agl-demo-platform.bb``.
 
 Supported Machine
 -----------------

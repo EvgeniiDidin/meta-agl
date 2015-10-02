@@ -6,7 +6,7 @@ LICENSE = "MIT"
 inherit packagegroup
 
 PACKAGES = "\
-    packagegroup-ivi-common-multimedia \
+    packagegroup-ivi-common-core-multimedia \
     "
 
 ALLOW_EMPTY_${PN} = "1"

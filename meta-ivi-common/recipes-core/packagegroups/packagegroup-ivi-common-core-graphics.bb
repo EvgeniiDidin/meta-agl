@@ -6,7 +6,7 @@ LICENSE = "MIT"
 inherit packagegroup
 
 PACKAGES = "\
-    packagegroup-ivi-common-graphics \
+    packagegroup-ivi-common-core-graphics \
     "
 
 ALLOW_EMPTY_${PN} = "1"

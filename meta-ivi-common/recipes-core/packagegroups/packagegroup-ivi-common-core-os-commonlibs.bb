@@ -1,12 +1,12 @@
 SUMMARY = "The middlewares for AGL IVI profile"
-DESCRIPTION = "A set of common packages required by Speech Services Subsystem"
+DESCRIPTION = "A set of common packages required by Operating System and Common libraries Subsystem"
 
 LICENSE = "MIT"
 
 inherit packagegroup
 
 PACKAGES = "\
-    packagegroup-ivi-common-speech-services \
+    packagegroup-ivi-common-core-os-commonlibs \
     "
 
 ALLOW_EMPTY_${PN} = "1"
