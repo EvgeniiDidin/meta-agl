@@ -11,4 +11,6 @@ PACKAGES = "\
 ALLOW_EMPTY_${PN} = "1"
 
 RDEPENDS_${PN} += "\
+    gstreamer1.0-plugins-base-meta \
+    gstreamer1.0-plugins-good-meta \
     "
