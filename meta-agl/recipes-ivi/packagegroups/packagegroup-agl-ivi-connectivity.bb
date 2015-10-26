@@ -14,4 +14,5 @@ RDEPENDS_${PN} += "\
     ofono \
     rygel \
     rygel-plugin-media-export \
+    rygel-plugin-lms \
     "
