@@ -1,7 +1,8 @@
 FILESEXTRAPATHS_prepend := ":${THISDIR}/weston-ivi-shell:"
 
 SRC_URI_append = " \
-                  file://Backport-IVI-Shell-from-Weston-1.9.0-to-1.5.0.patch \
+                  file://0001-IVI-Shell-Backport-from-Weston-1.9.0-to-1.5.0.patch \
+                  file://0002-IVI-Shell-use-primary-screen-for-resolution.patch \
                   file://data/background.png \
                   file://data/fullscreen.png \
                   file://data/home.png \
