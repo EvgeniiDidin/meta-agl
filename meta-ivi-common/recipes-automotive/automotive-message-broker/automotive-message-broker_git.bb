@@ -11,9 +11,9 @@ inherit cmake systemd
 
 PV = "0.12+git${SRCPV}"
 
-# The 'gpsd' cause conflict bluez4 and bluez5 because
+# The 'gpsd' leads to a conflict between bluez4 and bluez5 because
 # meta-openembedded/meta-oe/recipes-navigation/gpsd/gpsd_3.10.bb is able to
-# select  bluez4 only instead AGL Distro choosed bluez5 at Changes 4141.
+# select  bluez4 only instead AGL Distro choose bluez5 at changeset 4141.
 # <https://gerrit.automotivelinux.org/gerrit/#/c/4141/>
 #
 # As temporary treatment, removing 'gpsd' from DEPENDS will let bitbake to build correctly.
@@ -32,6 +32,12 @@ SYSTEMD_PACKAGES = "${PN}"
 SYSTEMD_SERVICE_${PN} = "ambd.service"
 
 S = "${WORKDIR}/git"
+
+# amb detects icecc in cmake and would override the 
+# compiler selection of yocto. This breaks the build
+# if icecc is installed on the host.
+# -> Disable the detection in cmake.
+EXTRA_OECMAKE += " -Denable_icecc=OFF"
 
 do_install_append() {
     mv ${D}/usr/include/amb/* ${D}/usr/include
