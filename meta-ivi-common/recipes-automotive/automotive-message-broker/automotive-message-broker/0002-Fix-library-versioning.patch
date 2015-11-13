@@ -1,0 +1,46 @@
+From 38c2869f16356ac723712020903ddf27cbf5890d Mon Sep 17 00:00:00 2001
+From: Petr Nechaev <petr.nechaev@cogentembedded.com>
+Date: Tue, 28 Jul 2015 17:05:10 +0300
+Subject: [PATCH 2/9] Fix library versioning
+
+Preferred for Yocto builds
+---
+ plugins/common/CMakeLists.txt      | 2 ++
+ plugins/dbus/amb-qt/CMakeLists.txt | 1 +
+ 2 files changed, 3 insertions(+)
+
+diff --git a/plugins/common/CMakeLists.txt b/plugins/common/CMakeLists.txt
+index 407b281..b760671 100644
+--- a/plugins/common/CMakeLists.txt
++++ b/plugins/common/CMakeLists.txt
+@@ -6,6 +6,7 @@ set(plugins_common_headers_install abstractio.hpp serialport.hpp bluetooth.hpp b
+ 		canobserver.h logger.h mutex.h thread.h dbusexport.h dbusplugin.h abstractdbusinterface.h dbussignaller.h varianttype.h)
+ 
+ add_library(amb-plugins-common SHARED ${plugins_common_sources})
++set_target_properties(amb-plugins-common PROPERTIES SOVERSION ${PROJECT_VERSION})
+ 
+ pkg_check_modules(gio-unix REQUIRED gio-unix-2.0)
+ 
+@@ -25,6 +26,7 @@ set(amb_json_protocol_sources jsonprotocol.cpp)
+ set(amb_json_protocol_headers jsonprotocol.cpp)
+ 
+ add_library(amb-json-protocol SHARED ${amb_json_protocol_sources})
++set_target_properties(amb-json-protocol PROPERTIES SOVERSION ${PROJECT_VERSION})
+ 
+ target_link_libraries(amb-json-protocol amb -L${CMAKE_BINARY_DIR}/lib ${link_libraries} -L${CMAKE_CURRENT_BINARY_DIR} amb-plugins-common)
+ 
+diff --git a/plugins/dbus/amb-qt/CMakeLists.txt b/plugins/dbus/amb-qt/CMakeLists.txt
+index a1ae739..2f2a2a8 100644
+--- a/plugins/dbus/amb-qt/CMakeLists.txt
++++ b/plugins/dbus/amb-qt/CMakeLists.txt
+@@ -22,6 +22,7 @@ set(ambqtquick_headers ambqtquick.h)
+ include_directories(${CMAKE_SOURCE_DIR}/lib ${include_dirs} ${QT_INCLUDE_DIRS})
+ 
+ add_library(amb-qt SHARED ${ambqt_sources} ${ambqt_headers_moc})
++set_target_properties(amb-qt PROPERTIES SOVERSION ${PROJECT_VERSION})
+ add_library(ambqtquick MODULE ${ambqtquick_sources} ${ambqtquick_headers_moc})
+ 
+ target_link_libraries(amb-qt amb ${QT_LIBRARIES} -L${CMAKE_CURRENT_BINARY_DIR}/lib ${link_libraries} ${gio_LIBRARIES})
+-- 
+1.9.1
+

@@ -1,0 +1,82 @@
+From fb401094c3d88da14e1b909d786a86c3a68d2199 Mon Sep 17 00:00:00 2001
+From: Petr Nechaev <petr.nechaev@cogentembedded.com>
+Date: Mon, 27 Jul 2015 20:34:47 +0300
+Subject: [PATCH 1/9] Improve backward compatibility with old linaro gcc
+
+---
+ lib/listplusplus.h                | 8 ++++++--
+ plugins/common/jsonprotocol.cpp   | 6 +++---
+ plugins/testplugin/testplugin.cpp | 2 +-
+ 3 files changed, 10 insertions(+), 6 deletions(-)
+
+diff --git a/lib/listplusplus.h b/lib/listplusplus.h
+index 433d34c..e653615 100644
+--- a/lib/listplusplus.h
++++ b/lib/listplusplus.h
+@@ -27,13 +27,17 @@
+ template <class T, class V, class Predicate>
+ bool contains(const T & iteratable, V value, Predicate comparator )
+ {
+-	return std::any_of(iteratable.begin(), iteratable.end(), [value, &comparator](auto i) { return comparator(value, i); });
++    for(auto i : iteratable)
++	{
++		if(comparator(value, i))
++			return true;
++	}
+ }
+ 
+ template <class T, class V>
+ bool contains(const T & iteratable, V value)
+ {
+-	return contains(iteratable, value, [](auto a, auto b) { return a == b; });
++	return iteratable.size() > 0 && (std::find(iteratable.begin(), iteratable.end(), value) != iteratable.end());
+ }
+ 
+ 
+diff --git a/plugins/common/jsonprotocol.cpp b/plugins/common/jsonprotocol.cpp
+index a534900..43ef8cf 100644
+--- a/plugins/common/jsonprotocol.cpp
++++ b/plugins/common/jsonprotocol.cpp
+@@ -149,7 +149,7 @@ void amb::AmbRemoteClient::hasJsonMessage(const picojson::value &json)
+ 
+ 			const ListMethodCall::Ptr listMethod = listMethodReply.method();
+ 
+-			auto itr = std::find_if(mListCalls.begin(), mListCalls.end(),[&listMethod](auto o)
++			auto itr = std::find_if(mListCalls.begin(), mListCalls.end(),[&listMethod](ListMethodCall::Ptr o)
+ 			{
+ 				return o->messageId == listMethod->messageId;
+ 			});
+@@ -176,7 +176,7 @@ void amb::AmbRemoteClient::hasJsonMessage(const picojson::value &json)
+ 			reply.fromJson(json);
+ 			GetMethodCall::Ptr getCall = reply.method();
+ 
+-			auto itr = std::find_if(mGetMethodCalls.begin(), mGetMethodCalls.end(),[&getCall](auto o)
++			auto itr = std::find_if(mGetMethodCalls.begin(), mGetMethodCalls.end(),[&getCall](GetMethodCall::Ptr o)
+ 			{
+ 				return o->messageId == getCall->messageId;
+ 			});
+@@ -205,7 +205,7 @@ void amb::AmbRemoteClient::hasJsonMessage(const picojson::value &json)
+ 
+ 			auto call = reply.method();
+ 
+-			auto itr = std::find_if(mSetMethodCalls.begin(), mSetMethodCalls.end(),[&call](auto o)
++			auto itr = std::find_if(mSetMethodCalls.begin(), mSetMethodCalls.end(),[&call](SetMethodCall::Ptr o)
+ 			{
+ 				return o->messageId == call->messageId;
+ 			});
+diff --git a/plugins/testplugin/testplugin.cpp b/plugins/testplugin/testplugin.cpp
+index d854d5f..a96cf19 100644
+--- a/plugins/testplugin/testplugin.cpp
++++ b/plugins/testplugin/testplugin.cpp
+@@ -268,7 +268,7 @@ bool testListPlusPlus()
+ 	complexList.push_back(complex1);
+ 	complexList.push_back(complex2);
+ 
+-	TEST(contains(complexList, complex1, [](auto a, auto b) { return a.foo == b.foo && a.bar == b.bar; }));
++	TEST(contains(complexList, complex1, [](Complex a, Complex b) { return a.foo == b.foo && a.bar == b.bar; }));
+ 
+ 	return true;
+ }
+-- 
+1.9.1
+

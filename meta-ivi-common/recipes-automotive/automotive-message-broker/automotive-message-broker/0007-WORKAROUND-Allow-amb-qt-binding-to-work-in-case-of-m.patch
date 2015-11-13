@@ -1,0 +1,640 @@
+From 5de4c1f8e0d5fb22a6d2927d3526498de2b21cbe Mon Sep 17 00:00:00 2001
+From: Petr Nechaev <petr.nechaev@cogentembedded.com>
+Date: Fri, 31 Jul 2015 20:22:36 +0300
+Subject: [PATCH 7/9] [WORKAROUND] Allow amb-qt binding to work in case of
+ multiple properties
+
+---
+ docs/amb.in.fidl                   |  21 ++++
+ plugins/dbus/amb-qt/CMakeLists.txt |   2 +-
+ plugins/dbus/amb-qt/ambqt.cpp      | 237 ++++++++++++++++++++++++++-----------
+ plugins/dbus/amb-qt/ambqt.h        |  59 ++++-----
+ plugins/dbus/amb-qt/ambqtquick.cpp |  22 +++-
+ plugins/dbus/amb-qt/ambqtquick.h   |  22 +++-
+ plugins/dbus/amb-qt/qmldir         |   1 +
+ plugins/dbus/amb-qt/test.cpp       |  26 +++-
+ plugins/dbus/automotivemanager.cpp |  65 ++++++++++
+ 9 files changed, 350 insertions(+), 105 deletions(-)
+
+diff --git a/docs/amb.in.fidl b/docs/amb.in.fidl
+index 398a33d..27d2827 100644
+--- a/docs/amb.in.fidl
++++ b/docs/amb.in.fidl
+@@ -220,6 +220,27 @@ interface org.automotive.Manager  {
+   }
+ 
+   /*!
++   * FindObjectsForZone
++   *  \brief find the DBus object path which matches "objectName" and "zone".  This has the same behavior as FindObject
++   * except that it takes an addition zone argument and only return the path for that zone.
++   *  \arg String property is the requested property to be retrieved.
++   *  \arg Zone zone is the zone which the object
++   *  \return list of object paths that provide the given object Name.
++   *  Possible errors:
++   * "org.automotive.Manager.InvalidZone"
++   * "org.automotive.Manager.ObjectNotFound"
++  */
++  method FindObjectsForZone {
++        in {
++          String objectName
++          Zone zone
++        }
++        out {
++          array of String objectPath
++        }
++  }
++
++  /*!
+    * ZonesForObjectName
+    *  \brief get a list of zones for a given objectName.
+    *  \arg String objectName object name.
+diff --git a/plugins/dbus/amb-qt/CMakeLists.txt b/plugins/dbus/amb-qt/CMakeLists.txt
+index 2f2a2a8..42b7fb4 100644
+--- a/plugins/dbus/amb-qt/CMakeLists.txt
++++ b/plugins/dbus/amb-qt/CMakeLists.txt
+@@ -16,7 +16,7 @@ endif(Qt5Core_FOUND)
+ 
+ set(ambqt_headers ambqt.h amb-qt_global.h)
+ set(ambqt_sources ambqt.cpp)
+-set(ambqtquick_sources ambqtquick.cpp)
++set(ambqtquick_sources ambqtquick.cpp qmldir)
+ set(ambqtquick_headers ambqtquick.h)
+ 
+ include_directories(${CMAKE_SOURCE_DIR}/lib ${include_dirs} ${QT_INCLUDE_DIRS})
+diff --git a/plugins/dbus/amb-qt/ambqt.cpp b/plugins/dbus/amb-qt/ambqt.cpp
+index 6a3faeb..c8f1faf 100644
+--- a/plugins/dbus/amb-qt/ambqt.cpp
++++ b/plugins/dbus/amb-qt/ambqt.cpp
+@@ -1,92 +1,189 @@
++/*
++Copyright (C) 2012 Intel Corporation
++Copyright (C) 2015 Cogent Embedded Inc.
++
++This library is free software; you can redistribute it and/or
++modify it under the terms of the GNU Lesser General Public
++License as published by the Free Software Foundation; either
++version 2.1 of the License, or (at your option) any later version.
++
++This library is distributed in the hope that it will be useful,
++but WITHOUT ANY WARRANTY; without even the implied warranty of
++MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++Lesser General Public License for more details.
++
++You should have received a copy of the GNU Lesser General Public
++License along with this library; if not, write to the Free Software
++Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
++*/
+ #include "ambqt.h"
+ #include <QDBusConnection>
+ #include <QDBusInterface>
+ #include <QtDebug>
+ #include <QDBusReply>
+ 
+-AmbProperty::AmbProperty(QString op, QString iface, QString propName)
+-	:QObject(), mPropertyName(propName),mInterfaceName(iface), mObjectPath(op),mDBusInterface(NULL),mZone(0)
++AmbProperty::AmbProperty(QString objectName, QString propName)
++    :QObject(), mObjectName(objectName), mPropertyName(propName), mZone(0), managerIface(NULL)
+ {
+-	connect();
++    // Automatically connect when all properties have been set
++    connect();
+ }
+ 
+ 
+-void AmbProperty::propertyChangedSlot(QString, QVariantMap values, QVariantMap )
++void AmbProperty::propertyChangedSlot(QString, QVariantMap values, QStringList )
+ {
+-	valueChanged(values);
++    // try to get value
++    mValue = values[mPropertyName];
++
++    // try to parse time
++    QVariant timeVariant = values["Time"];
++    bool ok = false;
++    double NewTime = 0;
++    if (timeVariant.isValid())
++        NewTime = timeVariant.toDouble(&ok);
++    if (ok)
++        mTime = NewTime;
++
++    // emit the signal
++    valueChanged(mValue);
+ }
+ 
+-void AmbProperty::propertyChanged1(QDBusVariant val, double t)
++void AmbProperty::connect()
+ {
+-	mTime = t;
+-	mValue = val.variant();
+-
+-	signalChanged(mValue);
++    if (managerIface)
++        disconnect();
++
++    managerIface = new QDBusInterface("org.automotive.message.broker","/","org.automotive.Manager", QDBusConnection::systemBus(), this);
++
++    if(!managerIface->isValid())
++    {
++        qWarning()<<"Failed to create manager interface";
++        delete managerIface;
++        return;
++    }
++
++    QDBusReply<QList<QDBusObjectPath>> reply = managerIface->call("FindObjectsForZone", mObjectName, mZone);
++
++    if(reply.isValid())
++    {
++        for (int i=0; i < reply.value().size(); ++i)
++        {
++            QDBusInterface* mDBusInterface = new QDBusInterface("org.automotive.message.broker",
++                                                                reply.value().at(i).path(),
++                                                                "org.freedesktop.DBus.Properties",
++                                                                QDBusConnection::systemBus(),
++                                                                this);
++
++            if(!mDBusInterface->isValid())
++            {
++                qDebug()<<"Failed to create dbus interface for property "<<propertyName();
++                qDebug()<<"path: "<< reply.value().at(i).path();
++                qDebug()<<"object: "<< objectName();
++                qDebug()<<"property: "<< propertyName();
++                qDebug()<<"Error: "<<QDBusConnection::systemBus().lastError().message();
++            }
++
++            // store object interface for future use
++            ServerProperties.append(mDBusInterface);
++
++            if(!QDBusConnection::systemBus().connect("org.automotive.message.broker",
++                                                     reply.value().at(i).path(),
++                                                     "org.freedesktop.DBus.Properties",
++                                                     "PropertiesChanged",
++                                                     this,
++                                                     SLOT(propertyChangedSlot(QString,QVariantMap,QStringList))))
++            {
++                qDebug()<<"Failed to connect to signal";
++                qDebug()<<"path: "<< reply.value().at(i).path();
++                qDebug()<<"object: "<< objectName();
++                qDebug()<<"property: "<< propertyName();
++                qDebug()<<"Error: "<< QDBusConnection::systemBus().lastError().message();
++            }
++        }
++    }
++
++    //    if(mInterfaceName.isEmpty())
++    //        mInterfaceName = "org.automotive."+mPropertyName;
++
++    //    mDBusInterface = new QDBusInterface("org.automotive.message.broker",objectPath(), interfaceName(), QDBusConnection::systemBus(),this);
++
++    //    if(!mDBusInterface->isValid())
++    //    {
++    //        qDebug()<<"Failed to create dbus interface for property "<<propertyName();
++    //        qDebug()<<"Path: "<<objectPath();
++    //        qDebug()<<"Interface: "<<interfaceName();
++    //        qDebug()<<"Error: "<<QDBusConnection::systemBus().lastError().message();
++    //    }
++
++    //    QString signalName = propertyName() + "Changed";
++
++
++
++    //    ///TODO: only use PropertiesChanged...  treat AmbProperty like an object rather than a representation of just a single property in the object
++
++    //    if(!QDBusConnection::systemBus().connect("org.automotive.message.broker", objectPath(), mInterfaceName,
++    //                                             signalName, this, SLOT(propertyChanged1(QDBusVariant,double))))
++    //    {
++    //        qDebug()<<"Failed to connect to signal";
++    //        qDebug()<<"path: "<<objectPath();
++    //        qDebug()<<"interface: "<<interfaceName();
++    //        qDebug()<<"signal: "<<propertyName();
++    //        qDebug()<<"Error: "<<QDBusConnection::systemBus().lastError().message();
++    //    }
+ }
+ 
+-void AmbProperty::connect()
++void AmbProperty::disconnect()
+ {
+-	if(mDBusInterface)
+-	{
+-		delete mDBusInterface;
+-	}
+-
+-	if(mObjectPath.isEmpty())
+-		getObjectPath();
+-
+-	if(mInterfaceName.isEmpty())
+-		mInterfaceName = "org.automotive."+mPropertyName;
+-
+-	mDBusInterface = new QDBusInterface("org.automotive.message.broker",objectPath(), interfaceName(), QDBusConnection::systemBus(),this);
+-
+-	if(!mDBusInterface->isValid())
+-	{
+-		qDebug()<<"Failed to create dbus interface for property "<<propertyName();
+-		qDebug()<<"Path: "<<objectPath();
+-		qDebug()<<"Interface: "<<interfaceName();
+-		qDebug()<<"Error: "<<QDBusConnection::systemBus().lastError().message();
+-	}
+-
+-	QString signalName = propertyName() + "Changed";
+-
+-
+-	if(!QDBusConnection::systemBus().connect("org.automotive.message.broker", objectPath(), "org.freedesktop.DBus.Properties",
+-											 "PropertiesChanged", this, SLOT(propertyChangedSlot(QString,QVariantMap,QVariantMap))))
+-	{
+-		qDebug()<<"Failed to connect to signal";
+-		qDebug()<<"path: "<<objectPath();
+-		qDebug()<<"interface: "<<interfaceName();
+-		qDebug()<<"signal: "<<propertyName();
+-		qDebug()<<"Error: "<<QDBusConnection::systemBus().lastError().message();
+-	}
+-
+-	///TODO: only use PropertiesChanged...  treat AmbProperty like an object rather than a representation of just a single property in the object
+-
+-	if(!QDBusConnection::systemBus().connect("org.automotive.message.broker", objectPath(), mInterfaceName,
+-											 signalName, this, SLOT(propertyChanged1(QDBusVariant,double))))
+-	{
+-		qDebug()<<"Failed to connect to signal";
+-		qDebug()<<"path: "<<objectPath();
+-		qDebug()<<"interface: "<<interfaceName();
+-		qDebug()<<"signal: "<<propertyName();
+-		qDebug()<<"Error: "<<QDBusConnection::systemBus().lastError().message();
+-	}
++    delete managerIface;
++    managerIface = NULL;
++
++    QDBusReply<QList<QDBusObjectPath>> reply = managerIface->call("FindObjectsForZone", mObjectName, mZone);
++
++    if(reply.isValid())
++    {
++        for (int i=0; i < reply.value().size(); ++i)
++        {
++            QDBusConnection::systemBus().disconnect("org.automotive.message.broker",
++                                                    reply.value().at(i).path(),
++                                                    "org.freedesktop.DBus.Properties",
++                                                    "PropertiesChanged",
++                                                    this,
++                                                    SLOT(propertyChangedSlot(QString,QVariantMap,QStringList)));
++        }
++    }
++
++    for (int i = 0; i < ServerProperties.size(); ++i)
++        delete ServerProperties[i];
++
++    ServerProperties.clear();
+ }
+ 
+-void AmbProperty::getObjectPath()
++QVariant AmbProperty::updateValue()
+ {
+-	QDBusInterface managerIface("org.automotive.message.broker","/","org.automotive.Manager", QDBusConnection::systemBus(), this);
+-
+-	if(!managerIface.isValid())
+-	{
+-		qDebug()<<"Failed to create manager interface";
+-		return;
+-	}
+-
+-	QDBusReply<QDBusObjectPath> reply = managerIface.call("FindObjectForZone", mPropertyName, mZone);
++    for (int i = 0; i < ServerProperties.size(); ++i)
++    {
++        if (!ServerProperties[i]->isValid())
++        {
++            qDebug()<<"error Interface is not valid "<<ServerProperties[i]->objectName();
++        }
++
++        QVariant v = ServerProperties[i]->property(propertyName().toUtf8());
++
++        if (v.isValid())
++            return v;
++    }
++}
+ 
+-	if(reply.isValid())
+-	{
+-		mObjectPath = reply.value().path();
+-	}
++void AmbProperty::setValue(QVariant v)
++{
++    for (int i = 0; i < ServerProperties.size(); ++i)
++    {
++        if (!ServerProperties[i]->isValid())
++        {
++            qDebug()<<"error Interface is not valid "<<ServerProperties[i]->objectName();
++        }
++
++        ServerProperties[i]->setProperty(propertyName().toUtf8(), v);
++    }
+ }
++
+diff --git a/plugins/dbus/amb-qt/ambqt.h b/plugins/dbus/amb-qt/ambqt.h
+index 3d7e793..6510daa 100644
+--- a/plugins/dbus/amb-qt/ambqt.h
++++ b/plugins/dbus/amb-qt/ambqt.h
+@@ -1,3 +1,21 @@
++/*
++Copyright (C) 2012 Intel Corporation
++Copyright (C) 2015 Cogent Embedded Inc.
++
++This library is free software; you can redistribute it and/or
++modify it under the terms of the GNU Lesser General Public
++License as published by the Free Software Foundation; either
++version 2.1 of the License, or (at your option) any later version.
++
++This library is distributed in the hope that it will be useful,
++but WITHOUT ANY WARRANTY; without even the implied warranty of
++MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++Lesser General Public License for more details.
++
++You should have received a copy of the GNU Lesser General Public
++License along with this library; if not, write to the Free Software
++Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
++*/
+ #ifndef AMBQT_H
+ #define AMBQT_H
+ 
+@@ -17,57 +35,44 @@ class QDBusInterface;
+ class AmbProperty: public QObject
+ {
+ 	Q_OBJECT
+-	Q_PROPERTY(QString propertyName READ propertyName WRITE setPropertyName)
++    Q_PROPERTY(QString objectName READ objectName WRITE setObjectName)
++    AUTOPROPERTY(QString, objectName, ObjectName)
++    Q_PROPERTY(QString propertyName READ propertyName WRITE setPropertyName)
+ 	AUTOPROPERTY(QString, propertyName, PropertyName)
+-	Q_PROPERTY(QVariant value READ value WRITE setValue NOTIFY valueChanged)
+-	Q_PROPERTY(QString interfaceName READ interfaceName WRITE setInterfaceName)
+-	AUTOPROPERTY(QString, interfaceName, InterfaceName)
+-	Q_PROPERTY(QString objectPath READ objectPath WRITE setObjectPath)
+-	AUTOPROPERTY(QString, objectPath, ObjectPath)
++    Q_PROPERTY(QVariant value READ value WRITE setValue NOTIFY valueChanged)
+ 	Q_PROPERTY(int zone READ zone WRITE setZone)
+ 	AUTOPROPERTY(int, zone, Zone)
+ 	Q_PROPERTY(double time READ time)
+ 
+ 
+-	public:
++public:
++    AmbProperty(): mPropertyName("Value"), mZone(0), mTime(0), managerIface(NULL) { }
+ 
+-		AmbProperty():mDBusInterface(NULL),mZone(0),mTime(0) { }
+-
+-	AmbProperty(QString op, QString iface, QString propName);
++    AmbProperty(QString objectName, QString propName);
+ 
+ 	QVariant value()
+ 	{
+ 		return mValue;
+ 	}
+ 
+-	void setValue(QVariant v)
+-	{
+-		if(!mDBusInterface || !mDBusInterface->isValid())
+-		{
+-			qDebug()<<"error Interface is not valid "<<interfaceName();
+-		}
+-
+-		mDBusInterface->setProperty(propertyName().toUtf8(), v);
+-	}
++    void setValue(QVariant v);
+ 
+ 	double time(){ return mTime; }
+ 
+-Q_SIGNALS:	
++signals:
+ 	void valueChanged(QVariant val);
+ 
+-	///TODO: remove
+-	void signalChanged(QVariant val);
+-
+ public Q_SLOTS:
+ 	void connect();
++    QVariant updateValue();
++    void disconnect();
+ 
+ private Q_SLOTS:
+-	void propertyChangedSlot(QString, QVariantMap values, QVariantMap);
+-	void propertyChanged1(QDBusVariant, double);
++    void propertyChangedSlot(QString, QVariantMap values, QStringList);
+ 
+ private:
+-	void getObjectPath();
+-	QDBusInterface* mDBusInterface;
++    QList<QDBusInterface*> ServerProperties;
++    QDBusInterface* managerIface;
+ 	double mTime;
+ 	QVariant mValue;
+ };
+diff --git a/plugins/dbus/amb-qt/ambqtquick.cpp b/plugins/dbus/amb-qt/ambqtquick.cpp
+index c5102a9..4362297 100644
+--- a/plugins/dbus/amb-qt/ambqtquick.cpp
++++ b/plugins/dbus/amb-qt/ambqtquick.cpp
+@@ -1,10 +1,28 @@
++/*
++Copyright (C) 2012 Intel Corporation
++Copyright (C) 2015 Cogent Embedded Inc.
++
++This library is free software; you can redistribute it and/or
++modify it under the terms of the GNU Lesser General Public
++License as published by the Free Software Foundation; either
++version 2.1 of the License, or (at your option) any later version.
++
++This library is distributed in the hope that it will be useful,
++but WITHOUT ANY WARRANTY; without even the implied warranty of
++MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++Lesser General Public License for more details.
++
++You should have received a copy of the GNU Lesser General Public
++License along with this library; if not, write to the Free Software
++Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
++*/
+ #include "ambqtquick.h"
+ #include <QtQml/qqml.h>
+ 
+ void Components::registerTypes(const char *uri)
+ {
+-	qmlRegisterType<AmbProperty>(uri,0,1,"AutomotivePropertyItem");
+-
++ Q_ASSERT(uri == QLatin1String("amb"));
++ int ret = qmlRegisterType<AmbProperty>(uri, 0, 1,"AutomotivePropertyItem");
+ }
+ 
+ void Components::initializeEngine(QQmlEngine *, const char *)
+diff --git a/plugins/dbus/amb-qt/ambqtquick.h b/plugins/dbus/amb-qt/ambqtquick.h
+index a48104a..74b3d6d 100644
+--- a/plugins/dbus/amb-qt/ambqtquick.h
++++ b/plugins/dbus/amb-qt/ambqtquick.h
+@@ -1,3 +1,21 @@
++/*
++Copyright (C) 2012 Intel Corporation
++Copyright (C) 2015 Cogent Embedded Inc.
++
++This library is free software; you can redistribute it and/or
++modify it under the terms of the GNU Lesser General Public
++License as published by the Free Software Foundation; either
++version 2.1 of the License, or (at your option) any later version.
++
++This library is distributed in the hope that it will be useful,
++but WITHOUT ANY WARRANTY; without even the implied warranty of
++MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++Lesser General Public License for more details.
++
++You should have received a copy of the GNU Lesser General Public
++License along with this library; if not, write to the Free Software
++Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
++*/
+ #include <QQmlExtensionPlugin>
+ #include "ambqt.h"
+ 
+@@ -7,8 +25,6 @@ class Components : public QQmlExtensionPlugin
+ 	Q_PLUGIN_METADATA(IID "org.automotive.qmlplugin")
+ public:
+ 
+-
+ 	void registerTypes(const char *uri);
+-	void initializeEngine(QQmlEngine *engine, const char *uri);
+-
++    void initializeEngine(QQmlEngine *engine, const char *uri);
+ };
+diff --git a/plugins/dbus/amb-qt/qmldir b/plugins/dbus/amb-qt/qmldir
+index a2d986c..49557ae 100644
+--- a/plugins/dbus/amb-qt/qmldir
++++ b/plugins/dbus/amb-qt/qmldir
+@@ -1 +1,2 @@
++module amb
+ plugin ambqtquick
+diff --git a/plugins/dbus/amb-qt/test.cpp b/plugins/dbus/amb-qt/test.cpp
+index 6eb88eb..a11f5e4 100644
+--- a/plugins/dbus/amb-qt/test.cpp
++++ b/plugins/dbus/amb-qt/test.cpp
+@@ -1,3 +1,21 @@
++/*
++Copyright (C) 2012 Intel Corporation
++Copyright (C) 2015 Cogent Embedded Inc.
++
++This library is free software; you can redistribute it and/or
++modify it under the terms of the GNU Lesser General Public
++License as published by the Free Software Foundation; either
++version 2.1 of the License, or (at your option) any later version.
++
++This library is distributed in the hope that it will be useful,
++but WITHOUT ANY WARRANTY; without even the implied warranty of
++MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++Lesser General Public License for more details.
++
++You should have received a copy of the GNU Lesser General Public
++License along with this library; if not, write to the Free Software
++Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
++*/
+ #include "ambqt.h"
+ #include "timestamp.h"
+ 
+@@ -15,7 +33,7 @@ int main(int argc, char** argv)
+ 	double totalLatency=0;
+ 	int numSamples=0;
+ 
+-	QObject::connect(&speed, &AmbProperty::signalChanged,[&](QVariant val)
++	QObject::connect(&speed, &AmbProperty::valueChanged,[&](QVariant val)
+ 	{
+ 		double t1 = speed.time();
+ 		double t2 = amb::currentTime();
+@@ -26,10 +44,14 @@ int main(int argc, char** argv)
+ 		totalLatency+=latency;
+ 		numSamples++;
+ 		DebugOut(0)<<"Average: "<<totalLatency / numSamples<<std::endl;
++		qDebug()<<"Value: "<<val;
+ 	});
+ 
+-	speed.setPropertyName("VehicleSpeed");
++	speed.setObjectName("VehicleSpeed");
++	speed.setPropertyName("Speed");
+ 	speed.connect();
+ 
++	qDebug() << "Updated="<< speed.updateValue();
++
+ 	return app.exec();
+ }
+diff --git a/plugins/dbus/automotivemanager.cpp b/plugins/dbus/automotivemanager.cpp
+index 64919e0..a164d11 100644
+--- a/plugins/dbus/automotivemanager.cpp
++++ b/plugins/dbus/automotivemanager.cpp
+@@ -14,6 +14,11 @@ static const gchar introspection_xml[] =
+   "      <arg type='i' name='zone' direction='in'/>"
+   "      <arg type='o' name='response' direction='out'/>"
+   "    </method>"
++  "    <method name='FindObjectsForZone'>"
++  "      <arg type='s' name='searchstring' direction='in'/>"
++  "      <arg type='i' name='zone' direction='in'/>"
++  "      <arg type='ao' name='response' direction='out'/>"
++  "    </method>"
+   "    <method name='FindObjectForSourceZone'>"
+   "      <arg type='s' name='searchstring' direction='in'/>"
+   "      <arg type='s' name='source' direction='in'/>"
+@@ -168,6 +173,66 @@ static void handleMethodCall(GDBusConnection       *connection,
+ 		g_dbus_method_invocation_return_dbus_error(invocation,"org.automotive.Manager.InvalidZone", "zone not found");
+ 	}
+ 
++	else if(method == "FindObjectsForZone")
++	{
++		gchar* arg;
++		int zone;
++
++		g_variant_get(parameters,"(si)", &arg, &zone);
++
++		std::string propertyToFind = arg;
++
++		if(propertyToFind == "")
++		{
++			g_dbus_method_invocation_return_error(invocation,G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS, "Invalid argument.");
++			return;
++		}
++
++		std::list<AbstractDBusInterface*> interfaces = AbstractDBusInterface::getObjectsForProperty(propertyToFind);
++
++		if(!interfaces.size())
++		{
++			g_dbus_method_invocation_return_dbus_error(invocation, "org.automotive.Manager.ObjectNotFound", "Property not found");
++			return;
++		}
++
++		GVariantBuilder params;
++		g_variant_builder_init(&params, G_VARIANT_TYPE_ARRAY);
++
++		bool hasItems = false;
++
++		for(auto itr = interfaces.begin(); itr != interfaces.end(); itr++)
++		{
++			AbstractDBusInterface* t = *itr;
++			if(!t->isSupported())
++				continue;
++
++			if(t->zone() == (Zone::Type)zone)
++			{
++				hasItems = true;
++
++				if(!t->isRegistered())
++					t->registerObject();
++
++				std::list<std::string> processes = manager->subscribedProcesses[t];
++
++				if(!contains(processes,sender))
++				{
++					DebugOut()<<"Referencing "<<t->objectPath()<<" with sender: "<<sender<<endl;
++					manager->subscribedProcesses[t].push_back(sender);
++				}
++
++				GVariant *newvar = g_variant_new("o",t->objectPath().c_str());
++				g_variant_builder_add_value(&params, newvar);
++			}
++		}
++
++		if(hasItems)
++			g_dbus_method_invocation_return_value(invocation, g_variant_new("(ao)",&params));
++		else
++			g_dbus_method_invocation_return_dbus_error(invocation,"org.automotive.Manager.ObjectNotFound", "Property not found");
++	}
++
+ 	else if (method == "ZonesForObjectName")
+ 	{
+ 		gchar* arg;
+-- 
+1.9.1
+

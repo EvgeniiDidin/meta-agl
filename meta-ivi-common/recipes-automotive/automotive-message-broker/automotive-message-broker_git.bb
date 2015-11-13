@@ -9,8 +9,6 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=b42382de5d854b9bb598acf2e8827de3"
 
 inherit cmake systemd
 
-PV = "0.12+git${SRCPV}"
-
 # The 'gpsd' leads to a conflict between bluez4 and bluez5 because
 # meta-openembedded/meta-oe/recipes-navigation/gpsd/gpsd_3.10.bb is able to
 # select  bluez4 only instead AGL Distro choose bluez5 at changeset 4141.
@@ -22,19 +20,33 @@ PV = "0.12+git${SRCPV}"
 DEPENDS = "glib-2.0 util-linux sqlite3 boost json-c libtool"
 RDEPENDS_${PN} = "python-misc python-json"
 
-SRC_URI = "git://github.com/otcshare/automotive-message-broker.git"
-SRCREV = "ac3fe53327a13afc571efe079a31a0472ea285a3"
+PV = "0.14+git${SRCPV}"
 
-SRC_URI += "file://amb_allow_sessionbus.patch \
-            file://ambd.service \
-            "
+SRC_URI = "git://github.com/CogentEmbedded/automotive-message-broker.git;protocol=https;branch=master"
+SRCREV = "58569fac42bb8b6e1ad208caef5db8a51befc87f"
+
+# The paches from 0001 to 0009 are from difference between 
+# hash:58569fac42bb8b6e1ad208caef5db8a51befc87f(main branch) and
+# hash:8f761e02172544212915c82b7e8dd8d4dd1281a6(dev_0.14_2)
+SRC_URI += " \
+    file://0001-Improve-backward-compatibility-with-old-linaro-gcc.patch \
+    file://0002-Fix-library-versioning.patch \
+    file://0003-AmbSignalMapper-fix-can-interface-specification.patch \
+    file://0004-cansocketbcm-Fix-reading-of-frames-in-case-of-RX_TIM.patch \
+    file://0005-ambctl-remove-unnecessary-dependency-on-glib-introsp.patch \
+    file://0006-cangen-Implement-basic-handling-of-RX_TIMEOUT.patch \
+    file://0007-WORKAROUND-Allow-amb-qt-binding-to-work-in-case-of-m.patch \
+    file://0008-Add-simple-Qt-QML-example.patch \
+    file://0009-Add-Pressure-property-to-BrakeOperation.patch \
+    file://ambd.service \
+    "
 
 SYSTEMD_PACKAGES = "${PN}"
 SYSTEMD_SERVICE_${PN} = "ambd.service"
 
 S = "${WORKDIR}/git"
 
-# amb detects icecc in cmake and would override the 
+# amb detects icecc in cmake and would override the
 # compiler selection of yocto. This breaks the build
 # if icecc is installed on the host.
 # -> Disable the detection in cmake.
