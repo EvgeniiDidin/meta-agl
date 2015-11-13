@@ -9,15 +9,8 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=b42382de5d854b9bb598acf2e8827de3"
 
 inherit cmake systemd
 
-# The 'gpsd' leads to a conflict between bluez4 and bluez5 because
-# meta-openembedded/meta-oe/recipes-navigation/gpsd/gpsd_3.10.bb is able to
-# select  bluez4 only instead AGL Distro choose bluez5 at changeset 4141.
-# <https://gerrit.automotivelinux.org/gerrit/#/c/4141/>
-#
-# As temporary treatment, removing 'gpsd' from DEPENDS will let bitbake to build correctly.
-#
 #DEPENDS = "glib-2.0 util-linux sqlite3 qtbase boost json-c libtool gpsd"
-DEPENDS = "glib-2.0 util-linux sqlite3 boost json-c libtool"
+DEPENDS = "glib-2.0 util-linux sqlite3 boost json-c libtool gpsd"
 RDEPENDS_${PN} = "python-misc python-json"
 
 PV = "0.14+git${SRCPV}"
@@ -25,7 +18,7 @@ PV = "0.14+git${SRCPV}"
 SRC_URI = "git://github.com/CogentEmbedded/automotive-message-broker.git;protocol=https;branch=master"
 SRCREV = "58569fac42bb8b6e1ad208caef5db8a51befc87f"
 
-# The paches from 0001 to 0009 are from difference between 
+# The paches from 0001 to 0009 are from difference between
 # hash:58569fac42bb8b6e1ad208caef5db8a51befc87f(main branch) and
 # hash:8f761e02172544212915c82b7e8dd8d4dd1281a6(dev_0.14_2)
 SRC_URI += " \
@@ -51,7 +44,7 @@ S = "${WORKDIR}/git"
 # compiler selection of yocto. This breaks the build
 # if icecc is installed on the host.
 # -> Disable the detection in cmake.
-EXTRA_OECMAKE += " -Denable_icecc=OFF"
+EXTRA_OECMAKE += " -Denable_icecc=OFF -Dgpsd_plugin=ON"
 
 do_install_append() {
     mv ${D}/usr/include/amb/* ${D}/usr/include
