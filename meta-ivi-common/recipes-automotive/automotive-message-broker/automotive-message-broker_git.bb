@@ -20,6 +20,7 @@ PV = "0.12+git${SRCPV}"
 #
 #DEPENDS = "glib-2.0 util-linux sqlite3 qtbase boost json-c libtool gpsd"
 DEPENDS = "glib-2.0 util-linux sqlite3 boost json-c libtool"
+RDEPENDS_${PN} = "python-misc python-json"
 
 SRC_URI = "git://github.com/otcshare/automotive-message-broker.git"
 SRCREV = "ac3fe53327a13afc571efe079a31a0472ea285a3"
