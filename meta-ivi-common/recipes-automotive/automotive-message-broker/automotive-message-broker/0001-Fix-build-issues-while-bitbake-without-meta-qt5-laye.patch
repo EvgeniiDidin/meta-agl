@@ -1,0 +1,30 @@
+From aff92c907e8fc96b1edf96aa061843bce71244ca Mon Sep 17 00:00:00 2001
+From: Tadao Tanikawa <tanikawa.tadao@jp.panasonic.com>
+Date: Mon, 16 Nov 2015 20:22:06 +0900
+Subject: [PATCH] Fix build issues while bitbake without meta-qt5 layer
+
+Signed-off-by: Tadao Tanikawa <tanikawa.tadao@jp.panasonic.com>
+---
+ tests/CMakeLists.txt | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/tests/CMakeLists.txt b/tests/CMakeLists.txt
+index cea4807..900bdc5 100644
+--- a/tests/CMakeLists.txt
++++ b/tests/CMakeLists.txt
+@@ -11,6 +11,7 @@ configure_file (${CMAKE_CURRENT_SOURCE_DIR}/gendb.sh ${CMAKE_CURRENT_SOURCE_DIR}
+ 
+ install (PROGRAMS ${amb_tests} DESTINATION bin)
+ 
++if(qtmainloop OR qt_bindings)
+ find_package(Qt5Network)
+ find_package(Qt5Core)
+ 
+@@ -28,3 +29,4 @@ if(Qt5Network_FOUND)
+   add_executable(testProtocolClient testProtocolClient.cpp testProtocolCommon.h)
+   target_link_libraries(testProtocolClient ${link_libraries} amb -L${CMAKE_CURRENT_BINARY_DIR}/lib amb-plugins-common amb-json-protocol -L${CMAKE_CURRENT_BINARY_DIR}/plugins/common ${QT_LIBRARIES})
+ endif()
++endif(qtmainloop OR qt_bindings)
+-- 
+1.9.1
+

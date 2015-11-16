@@ -38,6 +38,7 @@ SRC_URI += " \
     file://0007-WORKAROUND-Allow-amb-qt-binding-to-work-in-case-of-m.patch \
     file://0008-Add-simple-Qt-QML-example.patch \
     file://0009-Add-Pressure-property-to-BrakeOperation.patch \
+    file://0001-Fix-build-issues-while-bitbake-without-meta-qt5-laye.patch \
     file://ambd.service \
     "
 
