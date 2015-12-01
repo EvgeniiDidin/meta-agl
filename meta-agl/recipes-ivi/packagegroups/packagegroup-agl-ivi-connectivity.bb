@@ -12,6 +12,7 @@ ALLOW_EMPTY_${PN} = "1"
 
 RDEPENDS_${PN} += "\
     ofono \
+    rtl-sdr \
     rygel \
     rygel-plugin-media-export \
     rygel-plugin-lms \
