@@ -2,7 +2,7 @@
 
 if [ -z $1 ]; then
         echo -e "Usage: source envsetup.sh <board/device> [build dir]"
-        return -1
+        return 1
 fi
 
 case "$1" in
@@ -14,7 +14,7 @@ case "$1" in
                         copy_mm_packages $1
                         if [ $? -ne 0 ]; then
                                 echo "Copying gfx drivers and multimedia packages for '$1' failed."
-                                return -1
+                                return 1
                         fi
                 fi
 
