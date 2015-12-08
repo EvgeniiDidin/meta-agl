@@ -1,0 +1,7 @@
+{
+	"name" : "gpsnmea",
+	"path" : "/usr/lib//automotive-message-broker/gpsnmea.so",
+	"device" : "/dev/ttyUSB0",
+	"baudrate" : "4800",
+	"enabled" : true
+}

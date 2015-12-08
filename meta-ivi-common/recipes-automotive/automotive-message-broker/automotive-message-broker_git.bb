@@ -16,7 +16,7 @@ RDEPENDS_${PN} = "python-misc python-json"
 PACKAGECONFIG ??= " use_gps \
     ${@bb.utils.contains('BBFILE_COLLECTIONS','qt5-layer','use_qt5','', d)} \
     "
-PACKAGECONFIG[use_gps] = "-Dgpsd_plugins=On,,gpsd"
+PACKAGECONFIG[use_gps] = "-Dgpsnmea_plugin=On"
 PACKAGECONFIG[use_qt5] = "-Dqtmainloop=On -Dqt_bindings=On,,qtbase qtdeclarative"
 
 SYSTEMD_PACKAGES = "${PN}"
@@ -33,6 +33,10 @@ do_install_append() {
 
     install -d ${D}${systemd_unitdir}/system/
     install -m 0644 ${WORKDIR}/ambd.service ${D}${systemd_unitdir}/system
+
+    if [ "${@bb.utils.contains('PACKAGECONFIG', 'use_gps', 'use_gps', '', d)}" = "use_gps" ]; then
+        install -m 0644 ${WORKDIR}/gps ${D}/${sysconfdir}/ambd/plugins.d
+    fi
 }
 
 FILES_${PN} += " ${systemd_unitdir}/ambd.service \

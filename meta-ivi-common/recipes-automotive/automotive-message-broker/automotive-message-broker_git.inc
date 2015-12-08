@@ -21,6 +21,7 @@ SRC_URI += " \
     file://0009-Add-Pressure-property-to-BrakeOperation.patch \
     file://0001-Fix-build-issues-while-bitbake-without-meta-qt5-laye.patch \
     file://ambd.service \
+    file://gps \
     "
 
 S = "${WORKDIR}/git"
