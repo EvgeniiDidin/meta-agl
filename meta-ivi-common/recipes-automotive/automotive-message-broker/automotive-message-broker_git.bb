@@ -11,7 +11,7 @@ CMAKE_QT5_CLASS = "${@bb.utils.contains('BBFILE_COLLECTIONS','qt5-layer','cmake_
 inherit cmake systemd ${CMAKE_QT5_CLASS}
 
 DEPENDS = "glib-2.0 util-linux sqlite3 boost json-c libtool"
-RDEPENDS_${PN} = "python-misc python-json"
+RDEPENDS_${PN} = "python-misc python-json python-curses"
 
 PACKAGECONFIG ??= " use_gps \
     ${@bb.utils.contains('BBFILE_COLLECTIONS','qt5-layer','use_qt5','', d)} \
