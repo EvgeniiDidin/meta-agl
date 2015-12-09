@@ -30,6 +30,7 @@ EXTRA_OECMAKE += " -Denable_icecc=OFF"
 
 do_install_append() {
     mv ${D}/usr/include/amb/* ${D}/usr/include
+    sed -i 's,/amb,,' ${D}${libdir}/pkgconfig/*.pc
 
     install -d ${D}${systemd_unitdir}/system/
     install -m 0644 ${WORKDIR}/ambd.service ${D}${systemd_unitdir}/system
