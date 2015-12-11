@@ -5,6 +5,7 @@ After=systemd-vconsole-setup.service systemd-udev-trigger.service systemd-udevd.
 DefaultDependencies=no
 
 [Service]
+ExecStartPre=/bin/sh -c "if [ -e /sys/class/graphics/fbcon/cursor_blink ]; then echo 0 > /sys/class/graphics/fbcon/cursor_blink; fi"
 ExecStart=/usr/bin/psplash -n
 
 [Install]
