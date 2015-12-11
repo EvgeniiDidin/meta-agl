@@ -1,5 +1,6 @@
 [Unit]
 Description=Weston reference Wayland compositor
+Conflicts=getty@tty1.service
 After=dbus.service rc.pvr.service
 
 [Service]
