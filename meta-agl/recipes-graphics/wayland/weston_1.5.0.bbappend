@@ -8,13 +8,15 @@ SRC_URI_append = "\
     "
 
 inherit systemd
-DEPENDS_append = " systemd"
+
+SYSTEMD_PACKAGES = "${PN}"
+SYSTEMD_SERVICE_${PN} = "weston.service"
 
 do_install_append() {
-    mkdir -p ${D}${systemd_unitdir}/system/
-    cp ${WORKDIR}/weston.service ${D}${systemd_unitdir}/system/
-    mkdir -p ${D}${systemd_unitdir}/system/multi-user.target.wants/
-    ln -sf /lib/systemd/system/weston.service ${D}/${systemd_unitdir}/system/multi-user.target.wants/weston.service
+    # Install systemd unit files
+    if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
+        install -p -D ${WORKDIR}/weston.service ${D}${systemd_system_unitdir}/weston.service
+    fi
 
     WESTON_INI_CONFIG=${sysconfdir}/xdg/weston
     install -d ${D}${WESTON_INI_CONFIG}
@@ -22,6 +24,5 @@ do_install_append() {
 }
 
 FILES_${PN} += " \
-    ${systemd_unitdir}/system/* \
     ${sysconfdir}/xdg/weston/weston.ini \
     "
