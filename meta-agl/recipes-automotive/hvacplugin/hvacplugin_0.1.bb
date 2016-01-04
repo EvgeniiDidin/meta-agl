@@ -6,6 +6,7 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=751419260aa954499f7abaabaa882bbe \
 
 SRC_URI = "git://github.com/iotbzh/hvacplugin \
            file://hvacplugin \
+           file://0001-Fix-boost-include-statement.patch \
           "
 SRCREV = "253e3d98505108f652ba875544fde4f58d4714c8"
 S = "${WORKDIR}/git"
