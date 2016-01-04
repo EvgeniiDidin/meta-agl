@@ -1,0 +1,48 @@
+From 2f29b6dea548be861e6f1d0be1b0b7f83a2b3037 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Jan-Simon=20M=C3=B6ller?= <dl9pf@gmx.de>
+Date: Mon, 4 Jan 2016 02:19:24 +0100
+Subject: [PATCH] Fix boost include statement
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+This patch fixes a cross-compilation issue with hvacplugin.
+The absolute path set for Boost_INCLUDE_DIRS is not
+cross-compilation save.
+According to https://cmake.org/Wiki/CMake:How_To_Find_Libraries
+we better use find_package(Boost REQUIRED) .
+
+Otherwise bitbake might fail with:
+ERROR: QA Issue: hvacplugin: The compile log indicates that 
+       host include and/or library paths were used.
+       Please check the log .../hvacplugin/0.1-r0/temp/log.do_compile'
+       for more information. [compile-host-path]
+ERROR: QA run found fatal errors. Please consider fixing them.
+ERROR: Function failed: do_package_qa
+
+Due to:
+cc1plus: warning: include location "/usr/include/boost" is unsafe 
+for cross-compilation [-Wpoison-system-directories]
+
+Signed-off-by: Jan-Simon Möller <dl9pf@gmx.de>
+---
+ CMakeLists.txt | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index f8d0e5b..f100736 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -6,7 +6,8 @@ pkg_check_modules(gio gio-2.0)
+ pkg_check_modules(gio-unix gio-unix-2.0)
+ pkg_check_modules(json-c json-c)
+ pkg_check_modules(amb automotive-message-broker)
+-set(Boost_INCLUDE_DIRS /usr/include/boost)
++#set(Boost_INCLUDE_DIRS /usr/include/boost)
++find_package(Boost REQUIRED)
+ 
+ include_directories(${CMAKE_SOURCE_DIR}/lib ${include_dirs} ${gio_INCLUDE_DIRS} ${gio-unix_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/plugins/common ${Boost_INCLUDE_DIRS} ${json-c_INCLUDE_DIRS} ${amb_INCLUDE_DIRS}) 
+ 
+-- 
+2.6.2
+
