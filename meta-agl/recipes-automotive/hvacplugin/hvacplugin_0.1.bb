@@ -6,9 +6,8 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=751419260aa954499f7abaabaa882bbe \
 
 SRC_URI = "git://github.com/iotbzh/hvacplugin \
            file://hvacplugin \
-           file://0001-Fix-boost-include-statement.patch \
           "
-SRCREV = "253e3d98505108f652ba875544fde4f58d4714c8"
+SRCREV = "00cb8ff4084d635d3a929cb41b8d853f6c4baf76"
 S = "${WORKDIR}/git"
 
 DEPENDS = "glib-2.0 json-c automotive-message-broker"
