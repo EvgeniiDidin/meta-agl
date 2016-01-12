@@ -17,9 +17,10 @@ do_install_append() {
 
               # Execute these manually on behalf of systemctl script (from systemd-systemctl-native.bb)
               # because it does not support systemd's user mode.
+              # However, systemctl --global should be checked
               mkdir -p ${D}/etc/systemd/user/default.target.wants/
-              ln -sf ${systemd_user_unitdir}/lightmediascanner.service ${D}/etc/systemd/user/dbus-org.gnome.Rygel1.service
-              ln -sf ${systemd_user_unitdir}/lightmediascanner.service ${D}/etc/systemd/user/default.target.wants/rygel.service
+              ln -sf ${systemd_user_unitdir}/rygel.service ${D}/etc/systemd/user/dbus-org.gnome.Rygel1.service
+              ln -sf ${systemd_user_unitdir}/rygel.service ${D}/etc/systemd/user/default.target.wants/rygel.service
        fi
 }
 
