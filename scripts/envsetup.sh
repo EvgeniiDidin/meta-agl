@@ -21,6 +21,10 @@ case "$1" in
                 # template conf for R-Car2 M2 Porter board
                 TEMPLATECONF=$PWD/meta-renesas/meta-rcar-gen2/conf
                 ;;
+        "intel-corei7-64")
+                # template conf for MinnowBoard MAX
+                TEMPLATECONF=$PWD/meta-agl-demo/conf
+                ;;
         "qemux86-64")
                 # template conf for QEMU x86-64
                 TEMPLATECONF=$PWD/meta-agl-demo/conf
