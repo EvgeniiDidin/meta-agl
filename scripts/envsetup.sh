@@ -5,7 +5,14 @@ if [ -z $1 ]; then
         return 1
 fi
 
-case "$1" in
+MACHINE="$1"
+
+# set template conf for each <board/device>
+if [ -z "$TEMPLATECONF" ]; then
+    TEMPLATECONF="$PWD/meta-agl-demo/templates/$MACHINE/conf"
+fi
+
+case "$MACHINE" in
         "porter")
                 # setup proprietary gfx drivers and multimedia packages
                 COPY_MM_SCRIPT=meta-renesas/meta-rcar-gen2/scripts/setup_mm_packages.sh
@@ -18,28 +25,30 @@ case "$1" in
                         fi
                 fi
 
-                # template conf for R-Car2 M2 Porter board
-                TEMPLATECONF=$PWD/meta-renesas/meta-rcar-gen2/conf
+                if [ ! -d "$TEMPLATECONF" ]; then
+                    # set template conf for R-Car2 M2 Porter board
+                    TEMPLATECONF="$PWD/meta-renesas/meta-rcar-gen2/conf"
+                fi
                 ;;
         "intel-corei7-64")
-                # template conf for MinnowBoard MAX
-                TEMPLATECONF=$PWD/meta-agl-demo/conf
+                ;;
+        "qemux86")
                 ;;
         "qemux86-64")
-                # template conf for QEMU x86-64
-                TEMPLATECONF=$PWD/meta-agl-demo/conf
                 ;;
         *)
                 # nothing to do here
-                echo "WARN: '$1' is not tested by AGL Distro"
-                if [ -z $TEMPLATECONF ]; then
-                        TEMPLATECONF=$PWD/meta-agl-demo/conf
-                fi
+                echo "WARN: '$MACHINE' is not tested by AGL Distro"
                 ;;
 esac
 
 echo "envsetup: Set '$1 as MACHINE."
-export MACHINE="$1"
+export MACHINE
+
+if [ ! -d "$TEMPLATECONF" ]; then
+   # Allow to use templates at meta-agl-demo/conf
+   TEMPLATECONF="$PWD/meta-agl-demo/conf"
+fi
 
 echo "envsetup: Using templates for local.conf & bblayers.conf from :"
 echo "          '$TEMPLATECONF'"
