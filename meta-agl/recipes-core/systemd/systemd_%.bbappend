@@ -7,7 +7,7 @@ PACKAGECONFIG_append_pn-systemd = " networkd"
 
 do_install_append() {
     # Install /etc/e2fsck.conf to avoid boot stuck by wrong clock time
-    install -p -D ${WORKDIR}/e2fsck.conf ${D}/etc/e2fsck.conf
+    install -m 644 -p -D ${WORKDIR}/e2fsck.conf ${D}/etc/e2fsck.conf
 }
 
 FILES_${PN} += " /etc/e2fsck.conf "

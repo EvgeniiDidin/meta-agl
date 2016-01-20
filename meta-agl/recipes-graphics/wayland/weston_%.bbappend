@@ -13,7 +13,7 @@ SYSTEMD_SERVICE_${PN} = "weston.service"
 do_install_append() {
     # Install systemd unit files
     if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
-        install -p -D ${WORKDIR}/weston.service ${D}${systemd_system_unitdir}/weston.service
+        install -m 644 -p -D ${WORKDIR}/weston.service ${D}${systemd_system_unitdir}/weston.service
     fi
 
     WESTON_INI_CONFIG=${sysconfdir}/xdg/weston

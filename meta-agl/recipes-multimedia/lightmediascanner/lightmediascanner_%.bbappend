@@ -10,7 +10,7 @@ inherit systemd
 do_install_append() {
        # Install LMS systemd service
        if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
-              install -p -D ${WORKDIR}/lightmediascanner.service ${D}${systemd_user_unitdir}/lightmediascanner.service
+              install -m 644 -p -D ${WORKDIR}/lightmediascanner.service ${D}${systemd_user_unitdir}/lightmediascanner.service
 
               # Execute these manually on behalf of systemctl script (from systemd-systemctl-native.bb)
               # because it does not support systemd's user mode.
