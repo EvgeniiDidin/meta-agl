@@ -1,3 +1,5 @@
+FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
+
 # Disable everything but the media-export plugin, add the lms plugin
 PACKAGECONFIG = "media-export lms"
 PACKAGECONFIG[lms] = "--enable-lms-plugin,--disable-lms-plugin,sqlite3"

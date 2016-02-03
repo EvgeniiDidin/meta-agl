@@ -14,6 +14,7 @@ BBLAYERS ?= " \
   ##OEROOT##/../meta-agl/meta-agl-bsp \
   ##OEROOT##/../meta-openembedded/meta-oe \
   ##OEROOT##/../meta-openembedded/meta-multimedia \
+  ##OEROOT##/../meta-openembedded/meta-efl \
   "
 BBLAYERS_NON_REMOVABLE ?= " \
   ##OEROOT##/meta \
