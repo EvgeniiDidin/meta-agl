@@ -75,3 +75,4 @@ fi
 
 export BB_ENV_EXTRAWHITE
 
+unset TEMPLATECONF
