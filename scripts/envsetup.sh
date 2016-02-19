@@ -7,10 +7,6 @@ fi
 
 MACHINE="$1"
 
-# set template conf for each <board/device>
-if [ -z "$TEMPLATECONF" ]; then
-    TEMPLATECONF="$PWD/meta-agl-demo/templates/$MACHINE/conf"
-fi
 
 case "$MACHINE" in
         "porter")
@@ -32,6 +28,10 @@ case "$MACHINE" in
                 ;;
         "intel-corei7-64")
                 ;;
+        "minnowboard")
+                # alias for minnowboardmax
+                MACHINE="intel-corei7-64"
+                ;;
         "qemux86")
                 ;;
         "qemux86-64")
@@ -44,9 +44,17 @@ case "$MACHINE" in
                 ;;
 esac
 
+# set template conf for each <board/device>
+if [ -z "$TEMPLATECONF" ]; then
+    if [ -d "$PWD/meta-agl-demo/templates/$MACHINE/conf" ]; then
+        TEMPLATECONF="$PWD/meta-agl-demo/templates/$MACHINE/conf"
+    fi
+fi
+
 echo "envsetup: Set '$1 as MACHINE."
 export MACHINE
 
+# fallback
 if [ ! -d "$TEMPLATECONF" ]; then
    # Allow to use templates at meta-agl-demo/conf
    TEMPLATECONF="$PWD/meta-agl-demo/conf"
