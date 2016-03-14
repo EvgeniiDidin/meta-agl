@@ -8,7 +8,6 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=176cedb32f48dd58f07e0c1c717b3ea4"
 DEPENDS = "weston"
 
 SRC_URI = "git://git.projects.genivi.org/${PN}.git \
-           file://apply_weston-1.5.x.patch \
           "
 SRC_URI_append_wandboard = "file://wandboard_fix_build.patch"
 
