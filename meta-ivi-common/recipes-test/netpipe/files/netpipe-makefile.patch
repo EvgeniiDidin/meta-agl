@@ -1,0 +1,245 @@
+diff -Napur NetPIPE-3.7.2.orig/makefile NetPIPE-3.7.2/makefile
+--- NetPIPE-3.7.2.orig/makefile	2010-08-19 22:34:26.000000000 +0200
++++ NetPIPE-3.7.2/makefile	2016-03-22 22:30:50.752197933 +0100
+@@ -21,8 +21,8 @@
+ #
+ ########################################################################
+ 
+-CC         = cc
+-CFLAGS     = -O -g
++CC         ?= gcc
++CFLAGS     ?= -O -g
+ SRC        = ./src
+ 
+ # For MPI, mpicc will set up the proper include and library paths
+@@ -91,51 +91,51 @@ clean:
+ 
+ 
+ tcp: $(SRC)/tcp.c $(SRC)/netpipe.c $(SRC)/netpipe.h 
+-	$(CC) $(CFLAGS) $(SRC)/netpipe.c $(SRC)/tcp.c -DTCP -o NPtcp -I$(SRC)
++	$(CC) $(CFLAGS) $(LDFLAGS) $(SRC)/netpipe.c $(SRC)/tcp.c -DTCP -o NPtcp -I$(SRC)
+ 
+ tcp6: $(SRC)/tcp.c $(SRC)/netpipe.c $(SRC)/netpipe.h 
+-	$(CC) $(CFLAGS) $(SRC)/netpipe.c $(SRC)/tcp6.c -DTCP6 \
++	$(CC) $(CFLAGS) $(LDFLAGS) $(SRC)/netpipe.c $(SRC)/tcp6.c -DTCP6 \
+ 		-o NPtcp6 -I$(SRC)
+ 
+ sctp: $(SRC)/sctp.c $(SRC)/netpipe.c $(SRC)/netpipe.h 
+-	$(CC) $(CFLAGS) $(SRC)/netpipe.c $(SRC)/sctp.c -DSCTP \
++	$(CC) $(CFLAGS) $(LDFLAGS) $(SRC)/netpipe.c $(SRC)/sctp.c -DSCTP \
+ 		-o NPsctp -I$(SRC)
+ 
+ sctp6: $(SRC)/sctp6.c $(SRC)/netpipe.c $(SRC)/netpipe.h 
+-	$(CC) $(CFLAGS) $(SRC)/netpipe.c $(SRC)/sctp6.c -DSCTP6 \
++	$(CC) $(CFLAGS) $(LDFLAGS) $(SRC)/netpipe.c $(SRC)/sctp6.c -DSCTP6 \
+ 		-o NPsctp6 -I$(SRC)
+ 
+ ipx: $(SRC)/ipx.c $(SRC)/netpipe.c $(SRC)/netpipe.h 
+-	$(CC) $(CFLAGS) $(SRC)/netpipe.c $(SRC)/ipx.c -DIPX \
++	$(CC) $(CFLAGS) $(LDFLAGS) $(SRC)/netpipe.c $(SRC)/ipx.c -DIPX \
+ 		-o NPipx -I$(SRC) -lipx
+ 
+ memcpy: $(SRC)/memcpy.c $(SRC)/netpipe.c $(SRC)/netpipe.h
+-	$(CC) $(CFLAGS) $(SRC)/netpipe.c $(SRC)/memcpy.c \
++	$(CC) $(CFLAGS) $(LDFLAGS) $(SRC)/netpipe.c $(SRC)/memcpy.c \
+               -DMEMCPY -o NPmemcpy -I$(SRC)
+ 
+ MP_memcpy: $(SRC)/memcpy.c $(SRC)/netpipe.c $(SRC)/netpipe.h $(SRC)/MP_memcpy.c
+-	$(CC) $(CFLAGS) -mmmx -msse $(SRC)/netpipe.c $(SRC)/memcpy.c \
++	$(CC) $(CFLAGS) $(LDFLAGS) -mmmx -msse $(SRC)/netpipe.c $(SRC)/memcpy.c \
+               $(SRC)/MP_memcpy.c -DMEMCPY -DUSE_MP_MEMCPY -o NPmemcpy -I$(SRC)
+ 
+ disk: $(SRC)/disk.c $(SRC)/netpipe.c $(SRC)/netpipe.h 
+-	$(CC) $(CFLAGS) $(SRC)/netpipe.c $(SRC)/disk.c -DDISK -o NPdisk -I$(SRC)
++	$(CC) $(CFLAGS) $(LDFLAGS) $(SRC)/netpipe.c $(SRC)/disk.c -DDISK -o NPdisk -I$(SRC)
+ 
+ sync: $(SRC)/mpi.c $(SRC)/netpipe.c $(SRC)/netpipe.h 
+ 	( cd ~/mplite; make clean; make sync; )
+-	$(CC) $(CFLAGS) -DMPI $(SRC)/netpipe.c $(SRC)/mpi.c -o NPmplite \
++	$(CC) $(CFLAGS) $(LDFLAGS) -DMPI $(SRC)/netpipe.c $(SRC)/mpi.c -o NPmplite \
+          -I$(SRC) -I$(MP_Lite_home) $(MP_Lite_home)/libmplite.a
+ 
+ debug2: $(SRC)/mpi.c $(SRC)/netpipe.c $(SRC)/netpipe.h 
+ 	( cd ~/mplite; make debug2; )
+-	$(CC) $(CFLAGS) -DMPI $(SRC)/netpipe.c $(SRC)/mpi.c -o NPmplite \
++	$(CC) $(CFLAGS) $(LDFLAGS) -DMPI $(SRC)/netpipe.c $(SRC)/mpi.c -o NPmplite \
+          -I$(SRC) -I$(MP_Lite_home) $(MP_Lite_home)/libmplite.a
+ 
+ mpi: $(SRC)/mpi.c $(SRC)/netpipe.c $(SRC)/netpipe.h 
+-	$(MPICC) $(CFLAGS) -DMPI $(SRC)/netpipe.c $(SRC)/mpi.c -o NPmpi -I$(SRC)
++	$(MPICC) $(CFLAGS) $(LDFLAGS) -DMPI $(SRC)/netpipe.c $(SRC)/mpi.c -o NPmpi -I$(SRC)
+ 	@ rm -f netpipe.o mpi.o
+ 
+ mpipro: $(SRC)/mpi.c $(SRC)/netpipe.c $(SRC)/netpipe.h 
+-	mpicc $(CFLAGS) -DMPI $(SRC)/netpipe.c $(SRC)/mpi.c \
++	mpicc $(CFLAGS) $(LDFLAGS) -DMPI $(SRC)/netpipe.c $(SRC)/mpi.c \
+             -o NPmpipro -I$(SRC)
+ 	@ rm -f netpipe.o mpi.o
+ 
+@@ -146,138 +146,138 @@ mpipro-gm: $(SRC)/mpi.c $(SRC)/netpipe.c
+             -L $HOME/np/packs/gm/binary/lib -lgm -lm -lpthread
+ 
+ mpich: $(SRC)/mpi.c $(SRC)/netpipe.c $(SRC)/netpipe.h 
+-	mpichcc $(CFLAGS) -DMPI $(SRC)/netpipe.c \
++	mpichcc $(CFLAGS) $(LDFLAGS) -DMPI $(SRC)/netpipe.c \
+             $(SRC)/mpi.c -o NPmpich -I$(SRC)
+ 	@ rm -f netpipe.o mpi.o
+ 
+ mpich-trace: $(SRC)/mpi.c $(SRC)/netpipe.c $(SRC)/netpipe.h 
+-	mpichcc $(CFLAGS) -mpitrace -DMPI $(SRC)/netpipe.c \
++	mpichcc $(CFLAGS) $(LDFLAGS) -mpitrace -DMPI $(SRC)/netpipe.c \
+             $(SRC)/mpi.c -o NPmpich -I$(SRC)
+ 	@ rm -f netpipe.o mpi.o
+ 
+ mpich-log: $(SRC)/mpi.c $(SRC)/netpipe.c $(SRC)/netpipe.h  
+-	mpichcc $(CFLAGS) -mpilog -DMPI $(SRC)/netpipe.c \
++	mpichcc $(CFLAGS) $(LDFLAGS) -mpilog -DMPI $(SRC)/netpipe.c \
+             $(SRC)/mpi.c -o NPmpich -I$(SRC)
+ 	@ rm -f netpipe.o mpi.o
+ 
+ mpich-gm: $(SRC)/mpi.c $(SRC)/netpipe.c $(SRC)/netpipe.h 
+-	mpichgmcc $(CFLAGS) -DMPI $(SRC)/netpipe.c \
++	mpichgmcc $(CFLAGS) $(LDFLAGS) -DMPI $(SRC)/netpipe.c \
+             $(SRC)/mpi.c -o NPmpich-gm -I$(SRC)
+ 	@ rm -f netpipe.o mpi.o
+ 
+ mx: $(SRC)/mx.c $(SRC)/netpipe.c $(SRC)/netpipe.h 
+-	$(CC) $(CFLAGS) -DMX $(SRC)/netpipe.c $(SRC)/mx.c \
++	$(CC) $(CFLAGS) $(LDFLAGS) -DMX $(SRC)/netpipe.c $(SRC)/mx.c \
+             -o NPmx -I$(SRC) -I$(MX_INC) \
+             $(MX_LIB) -static
+ 
+ gm: $(SRC)/gm.c $(SRC)/netpipe.c $(SRC)/netpipe.h 
+-	$(CC) $(CFLAGS) -DGM $(SRC)/netpipe.c $(SRC)/gm.c \
++	$(CC) $(CFLAGS) $(LDFLAGS) -DGM $(SRC)/netpipe.c $(SRC)/gm.c \
+             -o NPgm -I$(SRC) -I$(GM_INC) -I$(GM_DRI) \
+             $(GM_LIB) -static
+ 
+ mvich: $(SRC)/mpi.c $(SRC)/netpipe.c $(SRC)/netpipe.h 
+-	mvichcc $(CFLAGS) -DMPI $(SRC)/netpipe.c \
++	mvichcc $(CFLAGS) $(LDFLAGS) -DMPI $(SRC)/netpipe.c \
+             $(SRC)/mpi.c -o NPmvich -I$(SRC) -lvipl
+ 	@ rm -f netpipe.o mpi.o
+ 
+ mvich-gn: $(SRC)/mpi.c $(SRC)/netpipe.c $(SRC)/netpipe.h 
+-	mvichcc $(CFLAGS) -DMPI $(SRC)/netpipe.c \
++	mvichcc $(CFLAGS) $(LDFLAGS) -DMPI $(SRC)/netpipe.c \
+             $(SRC)/mpi.c -o NPmvich-gn -I$(SRC) -lgnivipl
+ 	@ rm -f netpipe.o mpi.o
+ 
+ mplite MP_Lite sigio: $(SRC)/mpi.c $(SRC)/netpipe.c $(SRC)/netpipe.h 
+ 	( cd $(MP_Lite_home); make; )
+-	$(CC) $(CFLAGS) -DMPI $(SRC)/netpipe.c $(SRC)/mpi.c \
++	$(CC) $(CFLAGS) $(LDFLAGS) -DMPI $(SRC)/netpipe.c $(SRC)/mpi.c \
+             -o NPmplite -I$(SRC) -I$(MP_Lite_home) $(MP_Lite_home)/libmplite.a
+ 
+ mplite-mvia: $(SRC)/mpi.c $(SRC)/netpipe.c $(SRC)/netpipe.h 
+ 	( cd ~/mplite; make mvia; )
+-	$(CC) $(CFLAGS) -DMPI $(SRC)/netpipe.c $(SRC)/mpi.c \
++	$(CC) $(CFLAGS) $(LDFLAGS) -DMPI $(SRC)/netpipe.c $(SRC)/mpi.c \
+              -o NPmplite-mvia -I$(SRC) -I$(MP_Lite_home) \
+              $(MP_Lite_home)/libmplite.a -lvipl -lpthread
+ 
+ mplite-gn: $(SRC)/mpi.c $(SRC)/netpipe.c $(SRC)/netpipe.h 
+ 	( cd ~/mplite; make giganet; )
+-	$(CC) $(CFLAGS) -DMPI $(SRC)/netpipe.c $(SRC)/mpi.c \
++	$(CC) $(CFLAGS) $(LDFLAGS) -DMPI $(SRC)/netpipe.c $(SRC)/mpi.c \
+             -o NPmplite-gn -I$(SRC) -I$(MP_Lite_home) \
+             $(MP_Lite_home)/libmplite.a -lgnivipl -lpthread
+ 
+ mplite-ib: $(SRC)/mpi.c $(SRC)/netpipe.c $(SRC)/netpipe.h 
+ 	( cd $(MP_Lite_home); make ib; )
+-	$(CC) $(CFLAGS) -g -DMPI $(SRC)/netpipe.c $(SRC)/mpi.c \
++	$(CC) $(CFLAGS) $(LDFLAGS) -g -DMPI $(SRC)/netpipe.c $(SRC)/mpi.c \
+             -o NPmplite-ib -I$(SRC) -I$(MP_Lite_home) \
+             $(MP_Lite_home)/libmplite.a -L/usr/mellanox/lib \
+             -lmpga -lvapi -lpthread
+ 
+ pvm: $(SRC)/pvm.c $(SRC)/netpipe.c $(SRC)/netpipe.h 
+-	$(CC) $(CFLAGS) -DPVM $(SRC)/netpipe.c $(SRC)/pvm.c \
++	$(CC) $(CFLAGS) $(LDFLAGS) -DPVM $(SRC)/netpipe.c $(SRC)/pvm.c \
+            -o NPpvm -I$(SRC) -I$(PVM_HOME)/include \
+            -L $(PVM_HOME)/lib/$(PVM_ARCH)/ -lpvm3 -lgpvm3
+ 
+ tcgmsg: $(SRC)/tcgmsg.c $(SRC)/netpipe.c $(SRC)/netpipe.h 
+-	$(CC) $(CFLAGS) -DTCGMSG $(SRC)/netpipe.c \
++	$(CC) $(CFLAGS) $(LDFLAGS) -DTCGMSG $(SRC)/netpipe.c \
+            $(SRC)/tcgmsg.c -o NPtcgmsg -I$(SRC) -I$(TCGMSG_INC) $(TCGMSG_LIB) 
+ 
+ tcgmsg-mpich: $(SRC)/tcgmsg.c $(SRC)/netpipe.c $(SRC)/netpipe.h 
+-	mpichcc $(CFLAGS) -DTCGMSG $(SRC)/netpipe.c \
++	mpichcc $(CFLAGS) $(LDFLAGS) -DTCGMSG $(SRC)/netpipe.c \
+            $(SRC)/tcgmsg.c -o NPtcgmsg.mpich -I$(SRC) -I$(TCGMSG_MPI_INC) \
+            $(TCGMSG_MPI_LIB) $(TCGMSG_ARMCI_LIB)
+ 
+ lapi: $(SRC)/lapi.c $(SRC)/netpipe.c $(SRC)/netpipe.h 
+-	mpcc_r $(CFLAGS) -DLAPI $(SRC)/netpipe.c \
++	mpcc_r $(CFLAGS) $(LDFLAGS) -DLAPI $(SRC)/netpipe.c \
+            $(SRC)/lapi.c -o NPlapi
+ 
+ t3e: $(SRC)/shmem.c $(SRC)/netpipe.c $(SRC)/netpipe.h 
+-	$(CC) $(CFLAGS) -DSHMEM $(SRC)/netpipe.c \
++	$(CC) $(CFLAGS) $(LDFLAGS) -DSHMEM $(SRC)/netpipe.c \
+            $(SRC)/shmem.c -o NPshmem
+ 
+ shmem: $(SRC)/shmem.c $(SRC)/netpipe.c $(SRC)/netpipe.h 
+-	$(CC) $(CFLAGS) -DSHMEM $(SRC)/netpipe.c \
++	$(CC) $(CFLAGS) $(LDFLAGS) -DSHMEM $(SRC)/netpipe.c \
+            $(SRC)/shmem.c -o NPshmem -lsma
+ 
+ gpshmem: $(SRC)/gpshmem.c $(SRC)/netpipe.c $(SRC)/netpipe.h 
+-	mpichcc $(CFLAGS) -DGPSHMEM -DSHMEM $(SRC)/netpipe.c \
++	mpichcc $(CFLAGS) $(LDFLAGS) -DGPSHMEM -DSHMEM $(SRC)/netpipe.c \
+            $(SRC)/gpshmem.c -I$(GPSHMEM_INC) -o NPgpshmem $(GPSHMEM_LIB) \
+            $(ARMCI_LIB)
+ 	@ rm -f netpipe.o gpshmem.o
+ 
+ paragon: $(SRC)/mpi.c $(SRC)/netpipe.c $(SRC)/netpipe.h 
+-	$(CC) -nx $(CFLAGS) -DMPI $(SRC)/netpipe.c \
++	$(CC) -nx $(CFLAGS) $(LDFLAGS) -DMPI $(SRC)/netpipe.c \
+            $(SRC)/mpi.c -o NPparagon -I$(SRC) -lmpi
+ 	@ echo "On the Paragon, the buffer alignment does not work."
+ 	@ echo "Run using NPparagon -A 0."
+ 
+ armci: $(SRC)/armci.c $(SRC)/netpipe.c $(SRC)/netpipe.h 
+-	$(MPICC) $(CFLAGS) -DARMCI $(SRC)/netpipe.c \
++	$(MPICC) $(CFLAGS) $(LDFLAGS) -DARMCI $(SRC)/netpipe.c \
+            $(SRC)/armci.c -o NParmci -I$(ARMCI_INC) $(ARMCI_LIB) 
+ 
+ mpi2: $(SRC)/mpi2.c $(SRC)/netpipe.c $(SRC)/netpipe.h 
+-	$(MPI2CC) $(CFLAGS) -DMPI -DMPI2 $(SRC)/netpipe.c \
++	$(MPI2CC) $(CFLAGS) $(LDFLAGS) -DMPI -DMPI2 $(SRC)/netpipe.c \
+            $(SRC)/mpi2.c -o NPmpi2 -I$(MPI2_INC) $(MPI2_LIB)
+ 
+ ib: $(SRC)/ib.c $(SRC)/netpipe.c $(SRC)/netpipe.h 
+-	$(CC) $(CFLAGS) $(SRC)/ib.c $(SRC)/netpipe.c -o NPib \
++	$(CC) $(CFLAGS) $(LDFLAGS) $(SRC)/ib.c $(SRC)/netpipe.c -o NPib \
+         -DINFINIBAND -DTCP -I $(VAPI_INC) -L $(VAPI_LIB) \
+         -lmpga -lvapi -lpthread
+ 
+ ibv: $(SRC)/ibv.c $(SRC)/netpipe.c $(SRC)/netpipe.h 
+-	$(CC) $(CFLAGS) $(SRC)/ibv.c $(SRC)/netpipe.c -o NPibv \
++	$(CC) $(CFLAGS) $(LDFLAGS) $(SRC)/ibv.c $(SRC)/netpipe.c -o NPibv \
+         -DOPENIB -DTCP -I $(IBV_INC) -L $(IBV_LIB) -libverbs
+ 
+ atoll: $(SRC)/atoll.c $(SRC)/netpipe.c $(SRC)/netpipe.h
+-	$(CC) $(CFLAGS) -DATOLL $(SRC)/netpipe.c \
++	$(CC) $(CFLAGS) $(LDFLAGS) -DATOLL $(SRC)/netpipe.c \
+         $(SRC)/atoll.c -o NPatoll \
+         -I$(PALMS_PATH)/include -L$(PALMS_PATH)/lib -latoll
+ 
+ udapl: $(SRC)/udapl.c $(SRC)/netpipe.c $(SRC)/netpipe.h 
+-	$(CC) $(CFLAGS) $(SRC)/udapl.c $(SRC)/netpipe.c -o NPudapl \
++	$(CC) $(CFLAGS) $(LDFLAGS) $(SRC)/udapl.c $(SRC)/netpipe.c -o NPudapl \
+         -DDAT -DTCP -DUSE_VOLATILE_RPTR -I $(UDAPL_INC) -L $(UDAPL_LIB) \
+         -ldat -lpthread
+ 
+ vmsplice: $(SRC)/vmsplice.c $(SRC)/netpipe.c $(SRC)/netpipe.h
+-	$(CC) $(CPPFLAGS) $(CFLAGS) $(SRC)/netpipe.c $(SRC)/vmsplice.c \
++	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $(SRC)/netpipe.c $(SRC)/vmsplice.c \
+               -DVMSPLICE -o NPvmsplice -I$(SRC)
+ 
+ knem: $(SRC)/knem.c $(SRC)/netpipe.c $(SRC)/netpipe.h
+-	$(CC) $(CPPFLAGS) $(CFLAGS) $(SRC)/netpipe.c $(SRC)/knem.c \
++	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $(SRC)/netpipe.c $(SRC)/knem.c \
+               -DKNEM -o NPknem -I$(SRC)
