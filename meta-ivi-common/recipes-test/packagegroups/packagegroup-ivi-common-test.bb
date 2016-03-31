@@ -22,6 +22,7 @@ RDEPENDS_${PN} += "\
     iozone3 \
     iperf \
     himeno \
+    linpack \
     ltp \
     nbench-byte \
     netpipe \
