@@ -15,6 +15,7 @@ BBLAYERS ?= " \
   ##OEROOT##/../meta-openembedded/meta-oe \
   ##OEROOT##/../meta-openembedded/meta-multimedia \
   ##OEROOT##/../meta-openembedded/meta-efl \
+  ##OEROOT##/../meta-openembedded/meta-networking \
   ##OEROOT##/../meta-fsl-arm \
   ##OEROOT##/../meta-fsl-arm-extra \
   "
