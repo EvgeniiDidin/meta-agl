@@ -1,0 +1,43 @@
+From f4adf64d979944aa80f1ba5dba4ed991b6620162 Mon Sep 17 00:00:00 2001
+From: Wataru Natsume <wnatsume@jp.adit-jv.com>
+Date: Tue, 23 Feb 2016 11:14:53 +0900
+Subject: [PATCH] ivi-controller: Send process ID that created surface to
+ client.
+
+createPid should be a pid of process that creates surface.
+
+Signed-off-by: Wataru Natsume <wnatsume@jp.adit-jv.com>
+---
+ weston-ivi-shell/src/ivi-controller-impl.c | 13 ++++++++++++-
+ 1 file changed, 12 insertions(+), 1 deletion(-)
+
+diff --git a/weston-ivi-shell/src/ivi-controller-impl.c b/weston-ivi-shell/src/ivi-controller-impl.c
+index f4e29ce..57bf5cc 100644
+--- a/weston-ivi-shell/src/ivi-controller-impl.c
++++ b/weston-ivi-shell/src/ivi-controller-impl.c
+@@ -603,10 +603,21 @@ controller_surface_send_stats(struct wl_client *client,
+                               struct wl_resource *resource)
+ {
+     struct ivisurface *ivisurf = wl_resource_get_user_data(resource);
++    struct weston_surface *surface;
++    struct wl_client* target_client;
+     pid_t pid;
+     uid_t uid;
+     gid_t gid;
+-    wl_client_get_credentials(client, &pid, &uid, &gid);
++
++    /* Get pid that created surface */
++    surface = ivi_extension_surface_get_weston_surface(ivisurf->shell,
++                                                       ivisurf->layout_surface);
++    if (!surface)
++        return;
++
++    target_client = wl_resource_get_client(surface->resource);
++
++    wl_client_get_credentials(target_client, &pid, &uid, &gid);
+ 
+     ivi_controller_surface_send_stats(resource, 0, 0,
+                                       ivisurf->update_count, pid, "");
+-- 
+1.8.3.1
+
