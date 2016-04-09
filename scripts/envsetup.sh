@@ -26,6 +26,13 @@ case "$MACHINE" in
                     TEMPLATECONF="$PWD/meta-renesas/meta-rcar-gen2/conf"
                 fi
                 ;;
+        "porter-nogfx")
+                MACHINE="porter"
+                if [ ! -d "$TEMPLATECONF" ]; then
+                    # set template conf for R-Car2 M2 Porter board
+                    TEMPLATECONF="$PWD/meta-renesas/meta-rcar-gen2/conf"
+                fi
+                ;;
         "intel-corei7-64")
                 ;;
         "minnowboard")
