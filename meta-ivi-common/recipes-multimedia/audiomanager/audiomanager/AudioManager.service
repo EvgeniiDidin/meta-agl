@@ -1,0 +1,15 @@
+# Copyright (c) 2012 Wind River Systems, Inc.
+# Copyright (c) 2016 Collabora Limited
+# AudioManager systemd service file
+
+[Unit]
+Description=GENIVI AudioManager
+
+[Service]
+Type=dbus
+BusName=org.genivi.audiomanager
+ExecStart=/usr/bin/AudioManager
+
+[Install]
+WantedBy=default.target
+Alias=dbus-org.genivi.AudioManager.service
