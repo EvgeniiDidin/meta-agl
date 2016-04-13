@@ -5,7 +5,7 @@ LCONF_VERSION = "6"
 BBPATH = "${TOPDIR}"
 BBFILES ?= ""
 
-# AGL layers for Wandboard (NXP/Freescale)
+# AGL layers for TI vayu
 BBLAYERS ?= " \
   ##OEROOT##/meta \
   ##OEROOT##/meta-yocto \
@@ -18,8 +18,7 @@ BBLAYERS ?= " \
   ##OEROOT##/../meta-openembedded/meta-efl \
   ##OEROOT##/../meta-openembedded/meta-networking \
   ##OEROOT##/../meta-openembedded/meta-python \
-  ##OEROOT##/../meta-fsl-arm \
-  ##OEROOT##/../meta-fsl-arm-extra \
+  ##OEROOT##/../meta-ti \
   "
 BBLAYERS_NON_REMOVABLE ?= " \
   ##OEROOT##/meta \

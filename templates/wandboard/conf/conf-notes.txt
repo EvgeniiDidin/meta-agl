@@ -1,6 +1,1 @@
-Common targets are:
-    agl-image-ivi
-    agl-image-ivi-crosssdk
-
-    agl-image-minimal
-    agl-image-weston
+../../common/conf-notes.txt

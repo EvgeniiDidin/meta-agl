@@ -1,7 +1,16 @@
-# Machine Selection: MinnowBoard MAX
-MACHINE ?= "intel-corei7-64"
-# Commnet out below if want to use QtWebkit
-PACKAGECONFIG_remove_pn-qtquick1 = "webkit"
+#
+# AGL
+#####
+
+MACHINE = "dra7xx-evm"
+
+## ATTENTION, this is needed right now to build meta-ti with AGL: ##
+## due to meta-ti being based on YP 1.8 instead of YP 2.0
+BBMASK  = "meta-ti/.*eudev"
+
+#
+# END AGL
+#########
 
 #
 # This file is your local configuration file and is where all local user settings
@@ -244,25 +253,6 @@ IMAGE_INSTALL_append = " kernel-modules"
 # we do not need a separate tarball stored.
 # Comment this out to receive the separate modules tarbal again.
 MODULE_TARBALL_DEPLOY ?= "0"
-
-# Configurations to run on VirtualBox/VMWare
-#
-# To get wide screen than default, there are a selection of resolutions
-# available:
-#
-#APPEND += "uvesafb.mode_option=1024x768-32"
-#APPEND += "uvesafb.mode_option=1280x1024-32"
-#APPEND += "uvesafb.mode_option=1600x1200-32"
-#
-# To avoid corrupt boot screen by systemd message, you can use serial
-# console separated from VGA console or disable all boot messages by
-# kernel command line.
-#
-# Configuration for serial console
-#APPEND += "console=ttyS0,115200n8"
-#
-# All boot message will be off
-#APPEND += "quiet"
 
 ###############
 # /END AGL

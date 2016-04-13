@@ -1,0 +1,26 @@
+Fix the following build break:
+
+drivers/usb/host/xhci-omap.c:35:5: error: ‘board_usb_init’ aliased to external symbol ‘__board_usb_init’
+ int board_usb_init(int index, enum usb_init_type init)
+      ^
+
+Signed-off-by: Felipe Balbi <balbi at ti.com>
+---
+ drivers/usb/host/xhci-omap.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/usb/host/xhci-omap.c b/drivers/usb/host/xhci-omap.c
+index 104e7a7282cf..fd19f79f0fc5 100644
+--- a/drivers/usb/host/xhci-omap.c
++++ b/drivers/usb/host/xhci-omap.c
+@@ -27,7 +27,7 @@ DECLARE_GLOBAL_DATA_PTR;
+ 
+ static struct omap_xhci omap;
+ 
+-inline int __board_usb_init(int index, enum usb_init_type init)
++__weak int __board_usb_init(int index, enum usb_init_type init)
+ {
+    return 0;
+ }
+--
+2.5.3

@@ -6,7 +6,7 @@ if [ -z $1 ]; then
 fi
 
 MACHINE="$1"
-
+echo "MACHINE=$MACHINE"
 
 case "$MACHINE" in
         "porter")
@@ -43,6 +43,12 @@ case "$MACHINE" in
                 ;;
         "qemux86-64")
                 ;;
+        "dra7xx-evm")
+                ;;
+        "vayu")
+                # nickname for dra7xx-evm
+                MACHINE="dra7xx-evm"
+                ;;
         "wandboard")
                 ;;
         *)
@@ -51,14 +57,20 @@ case "$MACHINE" in
                 ;;
 esac
 
+echo "TEMPALTECONF=$TEMPLATECONF"
 # set template conf for each <board/device>
 if [ -z "$TEMPLATECONF" ]; then
+    # lookup meta-agl-demo first
     if [ -d "$PWD/meta-agl-demo/templates/$MACHINE/conf" ]; then
         TEMPLATECONF="$PWD/meta-agl-demo/templates/$MACHINE/conf"
+    # lookup meta-agl 2nd
+    elif [ -d "$PWD/meta-agl/templates/$MACHINE/conf" ]; then
+        TEMPLATECONF="$PWD/meta-agl/templates/$MACHINE/conf"
     fi
 fi
+echo "TEMPLATECONF=$TEMPLATECONF"
 
-echo "envsetup: Set '$1 as MACHINE."
+echo "envsetup: Set '$1' as MACHINE."
 export MACHINE
 
 # fallback
