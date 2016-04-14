@@ -33,6 +33,10 @@ case "$MACHINE" in
                     TEMPLATECONF="$PWD/meta-renesas/meta-rcar-gen2/conf"
                 fi
                 ;;
+        "raspberrypi3")
+                ;;
+        "raspberrypi2")
+                ;;
         "intel-corei7-64")
                 ;;
         "minnowboard")
