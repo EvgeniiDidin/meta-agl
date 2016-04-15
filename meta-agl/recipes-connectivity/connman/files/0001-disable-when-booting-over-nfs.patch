@@ -1,0 +1,11 @@
+diff -urN a/src/connman.service.in b/src/connman.service.in
+--- a/src/connman.service.in	2015-08-31 15:50:11.000000000 +0000
++++ b/src/connman.service.in	2016-04-15 11:04:37.057445255 +0000
+@@ -3,6 +3,7 @@
+ After=dbus.service network-pre.target
+ Before=network.target remote-fs-pre.target
+ Wants=network.target remote-fs-pre.target
++ConditionKernelCommandLine=!root=/dev/nfs
+ 
+ [Service]
+ Type=dbus
