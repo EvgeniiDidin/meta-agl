@@ -24,7 +24,6 @@ RDEPENDS_${PN} += "\
     himeno \
     ltp \
     nbench-byte \
-    netperf \
     netpipe \
     packagegroup-ivi-common-test-ltp \
     rt-tests \
@@ -32,6 +31,8 @@ RDEPENDS_${PN} += "\
     trinity \
     wayland-fits \
     "
+# to be added, but needs LICENSE_FLAGS_WHITELIST="non-commercial"
+#    netperf
 
 
 # Packages for shell commands which are required by LTP
