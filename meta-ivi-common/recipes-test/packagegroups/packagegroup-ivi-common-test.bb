@@ -22,11 +22,14 @@ RDEPENDS_${PN} += "\
     iozone3 \
     iperf \
     himeno \
+    ltp \
     nbench-byte \
     netperf \
     netpipe \
     packagegroup-ivi-common-test-ltp \
     rt-tests \
+    stress \
+    trinity \
     wayland-fits \
     "
 
