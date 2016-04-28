@@ -77,6 +77,11 @@ else
   BUILD_DIR=build
 fi
 
+echo "envsetup: Setup build environment for poky/oe."
+echo -e
+
+source poky/oe-init-build-env $BUILD_DIR
+
 if [ -n "$DL_DIR" ]; then
         BB_ENV_EXTRAWHITE="$BB_ENV_EXTRAWHITE DL_DIR"
 fi
@@ -86,10 +91,5 @@ if [ -n "$SSTATE_DIR" ]; then
 fi
 
 export BB_ENV_EXTRAWHITE
-
-echo "envsetup: Setup build environment for poky/oe."
-echo -e
-
-source poky/oe-init-build-env $BUILD_DIR
 
 unset TEMPLATECONF
