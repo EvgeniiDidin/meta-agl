@@ -20,6 +20,7 @@ BBLAYERS ?= " \
   ##OEROOT##/../meta-openembedded/meta-python \
   ##OEROOT##/../meta-fsl-arm \
   ##OEROOT##/../meta-fsl-arm-extra \
+  ##OEROOT##/../meta-rust \
   "
 BBLAYERS_NON_REMOVABLE ?= " \
   ##OEROOT##/meta \
