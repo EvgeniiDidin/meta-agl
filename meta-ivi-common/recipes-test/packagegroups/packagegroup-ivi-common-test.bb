@@ -23,6 +23,7 @@ RDEPENDS_${PN} += "\
     iperf \
     himeno \
     linpack \
+    lmbench \
     ltp \
     nbench-byte \
     netpipe \
