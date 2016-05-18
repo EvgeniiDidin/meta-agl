@@ -18,7 +18,7 @@ BBLAYERS ?= " \
   ##OEROOT##/../meta-openembedded/meta-efl \
   ##OEROOT##/../meta-openembedded/meta-networking \
   ##OEROOT##/../meta-openembedded/meta-python \
-  ##OEROOT##/../meta-openembedded/meta-rust \
+  ##OEROOT##/../meta-rust \
   "
 BBLAYERS_NON_REMOVABLE ?= " \
   ##OEROOT##/meta \
