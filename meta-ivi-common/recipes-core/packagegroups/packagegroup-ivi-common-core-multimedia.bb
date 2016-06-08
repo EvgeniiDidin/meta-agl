@@ -14,5 +14,6 @@ ALLOW_EMPTY_${PN} = "1"
 RDEPENDS_${PN} += "\
     alsa-lib \
     alsa-utils \
+    pulseaudio-server \
     gstreamer1.0-meta-base \
     "
