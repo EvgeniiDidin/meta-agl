@@ -108,7 +108,7 @@ done
 
 # mount NBD device
 mkdir -p /sysroot
-mount $NBD_DEV /sysroot || bail_out "Unable to mount root NBD device"
+mount $NBD_DEV -o noatime /sysroot || bail_out "Unable to mount root NBD device"
 
 # move mounted devices to new root
 cd /sysroot
