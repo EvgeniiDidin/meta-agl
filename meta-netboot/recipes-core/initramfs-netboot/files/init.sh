@@ -122,12 +122,15 @@ log_info "Switching to new rootfs"
 mkdir -p run/initramfs
 pivot_root . run/initramfs || bail_out "pivot_root failed."
 
-# workaround for connman (avoid bringing down the network interface used for booting)
+# workaround for connman (avoid bringing down the network interface used for booting, disable DNS proxy)
 if [[ -f /lib/systemd/system/connman.service ]]; then
 	log_info "Adjusting Connman configuration"
 	iface=$(ip -o link show up | tr ':' ' ' | awk '{print $2}' | grep -v -e "^lo$" | head -1)
-	sed -i "s|connmand -n\$|connmand -n -I $iface|g" /lib/systemd/system/connman.service
+	sed -i "s|connmand -n\$|connmand -r -n -I $iface|g" /lib/systemd/system/connman.service
 fi
+
+# also use /proc/net/pnp to generate /etc/resolv.conf
+grep -v bootserver /proc/net/pnp | sed 's/^domain/search/g' >/etc/resolv.conf
 
 # finally, run systemd
 check_debug "Debug point 2. Exit to continue initrd script (run systemd)."
