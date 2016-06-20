@@ -21,8 +21,10 @@ RDEPENDS_${PN} += "\
     interbench \
     iozone3 \
     iperf \
+    ipv6connect \
     himeno \
     linpack \
+    linus-stress \
     lmbench \
     ltp \
     nbench-byte \
