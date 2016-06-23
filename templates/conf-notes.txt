@@ -1,8 +1,12 @@
 Common targets are:
+- AGL CORE
     agl-image-ivi
     agl-image-ivi-crosssdk
     agl-image-ivi-qa
-
     agl-image-minimal
     agl-image-weston
+
+- AGL DEMO 
+    agl-demo-platform
+
 

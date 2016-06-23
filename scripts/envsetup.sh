@@ -104,18 +104,9 @@ case "$MACHINE" in
                                 return 1
                         fi
                 fi
-
-                if [ ! -d "$TEMPLATECONF" ]; then
-                    # set template conf for R-Car2 M2 Porter board
-                    TEMPLATECONF="$PWD/meta-renesas/meta-rcar-gen2/conf"
-                fi
                 ;;
         "porter-nogfx")
                 MACHINE="porter"
-                if [ ! -d "$TEMPLATECONF" ]; then
-                    # set template conf for R-Car2 M2 Porter board
-                    TEMPLATECONF="$PWD/meta-renesas/meta-rcar-gen2/conf"
-                fi
                 ;;
         "raspberrypi3")
                 ;;
@@ -144,25 +135,17 @@ case "$MACHINE" in
                 ;;
         *)
                 # nothing to do here
-                echo "WARN: '$MACHINE' is not tested by AGL Distro"
+                echo "WARN: '$MACHINE' is not tested with AGL Distro"
+                echo "WARN: your mileage may vary. Please test - patches welcome!"
                 ;;
 esac
 
-echo "TEMPALTECONF=$TEMPLATECONF"
-# set template conf for each <board/device>
-if [ -z "$TEMPLATECONF" ]; then
-    # lookup meta-agl-demo first
-    if [ -d "$PWD/meta-agl-demo/templates/$MACHINE/conf" ]; then
-        TEMPLATECONF="$PWD/meta-agl-demo/templates/$MACHINE/conf"
-    # lookup meta-agl 2nd
-    elif [ -d "$PWD/meta-agl/templates/$MACHINE/conf" ]; then
-        TEMPLATECONF="$PWD/meta-agl/templates/$MACHINE/conf"
-    fi
-fi
-echo "TEMPLATECONF=$TEMPLATECONF"
+# Template system
+TEMPLATECONF="$PWD/meta-agl/templates/"
+
+export MACHINE
 
 echo "envsetup: Set '$1' as MACHINE."
-export MACHINE
 
 # fallback
 if [ ! -d "$TEMPLATECONF" ]; then
@@ -206,3 +189,8 @@ case "$EULA_ACCEPT" in
     *)
         ;;
 esac
+
+# Finally set machine in generated local.conf
+echo "MACHINE = \"$MACHINE\"" >> conf/local.conf
+
+echo "envsetup: Done configuring AGL build directory for $MACHINE."

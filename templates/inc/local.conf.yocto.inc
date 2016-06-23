@@ -1,22 +1,12 @@
 #
-# AGL
-#####
-
-MACHINE = "dragonboard-410c"
-
-#
-# END AGL
-#########
-
-#
 # This file is your local configuration file and is where all local user settings
 # are placed. The comments in this file give some guide to the options a new user
 # to the system might want to change but pretty much any configuration option can
-# be set in this file. More adventurous users can look at local.conf.extended
+# be set in this file. More adventurous users can look at local.conf.extended 
 # which contains other examples of configuration which can be placed in this file
 # but new users likely won't need any of them initially.
 #
-# Lines starting with the '#' character are commented out and in some cases the
+# Lines starting with the '#' character are commented out and in some cases the 
 # default values are provided as comments to show people example syntax. Enabling
 # the option is a question of removing the # character and making any change to the
 # variable as required.
@@ -28,12 +18,13 @@ MACHINE = "dragonboard-410c"
 # of emulated machines available which can boot and run in the QEMU emulator:
 #
 #MACHINE ?= "qemuarm"
+#MACHINE ?= "qemuarm64"
 #MACHINE ?= "qemumips"
 #MACHINE ?= "qemuppc"
 #MACHINE ?= "qemux86"
 #MACHINE ?= "qemux86-64"
 #
-# There are also the following hardware board target machines included for
+# There are also the following hardware board target machines included for 
 # demonstration purposes:
 #
 #MACHINE ?= "beaglebone"
@@ -43,7 +34,7 @@ MACHINE = "dragonboard-410c"
 #MACHINE ?= "edgerouter"
 #
 # This sets the default machine to be qemux86 if no other machine is selected:
-MACHINE ??= "qemux86-64"
+MACHINE ??= "qemux86"
 
 #
 # Where to place downloads
@@ -91,13 +82,12 @@ MACHINE ??= "qemux86-64"
 #
 # The distribution setting controls which policy settings are used as defaults.
 # The default value is fine for general Yocto project use, at least initially.
-# Ultimately when creating custom policy, people will likely end up subclassing
+# Ultimately when creating custom policy, people will likely end up subclassing 
 # these defaults.
 #
-#DISTRO ?= "poky"
-DISTRO ?= "poky-agl"
+DISTRO ?= "poky"
 # As an example of a subclass there is a "bleeding" edge policy configuration
-# where many versions are set to the absolute latest code from the upstream
+# where many versions are set to the absolute latest code from the upstream 
 # source control systems. This is just mentioned here as an example, its not
 # useful to most new users.
 # DISTRO ?= "poky-bleeding"
@@ -105,8 +95,8 @@ DISTRO ?= "poky-agl"
 #
 # Package Management configuration
 #
-# This variable lists which packaging formats to enable. Multiple package backends
-# can be enabled at once and the first item listed in the variable will be used
+# This variable lists which packaging formats to enable. Multiple package backends 
+# can be enabled at once and the first item listed in the variable will be used 
 # to generate the root filesystems.
 # Options are:
 #  - 'package_deb' for debian style deb files
@@ -120,7 +110,7 @@ PACKAGE_CLASSES ?= "package_rpm"
 # SDK/ADT target architecture
 #
 # This variable specifies the architecture to build SDK/ADT items for and means
-# you can build the SDK packages for architectures other than the machine you are
+# you can build the SDK packages for architectures other than the machine you are 
 # running the build on (i.e. building i686 packages on an x86_64 host).
 # Supported values are i686 and x86_64
 #SDKMACHINE ?= "i686"
@@ -128,7 +118,7 @@ PACKAGE_CLASSES ?= "package_rpm"
 #
 # Extra image configuration defaults
 #
-# The EXTRA_IMAGE_FEATURES variable allows extra packages to be added to the generated
+# The EXTRA_IMAGE_FEATURES variable allows extra packages to be added to the generated 
 # images. Some of these options are added to certain image types automatically. The
 # variable can contain the following options:
 #  "dbg-pkgs"       - add -dbg packages for all installed packages
@@ -153,7 +143,7 @@ EXTRA_IMAGE_FEATURES = "debug-tweaks"
 # Additional image features
 #
 # The following is a list of additional classes to use when building images which
-# enable extra features. Some available options which can be included in this variable
+# enable extra features. Some available options which can be included in this variable 
 # are:
 #   - 'buildstats' collect build statistics
 #   - 'image-mklibs' to reduce shared library files size for an image
@@ -161,7 +151,9 @@ EXTRA_IMAGE_FEATURES = "debug-tweaks"
 #   - 'image-swab' to perform host system intrusion detection
 # NOTE: if listing mklibs & prelink both, then make sure mklibs is before prelink
 # NOTE: mklibs also needs to be explicitly enabled for a given image, see local.conf.extended
-USER_CLASSES ?= "buildstats image-mklibs image-prelink"
+# NOTE: image-prelink is currently broken due to problems with the prelinker.  It is advised
+# that you do NOT run the prelinker at this time. 
+USER_CLASSES ?= "buildstats image-mklibs"
 
 #
 # Runtime testing of images
@@ -174,8 +166,8 @@ USER_CLASSES ?= "buildstats image-mklibs image-prelink"
 #
 # Interactive shell configuration
 #
-# Under certain circumstances the system may need input from you and to do this it
-# can launch an interactive shell. It needs to do this since the build is
+# Under certain circumstances the system may need input from you and to do this it 
+# can launch an interactive shell. It needs to do this since the build is 
 # multithreaded and needs to be able to handle the case where more than one parallel
 # process may require the user's attention. The default is iterate over the available
 # terminal types to find one that works.
@@ -198,24 +190,28 @@ PATCHRESOLVE = "noop"
 # shutdown the build. If there is less that 100MB or 1K inodes, perform a hard abort
 # of the build. The reason for this is that running completely out of space can corrupt
 # files and damages the build in ways which may not be easily recoverable.
+# It's necesary to monitor /tmp, if there is no space left the build will fail
+# with very exotic errors.
 BB_DISKMON_DIRS = "\
     STOPTASKS,${TMPDIR},1G,100K \
     STOPTASKS,${DL_DIR},1G,100K \
     STOPTASKS,${SSTATE_DIR},1G,100K \
+    STOPTASKS,/tmp,100M,100K \
     ABORT,${TMPDIR},100M,1K \
     ABORT,${DL_DIR},100M,1K \
-    ABORT,${SSTATE_DIR},100M,1K"
+    ABORT,${SSTATE_DIR},100M,1K \
+    ABORT,/tmp,10M,1K"
 
 #
 # Shared-state files from other locations
 #
-# As mentioned above, shared state files are prebuilt cache data objects which can
+# As mentioned above, shared state files are prebuilt cache data objects which can 
 # used to accelerate build time. This variable can be used to configure the system
 # to search other mirror locations for these objects before it builds the data itself.
 #
 # This can be a filesystem directory, or a remote url such as http or ftp. These
-# would contain the sstate-cache results from previous builds (possibly from other
-# machines). This variable works like fetcher MIRRORS/PREMIRRORS and points to the
+# would contain the sstate-cache results from previous builds (possibly from other 
+# machines). This variable works like fetcher MIRRORS/PREMIRRORS and points to the 
 # cache locations to check for the shared objects.
 # NOTE: if the mirror uses the same structure as SSTATE_DIR, you need to add PATH
 # at the end as shown in the examples below. This will be substituted with the
@@ -229,30 +225,12 @@ BB_DISKMON_DIRS = "\
 # Qemu configuration
 #
 # By default qemu will build with a builtin VNC server where graphical output can be
-# seen. The two lines below enable the SDL backend too. This assumes there is a
-# libsdl library available on your build system.
+# seen. The two lines below enable the SDL backend too. By default libsdl-native will
+# be built, if you want to use your host's libSDL instead of the minimal libsdl built
+# by libsdl-native then uncomment the ASSUME_PROVIDED line below.
 PACKAGECONFIG_append_pn-qemu-native = " sdl"
 PACKAGECONFIG_append_pn-nativesdk-qemu = " sdl"
-ASSUME_PROVIDED += "libsdl-native"
-
-###############
-#
-# AGL specifics
-#
-###############
-
-# AGL includes all kernel modules here for ease-of-use during development.
-# Comment this out to be able to select the kernel modules yourself.
-IMAGE_INSTALL_append = " kernel-modules"
-
-# Likewise as we included all kernel modules by default in the filesystem,
-# we do not need a separate tarball stored.
-# Comment this out to receive the separate modules tarbal again.
-MODULE_TARBALL_DEPLOY ?= "0"
-
-###############
-# /END AGL
-###############
+#ASSUME_PROVIDED += "libsdl-native"
 
 
 # CONF_VERSION is increased each time build/conf/ changes incompatibly and is used to

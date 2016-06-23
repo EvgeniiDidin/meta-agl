@@ -1,0 +1,114 @@
+# LAYER_CONF_VERSION is increased each time build/conf/bblayers.conf
+# changes incompatibly
+LCONF_VERSION = "6"
+
+BBPATH = "${TOPDIR}"
+BBFILES ?= ""
+
+BCONFDIR := "${@os.path.abspath(os.path.dirname(d.getVar('FILE', True)))}"
+AGLROOT  := "##OEROOT##"
+
+# These are the core OE + YP Layers
+#----------------------------------
+YOCTO_LAYERS = " \
+  ##OEROOT##/meta \
+  ##OEROOT##/meta-yocto \
+  ##OEROOT##/meta-yocto-bsp \
+  "
+
+# These are the AGL CORE Layers that make up the basis
+# - they create a minimal bootable filesystem
+#   with some automotive tools/libraries
+#-----------------------------------------------------
+AGL_CORE_LAYERS = " \
+  ##OEROOT##/../meta-agl/meta-ivi-common \
+  ##OEROOT##/../meta-agl/meta-agl \
+  ##OEROOT##/../meta-agl/meta-agl-bsp \
+  "
+
+# These are the direct dependencies of the AGL CORE Layers
+#---------------------------------------------------------
+AGL_CORE_DEPENDENCY_LAYERS = " \
+  ##OEROOT##/../meta-openembedded/meta-oe \
+  ##OEROOT##/../meta-openembedded/meta-multimedia \
+  ##OEROOT##/../meta-openembedded/meta-efl \
+  ##OEROOT##/../meta-openembedded/meta-networking \
+  ##OEROOT##/../meta-openembedded/meta-python \
+  ##OEROOT##/../meta-rust \
+  "
+
+# These layers come out of the meta-agl-extra layer
+# (e.g. dependencies of those additional features)
+# They define AGL_EXTRA_LAYERS in there.
+#-----------------------------------------------
+AGL_EXTRA_LAYERS := " "
+require ${@'##OEROOT##/../meta-agl-extra/bblayers.conf.inc' if os.path.exists('##OEROOT##/../meta-agl-extra/bblayers.conf.inc') else '##OEROOT##/../meta-agl/templates/inc/.null.inc'}
+
+# This layer contains the WIP feature/demo code only
+#---------------------------------------------------
+AGL_DEMO_LAYERS = " \
+  ##OEROOT##/../meta-agl-demo \
+  "
+
+# These are the dependencies of the AGL DEMO Layer
+#-------------------------------------------------
+AGL_DEMO_DEPENDENCY_LAYERS = " \
+  ##OEROOT##/../meta-openembedded/meta-filesystems \
+  ##OEROOT##/../meta-openembedded/meta-ruby \
+  ##OEROOT##/../meta-qt5 \
+  "
+
+# BSPS - on demand based on MACHINE
+#----------------------------------
+# qemux86/qemux86_64 are in OE core already
+#
+#  REFERENCE PLATFORMS:
+#  --------------------
+#  Renesas porter
+AGL_BSP_LAYERS += " ${@'##OEROOT##/../meta-renesas' if ( open('${BCONFDIR}/local.conf', 'r').read().find('MACHINE = "porter"') > 0 ) else ''}"
+AGL_BSP_LAYERS += " ${@'##OEROOT##/../meta-renesas/meta-rcar-gen2' if ( open('${BCONFDIR}/local.conf', 'r').read().find('MACHINE = "porter"') > 0 ) else ''}"
+
+# Minnowboard max (also generic intel-corei7-64)
+# (also good for Vmware/VirtualBox)
+AGL_BSP_LAYERS += " ${@'##OEROOT##/../meta-intel' if ( open('${BCONFDIR}/local.conf', 'r').read().find('MACHINE = "intel-corei7-64"') > 0 ) else ''}"
+
+
+#  COMMUNITY SUPPORTED PLATFORMS:
+#  ------------------------------
+#  TI vayu/dra7xx-evm
+AGL_BSP_LAYERS += " ${@'##OEROOT##/../meta-ti' if ( open('${BCONFDIR}/local.conf', 'r').read().find('MACHINE = "dra7xx-evm"') > 0 ) else ''}"
+
+# Qualcomm dragonboard 410c
+AGL_BSP_LAYERS += " ${@'##OEROOT##/../meta-qcom' if ( open('${BCONFDIR}/local.conf', 'r').read().find('MACHINE = "dragonboard-410c"') > 0 ) else ''}"
+
+# NXP Wandboard
+AGL_BSP_LAYERS += " ${@'##OEROOT##/../meta-fsl-arm' if ( open('${BCONFDIR}/local.conf', 'r').read().find('MACHINE = "wandboard"') > 0 ) else ''}"
+AGL_BSP_LAYERS += " ${@'##OEROOT##/../meta-fsl-arm-extra' if ( open('${BCONFDIR}/local.conf', 'r').read().find('MACHINE = "wandboard"') > 0 ) else ''}"
+
+# Raspberry PI 2,3
+AGL_BSP_LAYERS += " ${@'##OEROOT##/../meta-raspberrypi' if ( open('${BCONFDIR}/local.conf', 'r').read().find('MACHINE = "raspberrypi2"') > 0 ) else ''}"
+AGL_BSP_LAYERS += " ${@'##OEROOT##/../meta-raspberrypi' if ( open('${BCONFDIR}/local.conf', 'r').read().find('MACHINE = "raspberrypi3"') > 0 ) else ''}"
+
+#
+# Local derivations during development, just add a layer in the folder meta-localdev
+AGL_LOCALDEV_LAYERS += "${@'##OEROOT##/../meta-localdev' if os.path.exists('##OEROOT##/../meta-localdev') else ''}"
+
+
+####################
+# Combine the layers
+BBLAYERS ?= " \
+  ${YOCTO_LAYERS} \
+  ${AGL_CORE_LAYERS} \
+  ${AGL_CORE_DEPENDENCY_LAYERS} \
+  ${AGL_BSP_LAYERS} \
+  ${AGL_EXTRA_LAYERS} \
+  ${AGL_DEMO_LAYERS} \
+  ${AGL_DEMO_DEPENDENCY_LAYERS} \
+  ${AGL_LOCALDEV_LAYERS} \
+  "
+
+BBLAYERS_NON_REMOVABLE ?= " \
+  ##OEROOT##/meta \
+  ##OEROOT##/meta-yocto \
+  ##OEROOT##/../meta-agl/meta-agl \
+  "
