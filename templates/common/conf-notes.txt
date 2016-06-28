@@ -1,8 +1,0 @@
-Common targets are:
-    agl-image-ivi
-    agl-image-ivi-crosssdk
-    agl-image-ivi-qa
-
-    agl-image-minimal
-    agl-image-weston
-

@@ -1,5 +1,3 @@
-#!/bin/bash
-
 ################################################################################
 #
 # The MIT License (MIT)
@@ -26,14 +24,6 @@
 #
 ################################################################################
 
-#################################################################################
-#                              IMPORTANT NOTICE
-#
-# This script is a compatiblity script with previous (AGL 1.0) envsetup script
-# It has been replaced by another script named "aglsetup.sh".
-# 
-################################################################################
-
 # detect if this script is sourced: see http://stackoverflow.com/a/38128348/6255594
 SOURCED=0
 if [ -n "$ZSH_EVAL_CONTEXT" ]; then 
@@ -47,37 +37,24 @@ fi
 if [ $SOURCED -ne 1 ]; then
 	unset SOURCED
 	unset SOURCEDIR
-	echo "Error: this script needs to be sourced in a supported shell" >&2
-	echo "Please check that the current shell is bash, zsh or ksh and run this script as '. $0 <args>'" >&2
-	return 1
+    echo "Error: this script needs to be sourced in a supported shell" >&2
+    echo "Please check that the current shell is bash, zsh or ksh and run this script as '. $0 <args>'" >&2
+    return 1
 else
 	unset SOURCED
-	if [ -z $1 ]; then
-        echo -e "Usage: source envsetup.sh <board/device> [build dir]"
-        return 1
-	fi
-	if [ -n "$2" ]; then
-		BUILD_DIR="$2"
-	else
-		BUILD_DIR=build
-	fi
-	# echo "DEPRECATED..." | figlet -f big -w 80 -c
-	cat <<'EOF' >&2
- ------------------------------------------------------------------------------
-| using this script is...                                                      |
-|   _____  ______ _____  _____  ______ _____       _______ ______ _____        |
-|  |  __ \|  ____|  __ \|  __ \|  ____/ ____|   /\|__   __|  ____|  __ \       |
-|  | |  | | |__  | |__) | |__) | |__ | |       /  \  | |  | |__  | |  | |      |
-|  | |  | |  __| |  ___/|  _  /|  __|| |      / /\ \ | |  |  __| | |  | |      |
-|  | |__| | |____| |    | | \ \| |___| |____ / ____ \| |  | |____| |__| | _ _  |
-|  |_____/|______|_|    |_|  \_\______\_____/_/    \_\_|  |______|_____(_|_|_) |
-|                                                                              |
-| To support the newest/upcoming features, please use the script aglsetup.sh.  |
- ------------------------------------------------------------------------------
-EOF
-	. $SOURCEDIR/aglsetup.sh -m $1 -b $BUILD_DIR agl-devel agl-netboot agl-appfw-smack agl-demo
+	tmpfile=$(mktemp /tmp/aglsetup.XXXXXXXX)
+	$SOURCEDIR/.aglsetup_genconfig.bash -s $tmpfile "$@"
 	rc=$?
 	unset SOURCEDIR
-	unset BUILD_DIR
+	if [ $rc -eq 0 ]; then
+		source $tmpfile
+		rc=$?
+	else
+		echo "Error: configuration files generation failed. Environment is not ready."
+	fi
+
+	rm -f $tmpfile
+	unset tmpfile
 	return $rc
 fi
+
