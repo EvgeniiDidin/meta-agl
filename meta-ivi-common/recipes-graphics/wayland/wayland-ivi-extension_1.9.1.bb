@@ -17,8 +17,9 @@ S = "${WORKDIR}/git"
 
 inherit cmake autotools
 
-PACKAGECONFIG ??= ""
+PACKAGECONFIG ??= "ilm_input"
 PACKAGECONFIG[ivi-share] = "-DIVI_SHARE=ON,-DIVI_SHARE=OFF,libgbm libdrm"
+PACKAGECONFIG[ilm_input] = "-DWITH_ILM_INPUT=1,-DWITH_ILM_INPUT=0"
 
 FILES_${PN} += "${libdir}/weston/*"
 FILES_${PN}-dbg += "${libdir}/weston/.debug/*"
