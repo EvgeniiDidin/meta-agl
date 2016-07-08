@@ -24,8 +24,7 @@ The BSP for $MACHINE depends on packages and firmware which are covered by an
 End User License Agreement (EULA). To have the right to use these binaries
 in your images, you need to read and accept the following...
 
-The firmware package can contains several types
-of firmware (depending on BSP):
+The firmware package can contains several types of firmware (depending on BSP):
 
 * bootloaders: the first stage bootloaders are proprietary for this
   board, they are included in this firmware package.
@@ -40,7 +39,7 @@ EOF
             echo
             REPLY=
             while [ -z "$REPLY" ]; do
-                echo -n "Do you read the EULA ? (y/n) "
+                echo -n "Do you want to read the EULA ? (y/n) "
                 read REPLY
                 case "$REPLY" in
                     y|Y)

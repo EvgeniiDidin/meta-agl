@@ -340,7 +340,7 @@ EOF
 	append_fragment $BUILDDIR/conf/setup.sh "" "echo '--- end of setup script'"
 
 	infon "   Executing setup script ... "
-	execute_setup $BUILDDIR/conf/setup.sh >$BUILDDIR/conf/setup.log 2>&1 \
+	execute_setup $BUILDDIR/conf/setup.sh 2>&1 | tee $BUILDDIR/conf/setup.log \
 		&& { 
 			info "OK"
 			[[ $VERBOSE == 1 ]] && dump_log $BUILDDIR/conf/setup.log
