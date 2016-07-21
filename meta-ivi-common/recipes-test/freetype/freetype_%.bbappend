@@ -9,7 +9,7 @@ SRC_URI[ft2demos.sha256sum] = "f8f4bc2a2e76e0dbe61838e452c5a7daf1d4bd9dfa4469194
 PACKAGES =+ "${PN}-demos"
 
 do_compile_append () {
-	oe_runmake -C ${WORKDIR}/ft2demos-${PV} TOP_DIR=${WORKDIR}/${PN}-${PV}
+	oe_runmake -C ${WORKDIR}/ft2demos-${PV} TOP_DIR=${WORKDIR}/${BPN}-${PV}
 }
 
 do_install_append () {
