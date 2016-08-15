@@ -9,9 +9,16 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=751419260aa954499f7abaabaa882bbe \
 DEPENDS = "libusb1"
 
 SRC_URI = "git://git.osmocom.org/rtl-sdr"
-SRCREV = "df9596b2d1ebd36cdb14549cfdd76c25092e14d0"
+SRCREV = "e3c03f738f5aef4dc51e2b741fbdb542b9cc1bb1"
 S = "${WORKDIR}/git"
 
 inherit autotools pkgconfig
 
 EXTRA_OECONF = "--enable-driver-detach"
+#CFLAGS_remove = "
+do_configure_append() {
+    # remove included temporary path from pc file due to pass-through of OE CFLAGS
+    # debug-prefix-map
+    # See: http://lists.openembedded.org/pipermail/openembedded-devel/2016-May/107456.html
+    sed -i -e "s# -fdebug-prefix-map=.*##g" librtlsdr.pc
+}

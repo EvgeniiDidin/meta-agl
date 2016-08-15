@@ -1,10 +1,9 @@
-diff -urN a/src/connman.service.in b/src/connman.service.in
---- a/src/connman.service.in	2015-08-31 15:50:11.000000000 +0000
-+++ b/src/connman.service.in	2016-04-15 11:04:37.057445255 +0000
-@@ -3,6 +3,7 @@
- After=dbus.service network-pre.target
- Before=network.target remote-fs-pre.target
- Wants=network.target remote-fs-pre.target
+--- a/src/connman.service.in	2016-08-15 13:51:03.479478140 +0200
++++ b/src/connman.service.in	2016-08-15 13:51:33.469478267 +0200
+@@ -6,6 +6,7 @@ RequiresMountsFor=@localstatedir@/lib/co
+ After=dbus.service network-pre.target systemd-sysusers.service
+ Before=network.target multi-user.target shutdown.target
+ Wants=network.target
 +ConditionKernelCommandLine=!root=/dev/nfs
  
  [Service]
