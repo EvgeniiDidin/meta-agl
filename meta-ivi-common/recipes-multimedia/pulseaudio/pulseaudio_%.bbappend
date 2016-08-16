@@ -6,7 +6,7 @@ do_install_append() {
        # Install pulseaudio systemd service
        if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
               install -m 644 -p -D ${WORKDIR}/build/src/pulseaudio.service ${D}${systemd_user_unitdir}/pulseaudio.service
-              install -m 644 -p -D ${WORKDIR}/pulseaudio-6.0/src/daemon/systemd/user/pulseaudio.socket ${D}${systemd_user_unitdir}/pulseaudio.socket
+              install -m 644 -p -D ${WORKDIR}/pulseaudio-${PV}/src/daemon/systemd/user/pulseaudio.socket ${D}${systemd_user_unitdir}/pulseaudio.socket
 
               # Execute these manually on behalf of systemctl script (from systemd-systemctl-native.bb)
               # because it does not support systemd's user mode.
