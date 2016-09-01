@@ -11,6 +11,7 @@ IMAGE_INSTALL_append = " \
 	systemtap \
 	screen \
 	usbutils \
+	rsync \
 "
 
 # disable install of debug files in SDK
