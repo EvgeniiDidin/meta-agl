@@ -1,7 +1,8 @@
 FILESEXTRAPATHS_prepend := "${THISDIR}/pulseaudio:"
 
-SRC_URI += " \
-             file://0008-install-files-for-a-module-development.patch \
+SRC_URI += " file://0008-install-files-for-a-module-development.patch"
+
+SRC_URI_needtocheckforkrogoth += " \
              file://0010-volume-ramp-additions-to-the-low-level-infra.patch \
              file://0011-volume-ramp-adding-volume-ramping-to-sink-input.patch \
              file://0012-volume-ramp-add-volume-ramping-to-sink.patch \

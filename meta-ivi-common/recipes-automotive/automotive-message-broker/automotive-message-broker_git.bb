@@ -38,6 +38,19 @@ do_install_append() {
     if [ "${@bb.utils.contains('PACKAGECONFIG', 'use_gps', 'use_gps', '', d)}" = "use_gps" ]; then
         install -m 0644 ${WORKDIR}/gps ${D}/${sysconfdir}/ambd/plugins.d
     fi
+
+    # Grmbl - heck gotta fix library installations ?!? WTF !
+    # GO FIX YOUR INSTALLATION ROUTINES PLEASE.  ;)  (jsmoeller)
+    # HACK-ALARM:
+    ls -alh ${D}${libdir}
+    if test -e ${D}${libdir}/libamb-qt.so -a ! -L ${D}${libdir}/libamb-qt.so ; then 
+        mv ${D}${libdir}/libamb-qt.so ${D}${libdir}/libamb-qt.so.0
+        ln -sf libamb-qt.so.0 ${D}${libdir}/libamb-qt.so
+    fi
+    if test -e ${D}${libdir}/libamb-plugins-common.so -a ! -L ${D}${libdir}/libamb-plugins-common.so ; then 
+        mv ${D}${libdir}/libamb-plugins-common.so ${D}${libdir}/libamb-plugins-common.so.0
+        ln -sf libamb-plugins-common.so.0 ${D}${libdir}/libamb-plugins-common.so
+    fi
 }
 
 FILES_${PN} += " ${systemd_unitdir}/ambd.service \

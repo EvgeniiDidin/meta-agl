@@ -16,6 +16,8 @@ RDEPENDS_${PN} += "\
     alsa-utils \
     pulseaudio-server \
     pulseaudio-misc \
-    agl-audio-plugin \
     gstreamer1.0-meta-base \
     "
+RDEPENDS_${PN}_checkforkrogoth += "\
+    agl-audio-plugin \
+"

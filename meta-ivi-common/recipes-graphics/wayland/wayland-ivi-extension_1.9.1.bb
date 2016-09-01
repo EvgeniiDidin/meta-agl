@@ -15,7 +15,8 @@ SRCREV = "44598504503eea5ac7f94c88477a5a78bda01f30"
 
 S = "${WORKDIR}/git"
 
-inherit cmake autotools
+inherit cmake
+#jsmoeller: rm autotools from inherit ... there can only be one
 
 PACKAGECONFIG ??= "ilm_input"
 PACKAGECONFIG[ivi-share] = "-DIVI_SHARE=ON,-DIVI_SHARE=OFF,libgbm libdrm"
