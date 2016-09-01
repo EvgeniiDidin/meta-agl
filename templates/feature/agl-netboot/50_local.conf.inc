@@ -1,1 +1,4 @@
 INHERIT += "netboot"
+
+# add 256MB of extra space in ext4 output image
+IMAGE_ROOTFS_EXTRA_SPACE ?= "262144"
