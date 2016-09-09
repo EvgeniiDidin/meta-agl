@@ -30,8 +30,7 @@
 # turn execute (source) generated instructions back in the parent shell, 
 # whether it's bash, zsh, or any other supported shell
 
-VERSION=1.0.0
-AGL_REPOSITORIES="meta-agl meta-agl-extra meta-agl-contrib"
+VERSION=1.1.0
 DEFAULT_MACHINE=qemux86-64
 DEFAULT_BUILDDIR=./build
 VERBOSE=0
@@ -50,40 +49,64 @@ function debug() { [[ $DEBUG == 1 ]] && echo "DEBUG: $@" >&2; return 0;}
 
 info "------------ $SCRIPT: Starting"
 
+#compute AGL_REPOSITORIES
+AGL_REPOSITORIES=$(for x in $(ls -d $METADIR/*/templates/{machine,feature}); do echo $(basename $(dirname $(dirname $x))); done | sort -u)
+
 function list_machines() {
 	for x in $@; do
 		for y in $(ls -d $METADIR/$x/templates/machine/* 2>/dev/null); do
-			echo -n "$(basename $y) "
+			echo $(basename $y)
 		done
 	done
 }
 
 function list_all_machines() {
 	for x in $AGL_REPOSITORIES; do
-		[[ ! -d $METADIR/$x ]] && continue
 		list_machines $x
 	done
+}
+
+function validate_machines() {
+	list_all_machines | sort | uniq -c | while read cnt machine; do
+		[[ $cnt == 1 ]] && continue
+		info "Machine $machine found in the following repositories:"
+		for x in $(ls -d $METADIR/*/templates/machine/$machine); do
+			info "   - $x"
+		done
+		error "Multiple machine templates are not allowed"
+	done
+	debug "Machines list has no duplicate."
 }
 
 function list_features() {
 	for x in $@; do
 		for y in $(ls -d $METADIR/$x/templates/feature/* 2>/dev/null); do
-			echo -n "$(basename $y) "
+			echo $(basename $y)
 		done
 	done
 }
 
 function list_all_features() {
 	for x in $AGL_REPOSITORIES; do
-		[[ ! -d $METADIR/$x ]] && continue
 		list_features $x
 	done
+}
+
+function validate_features() {
+	list_all_features | sort | uniq -c | while read cnt feature; do
+		[[ $cnt == 1 ]] && continue;
+		info "Feature $feature found in the following repositories:"
+		for x in $(ls -d $METADIR/*/templates/feature/$feature); do
+			info "   - $x"
+		done
+		error "Multiple feature templates are not allowed"
+	done
+	debug "Features list has no duplicate."
 }
 
 function find_machine_dir() {
 	machine=$1
 	for x in $AGL_REPOSITORIES; do
-		[[ ! -d $METADIR/$x ]] && continue
 		dir=$METADIR/$x/templates/machine/$machine
 		[[ -d $dir ]] && { echo $dir; return 0; }
 	done
@@ -93,7 +116,6 @@ function find_machine_dir() {
 function find_feature_dir() {
 	feature=$1
 	for x in $AGL_REPOSITORIES; do
-		[[ ! -d $METADIR/$x ]] && continue
 		dir=$METADIR/$x/templates/feature/$feature
 		[[ -d $dir ]] && { echo $dir; return 0; }
 	done
@@ -130,12 +152,14 @@ Options:
       get some help
 
 EOF
+	local buf
 	
 	echo "Available machines:" >&2
 	for x in $AGL_REPOSITORIES; do
-		[[ ! -d $METADIR/$x ]] && continue
+		buf=$(list_machines $x)
+		[[ -z "$buf" ]] && continue
 		echo "   [$x]"
-		for y in $(list_machines $x); do 
+		for y in $buf; do 
 			[[ $y == $DEFAULT_MACHINE ]] && def="* " || def="  "
 			echo "     $def$y"
 		done
@@ -144,9 +168,10 @@ EOF
 
 	echo "Available features:" >&2
 	for x in $AGL_REPOSITORIES; do
-		[[ ! -d $METADIR/$x ]] && continue
+		buf=$(list_features $x)
+		[[ -z "$buf" ]] && continue
 		echo "   [$x]"
-		for y in $(list_features $x); do
+		for y in $buf; do
 			echo "       $y"
 		done
 	done
@@ -250,9 +275,17 @@ verbose "Command line arguments: ${GLOBAL_ARGS[@]}"
 # the remaining args are the features
 FEATURES="$@"
 
+# validate the machine list
+debug "validating machines list"
+validate_machines
+
 # validate the machine
 debug "validating machine $MACHINE"
 find_machine_dir $MACHINE >/dev/null || error "Machine '$MACHINE' not found in [ $(list_all_machines)]"
+
+# validate the features list
+debug "validating features list"
+validate_features
 
 # validate the features
 for f in $FEATURES; do
