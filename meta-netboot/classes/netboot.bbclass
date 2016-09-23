@@ -9,9 +9,10 @@ python () {
 	if (bb.utils.contains("IMAGE_FSTYPES","live",True,False,d)):
 		# typical case for Minnowboard Max
 		d.setVar("INITRD_IMAGE","initramfs-netboot-image")
-		d.setVar("INITRD","%s/%s-%s.ext4.gz" % (
+		d.setVar("INITRD_IMAGE_LIVE",d.getVar("INITRD_IMAGE",True))
+		d.setVar("INITRD_LIVE","%s/%s-%s.ext4.gz" % (
 			d.getVar("DEPLOY_DIR_IMAGE",True),
-			d.getVar("INITRD_IMAGE",True),
+			d.getVar("INITRD_IMAGE_LIVE",True),
 			d.getVar("MACHINE",True)
 		))
 	else:
