@@ -1,1 +1,1 @@
-BBLAYERS =+ "${METADIR}/meta-raspberry"
+BBLAYERS =+ "${METADIR}/meta-raspberrypi"
