@@ -1,4 +1,4 @@
-DEPENDS += "python-mako-native libomxil"
+DEPENDS += "python-mako-native"
 
 PACKAGECONFIG_append = " gallium gallium-llvm"
 
