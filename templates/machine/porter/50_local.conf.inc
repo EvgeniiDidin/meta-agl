@@ -48,6 +48,12 @@ IMAGE_INSTALL_append_porter = " \
     alsa-utils alsa-utils-config alsa-tools \
 "
 
+IMAGE_INSTALL_append_porter = " \
+    gles-kernel-module \
+    libegl \
+    libgbm-dev \
+    "
+
 # For Bluetooth hardware support
 BT_KERNEL_MODULES = " \
     kernel-module-btusb \
