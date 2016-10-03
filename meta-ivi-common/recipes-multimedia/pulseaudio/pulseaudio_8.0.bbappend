@@ -1,19 +1,13 @@
-FILESEXTRAPATHS_prepend := "${THISDIR}/pulseaudio:"
+FILESEXTRAPATHS_prepend := "${THISDIR}/pulseaudio-8.0:"
 
-SRC_URI += " file://0008-install-files-for-a-module-development.patch"
-
-SRC_URI_needtocheckforkrogoth += " \
-             file://0010-volume-ramp-additions-to-the-low-level-infra.patch \
-             file://0011-volume-ramp-adding-volume-ramping-to-sink-input.patch \
-             file://0012-volume-ramp-add-volume-ramping-to-sink.patch \
-             file://0013-add-internal-corking-state-for-sink-input.patch \
-             file://0020-core-util-Add-pa_join.patch \
-             file://0021-dynarray-Add-pa_dynarray_get_raw_array.patch \
-             file://0022-device-port-Add-pa_device_port.active.patch \
-             file://0030-volume-api-Add-libvolume-api.patch \
-             file://0031-Add-module-main-volume-policy.patch \
-             file://0039-main-volume-policy-adapt-to-pa6rev.patch \
-           "
+SRC_URI += " \
+	file://0001-install-files-for-a-module-development.patch \
+	file://0002-volume-ramp-additions-to-the-low-level-infra.patch \
+	file://0003-volume-ramp-adding-volume-ramping-to-sink-input.patch \
+	file://0004-sink-input-Code-cleanup-regarding-volume-ramping.patch \
+	file://0005-sink-input-volume-Add-support-for-volume-ramp-factor.patch \
+	file://0006-sink-input-Remove-pa_sink_input_set_volume_ramp.patch;apply=no \
+"
 
 PACKAGES =+ " pulseaudio-module-dev"
 
