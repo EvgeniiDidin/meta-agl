@@ -4,6 +4,7 @@ FILESEXTRAPATHS_prepend := "${THISDIR}/linux-yocto:"
 SRC_URI += "file://fanotify.cfg \
             file://uinput.cfg \
             file://hid.cfg \
+            file://drm.cfg \
             "
 
 # disk drivers for vmdk
