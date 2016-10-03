@@ -12,12 +12,10 @@ PACKAGES = "\
 ALLOW_EMPTY_${PN} = "1"
 
 RDEPENDS_${PN} += "\
+    agl-audio-plugin \
     alsa-lib \
     alsa-utils \
     pulseaudio-server \
     pulseaudio-misc \
     gstreamer1.0-meta-base \
     "
-RDEPENDS_${PN}_checkforkrogoth += "\
-    agl-audio-plugin \
-"
