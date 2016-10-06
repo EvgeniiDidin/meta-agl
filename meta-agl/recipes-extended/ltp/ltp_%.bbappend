@@ -1,3 +1,3 @@
-SRCREV = "149490ec2de45a5dc7a9fd2c31add615fdd4f82b"
+SRCREV = "52f4cf73fc1304e1339136729cfc03960d2d7c85"
 
 SRC_URI = "git://github.com/linux-test-project/ltp.git"
