@@ -6,6 +6,7 @@ CORE_IMAGE_EXTRA_INSTALL += "wayland weston"
 
 MULTI_PROVIDER_WHITELIST += "virtual/libgl virtual/egl virtual/libgles1 virtual/libgles2"
 IMAGE_CLASSES += "sdcard_image-rpi-gdp"
+IMAGE_FSTYPES += "tar.bz2 ext3 rpi-sdimg"
 KERNEL_DEVICETREE_append = " overlays/vc4-kms-v3d-overlay.dtb"
 PREFERRED_VERSION_linux-raspberrypi = "4.4.%"
 PREFERRED_VERSION_mesa = "11.%"
