@@ -4,8 +4,8 @@ SRC_URI =+ "${SOURCEFORGE_MIRROR}/freetype/ft2demos-${PV}.tar.bz2;name=ft2demos 
            file://0001-Makefile-dont-build-gfx-demos.patch;patchdir=../ft2demos-${PV} \
            file://0001-ft2demos-Makefile-Do-not-hardcode-libtool-path.patch;patchdir=../ft2demos-${PV} \
           "
-SRC_URI[ft2demos.md5sum] = "f7c6102f29834a80456264fe4edd81d1"
-SRC_URI[ft2demos.sha256sum] = "b076ac52465e912d035f111ede78b88bf3dd186f91a56a54ff83ffdf862e84e4"
+SRC_URI[ft2demos.md5sum] = "b8185d15751e9decd21d0e7e63cccbf6"
+SRC_URI[ft2demos.sha256sum] = "568a8f3a6301189a881d2f7ec95da280d20c862de94d81815341870e380b00e6"
 
 PACKAGES =+ "${PN}-demos"
 
