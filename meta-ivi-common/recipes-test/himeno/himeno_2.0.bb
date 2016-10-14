@@ -16,6 +16,9 @@ DEPENDS = "p7zip-native"
 
 do_configure_append() {
     7z x -y -o${S} ${WORKDIR}/himenobmt.c.lzh
+    cd ${S}
+    sed -i -e 's/CC= gcc/#CC= gcc/' Makefile
+    sed -i -e 's/CFLAGS = /#CFLAGS = /' Makefile
 }
 
 do_install () {
