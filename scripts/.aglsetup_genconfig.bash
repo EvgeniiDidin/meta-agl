@@ -373,17 +373,17 @@ EOF
 	append_fragment $BUILDDIR/conf/setup.sh "" "echo '--- end of setup script'"
 
 	infon "   Executing setup script ... "
-	execute_setup $BUILDDIR/conf/setup.sh 2>&1 | tee $BUILDDIR/conf/setup.log \
-		&& { 
-			info "OK"
-			[[ $VERBOSE == 1 ]] && dump_log $BUILDDIR/conf/setup.log
-			rm $BUILDDIR/conf/setup.sh
-		} \
-		|| { 
-			info "FAIL: please check $BUILDDIR/conf/setup.log"
-			dump_log $BUILDDIR/conf/setup.log
-			return 1
-		}
+	execute_setup $BUILDDIR/conf/setup.sh 2>&1 | tee $BUILDDIR/conf/setup.log
+	[[ ${PIPESTATUS[0]} == 0 ]] && {
+		info "OK"
+		[[ $VERBOSE == 1 ]] && dump_log $BUILDDIR/conf/setup.log
+		rm $BUILDDIR/conf/setup.sh
+	} \
+	|| {
+		info "FAIL: please check $BUILDDIR/conf/setup.log"
+		dump_log $BUILDDIR/conf/setup.log
+		return 1
+	}
 	# NOTE: the setup.sh script is removed if execution succeeded (only the log remains)
 }
 
