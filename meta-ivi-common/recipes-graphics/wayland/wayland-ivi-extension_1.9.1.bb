@@ -3,7 +3,7 @@ DESCRIPTION = "GENIVI Layer Management API based on Wayland IVI Extension"
 HOMEPAGE = "http://projects.genivi.org/wayland-ivi-extension"
 BUGTRACKER = "http://bugs.genivi.org/enter_bug.cgi?product=Wayland%20IVI%20Extension"
 LICENSE = "Apache-2.0"
-LIC_FILES_CHKSUM = "file://LICENSE;md5=176cedb32f48dd58f07e0c1c717b3ea4"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=1f1a56bb2dadf5f2be8eb342acf4ed79"
 
 DEPENDS = "weston"
 
@@ -11,7 +11,7 @@ SRC_URI = "git://github.com/GENIVI/${PN}.git;protocol=https \
           "
 SRC_URI_append_wandboard = "file://wandboard_fix_build.patch"
 
-SRCREV = "44598504503eea5ac7f94c88477a5a78bda01f30"
+SRCREV = "6c2823684105c0bd46aaeca817fe5d87e7c6da25"
 
 S = "${WORKDIR}/git"
 
