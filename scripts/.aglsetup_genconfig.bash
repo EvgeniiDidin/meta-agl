@@ -5,6 +5,7 @@
 # The MIT License (MIT)
 #
 # Copyright (c) 2016 Stéphane Desneux <sdx@iot.bzh>
+#           (c) 2016 Jan-Simon Möller <jsmoeller@linuxfoundation.org>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -286,6 +287,14 @@ find_machine_dir $MACHINE >/dev/null || error "Machine '$MACHINE' not found in [
 # validate the features list
 debug "validating features list"
 validate_features
+
+if $(echo "$FEATURES" | grep -q 'agl-all-features' 2>&1 ) ; then
+    featuredir=$(find_feature_dir agl-all-features)
+    tmpfeatures="$FEATURES $(cat $featuredir/included.inc)"
+    tmpfeatures_uniq="$(echo $tmpfeatures | sed -e 's/agl-all-features//g' -e 's/  / /g' | sort -u )"
+    export FEATURES=$tmpfeatures_uniq
+    echo "Features used: $FEATURES"
+fi
 
 # validate the features
 for f in $FEATURES; do
