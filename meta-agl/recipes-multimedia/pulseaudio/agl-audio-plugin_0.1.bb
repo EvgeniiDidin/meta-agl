@@ -11,8 +11,8 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=2d5025d4aa3495befef8f17206a5b0a1"
 DEPENDS = "json-c pulseaudio"
 RDEPENDS_${PN} = "pulseaudio-server pulseaudio-module-null-sink pulseaudio-module-loopback"
 
-SRCREV = "bb324f335e123163c60b77e3719ee5ca0e7e4cd1"
-SRC_URI = "git://github.com/iotbzh/agl-audio-plugin;protocol=https"
+SRCREV = "952d404e87ca6001e546fe9105bdb6760c468760"
+SRC_URI = "git://gerrit.automotivelinux.org/gerrit/staging/agl-audio-plugin;protocol=https"
 
 S = "${WORKDIR}/git"
 
