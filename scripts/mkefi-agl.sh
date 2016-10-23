@@ -319,8 +319,8 @@ else
 	mkfs.vfat $BOOTFS -n "EFI" >$OUT 2>&1 || die "Failed to format $BOOTFS"
 fi
 
-debug "Formatting $ROOTFS as ext3"
-mkfs.ext3 -F $ROOTFS -L "ROOT" >$OUT 2>&1 || die "Failed to format $ROOTFS"
+debug "Formatting $ROOTFS as ext4"
+mkfs.ext4 -F $ROOTFS -L "ROOT" >$OUT 2>&1 || die "Failed to format $ROOTFS"
 
 
 #
@@ -341,7 +341,7 @@ fi
 echo "bootx64.efi" > $BOOTFS_MNT/startup.nsh || error "Failed to create startup.nsh"
 # Copy the efi loader and configs (booti*.efi and grub.cfg if it exists)
 cp -r $HDDIMG_MNT/EFI $BOOTFS_MNT >$OUT 2>&1 || error "Failed to copy EFI dir"
-# Silently ignore a missing gummiboot loader dir (we might just be a GRUB image)
+# Silently ignore a missing systemd-boot or gummiboot loader dir (we might just be a GRUB image)
 cp -r $HDDIMG_MNT/loader $BOOTFS_MNT >$OUT 2>&1
 
 # Update the boot loaders configurations for an installed image
@@ -365,9 +365,35 @@ if [ -e "$GRUB_CFG" ]; then
 	sed -i "s@vmlinuz @vmlinuz root=$ROOTFS_PARTUUID ro rootwait quiet @" $GRUB_CFG
 fi
 
+# look for a systemd-boot loader.conf file and create a default boot entry
+SYSTEMDBOOT_CFG="$BOOTFS_MNT/loader/loader.conf"
+SYSTEMDBOOT_BOOT="$BOOTFS_MNT/loader/entries/boot.conf"
+SYSTEMDBOOT_DEBUG="$BOOTFS_MNT/loader/entries/debug.conf"
+if [ -e "$SYSTEMDBOOT_CFG" ]; then
+	info "Configuring SYSTEMD-BOOT"
+	# Delete any existing entries
+	rm -rf "$BOOTFS_MNT/loader/entries" >$OUT 2>&1
+	mkdir  "$BOOTFS_MNT/loader/entries" >$OUT 2>&1
+	# create the new loader.conf file
+	echo "# Created by mkefi-agl.sh script `date`" > $SYSTEMDBOOT_CFG
+	echo "default boot" >> $SYSTEMDBOOT_CFG
+	echo "timout 5" >> $SYSTEMDBOOT_CFG
+	# create the boot entry
+	echo "title boot"  > $SYSTEMDBOOT_BOOT
+	echo "linux /vmlinuz" >> $SYSTEMDBOOT_BOOT
+	echo "initrd /initrd" >> $SYSTEMDBOOT_BOOT
+	echo "options LABEL=boot root=$ROOTFS_PARTUUID ro quiet rootwait console=ttyS0,115200 console=tty0" >> $SYSTEMDBOOT_BOOT
+	# create the debug entry
+	echo "title debug" > $SYSTEMDBOOT_DEBUG
+	echo "linux /vmlinuz" >> $SYSTEMDBOOT_DEBUG
+	echo "initrd /initrd" >> $SYSTEMDBOOT_DEBUG
+	echo "options LABEL=debug root=$ROOTFS_PARTUUID ro debug rootwait console=ttyS0,115200 console=tty0" >> $SYSTEMDBOOT_DEBUG
+	
+fi	
+
 
 # Ensure we have at least one EFI bootloader configured
-if [ ! -e $GRUB_CFG ] ; then
+if [ ! -e $GRUB_CFG ]  && [ ! -e $SYSTEMDBOOT_CFG ] ; then
 	die "No EFI bootloader configuration found"
 fi
 
