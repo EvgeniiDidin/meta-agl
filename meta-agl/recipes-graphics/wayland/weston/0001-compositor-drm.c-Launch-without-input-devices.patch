@@ -1,0 +1,28 @@
+From d46538cde290f2638d3631a8789f659b433c2d2a Mon Sep 17 00:00:00 2001
+From: Leon Anavi <leon.anavi@konsulko.com>
+Date: Mon, 24 Oct 2016 14:54:02 +0300
+Subject: [PATCH] compositor-drm.c: Launch without input devices
+
+Launch Weston 1.9 even if input devices (such as
+a keyboard or a mouse) are not present.
+
+Signed-off-by: Leon Anavi <leon.anavi@konsulko.com>
+---
+ src/compositor-drm.c | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/src/compositor-drm.c b/src/compositor-drm.c
+index 6777bf8..ab493ad 100644
+--- a/src/compositor-drm.c
++++ b/src/compositor-drm.c
+@@ -3149,7 +3149,6 @@ drm_backend_create(struct weston_compositor *compositor,
+ 	if (udev_input_init(&b->input,
+ 			    compositor, b->udev, param->seat_id) < 0) {
+ 		weston_log("failed to create input devices\n");
+-		goto err_sprite;
+ 	}
+ 
+ 	if (create_outputs(b, param->connector, drm_device) < 0) {
+-- 
+2.7.4
+
