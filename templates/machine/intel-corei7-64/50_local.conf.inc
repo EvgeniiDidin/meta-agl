@@ -18,3 +18,5 @@ MACHINE = "intel-corei7-64"
 #
 # All boot message will be off
 #APPEND += "quiet"
+
+EFI_PROVIDER = "grub-efi"
