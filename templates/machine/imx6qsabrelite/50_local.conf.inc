@@ -1,0 +1,2 @@
+MACHINE = "imx6qsabrelite"
+
