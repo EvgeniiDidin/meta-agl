@@ -8,7 +8,13 @@ find_and_ack_eula() {
     # If the env variable EULA_$MACHINE is set it is used by default,
     # without prompting the user.
     # FIXME: there is a potential issue if the same $MACHINE is set in more than one layer.. but we should assert that earlier
-    EULA=$(find $1 -print | grep "conf/eula/$MACHINE" | grep -v scripts | grep -v openembedded-core || true)
+    # $1 is layer directory
+    # $2 is location of EULA file relative to layer directory
+    if test x"" == x"$2"; then
+        EULA=$(find $1 -print | grep "conf/eula/$MACHINE" | grep -v scripts | grep -v openembedded-core || true)
+    else
+	EULA=$1/$2
+    fi
     if [ -n "$EULA" ]; then
         # remove '-' since we are constructing a bash variable name here
         EULA_MACHINE="EULA_$(echo $MACHINE | sed 's/-//g')"
