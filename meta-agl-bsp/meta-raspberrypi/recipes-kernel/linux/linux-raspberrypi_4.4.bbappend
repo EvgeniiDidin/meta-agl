@@ -5,9 +5,54 @@ LINUX_VERSION = "4.4.16"
 SRCREV = "26550dcfb86b0308a99f726abbfb55abb1b0f78c"
 
 SRC_URI_append = "\
-	file://0001-rpi-defconfig.patch \
 	${@base_conditional('USE_FAYTECH_MONITOR', '1', 'file://0002-faytech-fix-rpi.patch', '', d)} \
 "
+
+do_configure_append_smack() {
+    # SMACK and Co
+    kernel_configure_variable IP_NF_SECURITY m
+    kernel_configure_variable IP6_NF_SECURITY m
+    kernel_configure_variable EXT2_FS_SECURITY y
+    kernel_configure_variable EXT3_FS_SECURITY y
+    kernel_configure_variable EXT4_FS_SECURITY y
+    kernel_configure_variable SECURITY y
+    kernel_configure_variable SECURITY_SMACK y
+    kernel_configure_variable TMPFS_XATTR y
+    kernel_configure_variable DEFAULT_SECURITY "smack"
+    kernel_configure_variable DEFAULT_SECURITY_SMACK y
+    kernel_configure_variable FANOTIFY_ACCESS_PERMISSIONS y
+}
+
+do_configure_append_netboot() {
+    # NBD for netboot
+    kernel_configure_variable BLK_DEV_NBD y
+    # ramblk for inird
+    kernel_configure_variable BLK_DEV_RAM y
+}
+
+do_configure_append_sota() {
+    # ramblk for inird
+    kernel_configure_variable BLK_DEV_RAM y
+}
+
+do_configure_append() {
+
+    # VC4 Wayland/Weston
+    kernel_configure_variable I2C_BCM2835 y
+    kernel_configure_variable DRM y
+    kernel_configure_variable DRM_PANEL_RASPBERRYPI_TOUCHSCREEN y
+    kernel_configure_variable DRM_VC4 y
+    kernel_configure_variable FB_BCM2708 n
+
+    # KEEP until fixed upstream:
+      # Keep this the last line
+      # Remove all modified configs and add the rest to .config
+      sed -e "${CONF_SED_SCRIPT}" < '${WORKDIR}/defconfig' >> '${B}/.config'
+
+      yes '' | oe_runmake oldconfig
+      kernel_do_configure
+}
+
 
 CMDLINE_append = " usbhid.mousepoll=0"
 
