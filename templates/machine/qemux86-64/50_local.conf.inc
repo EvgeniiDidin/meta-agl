@@ -18,3 +18,7 @@ APPEND += "console=ttyS0,115200n8"
 #
 # All boot message will be off
 APPEND += "quiet"
+
+# U-Boot support for SOTA
+PREFERRED_PROVIDER_virtual/bootloader_sota = "u-boot-ota"
+UBOOT_MACHINE_sota = "qemu-x86_defconfig"
