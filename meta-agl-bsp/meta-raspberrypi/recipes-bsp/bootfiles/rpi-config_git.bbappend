@@ -8,4 +8,8 @@ do_deploy_append() {
     echo "dtparam=audio=on" >> ${DEPLOYDIR}/bcm2835-bootfiles/config.txt
 }
 
+do_deploy_append_sota() {
+    echo "device_tree_address=0x0c800000" >> ${DEPLOYDIR}/bcm2835-bootfiles/config.txt
+}
+
 ENABLE_UART_raspberrypi3 = "1"
