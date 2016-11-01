@@ -172,8 +172,13 @@ EOF
 		buf=$(list_features $x)
 		[[ -z "$buf" ]] && continue
 		echo "   [$x]"
-		for y in $buf; do
-			echo "       $y"
+		for feature in $buf; do
+			print_feature="$feature"
+			featuredir=$(find_feature_dir $feature)
+			if [ -e $featuredir/included.dep ];then
+				print_feature="$print_feature :($(find_feature_dependency $feature $feature))"
+			fi;
+			echo "       $print_feature"
 		done
 	done
 	echo >&2
@@ -211,6 +216,7 @@ function execute_setup() {
 	return $rc
 }
 
+
 # process all fragments
 FRAGMENTS_BBLAYERS=""
 FRAGMENTS_LOCALCONF=""
@@ -239,6 +245,31 @@ function process_fragments() {
 			verbose "      priority $(basename $x | cut -c1-2): $(basename $x)"
 		done
 	done
+}
+
+function containsFeature () {
+  for feature in $1; do
+    [[ "$feature" == "$2" ]] && return 1;
+  done;
+  return 0;
+}
+
+function find_feature_dependency() {
+	res_dep_features=""
+	featuredir=$(find_feature_dir $1)
+	full_feature=$2;
+	if [ -e $featuredir/included.dep ]; then
+		dep_features="$(cat $featuredir/included.dep)"
+		for dep_feature in $dep_features; do
+			full_feature="$full_feature $res_dep_features"
+			res_dep_features="$res_dep_features $dep_feature"
+			if  containsFeature $dep_feature $full_feature ; then
+				res_dep_features="$res_dep_features $(find_feature_dependency $dep_feature $full_feature)"
+			fi;
+		done;
+	fi;
+	echo "$res_dep_features";
+	return 0;
 }
 
 GLOBAL_ARGS=( "$@" )
@@ -288,13 +319,13 @@ find_machine_dir $MACHINE >/dev/null || error "Machine '$MACHINE' not found in [
 debug "validating features list"
 validate_features
 
-if $(echo "$FEATURES" | grep -q 'agl-all-features' 2>&1 ) ; then
-    featuredir=$(find_feature_dir agl-all-features)
-    tmpfeatures="$FEATURES $(cat $featuredir/included.inc)"
-    tmpfeatures_uniq="$(echo $tmpfeatures | sed -e 's/agl-all-features//g' -e 's/  / /g' | sort -u )"
-    export FEATURES=$tmpfeatures_uniq
-    echo "Features used: $FEATURES"
-fi
+TMP_FEATURES="";
+for FEATURE in $FEATURES;do
+    TMP_FEATURES="$TMP_FEATURES $FEATURE"
+    TMP_FEATURES="$TMP_FEATURES $(find_feature_dependency $FEATURE $TMP_FEATURES)"
+done
+FEATURES=$TMP_FEATURES
+echo "Features used: $FEATURES"
 
 # validate the features
 for f in $FEATURES; do
