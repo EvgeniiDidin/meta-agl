@@ -1,1 +1,1 @@
-RDEPENDS_${PN}_sota += " u-boot-otascript"
+RDEPENDS_${PN}_append_sota += " u-boot-otascript"
