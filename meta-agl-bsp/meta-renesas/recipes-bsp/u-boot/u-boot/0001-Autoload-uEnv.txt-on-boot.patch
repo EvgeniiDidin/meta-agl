@@ -1,0 +1,27 @@
+From bd56666d27f765113749c2e55eda97b67a659b2b Mon Sep 17 00:00:00 2001
+From: Anton Gerasimov <anton@advancedtelematic.com>
+Date: Wed, 2 Nov 2016 15:17:16 +0100
+Subject: [PATCH] Autoload uEnv.txt on boot
+
+---
+ include/configs/porter.h | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/include/configs/porter.h b/include/configs/porter.h
+index 45e6556..19dab74 100644
+--- a/include/configs/porter.h
++++ b/include/configs/porter.h
+@@ -151,6 +151,10 @@
+ #define CONFIG_EXTRA_ENV_SETTINGS \
+ 	"bootm_low=0x40e00000\0" \
+ 	"bootm_size=0x100000\0" \
++	"bootcmd=if fatload mmc 1:1 0x50000000 uEnv.txt; then env import -t 0x50000000 ${filesize}; run bootcmd; fi;\0"
++
++/* Shell scripting features */
++#define CONFIG_SYS_HUSH_PARSER
+ 
+ /* SH Ether */
+ #define CONFIG_NET_MULTI
+-- 
+2.7.4
+
