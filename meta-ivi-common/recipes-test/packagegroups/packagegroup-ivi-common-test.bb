@@ -22,7 +22,6 @@ RDEPENDS_${PN} += "\
     iozone3 \
     iperf \
     ipv6connect \
-    himeno \
     linpack \
     linus-stress \
     lmbench \
@@ -40,6 +39,8 @@ RDEPENDS_${PN} += "\
 # http://errors.yoctoproject.org/Errors/Details/35141/
 #     wayland-fits
 
+# FTBS, SPEC-316
+#    himeno 
 
 
 # Packages for shell commands which are required by LTP
