@@ -1,5 +1,29 @@
 MACHINE = "dra7xx-evm"
 
+PACKAGES_GFX_${MACHINE} = "omapdrm-pvr"
+
+# Enable Gfx Pkgs
+MACHINE_FEATURES_append = " sgx"
+MULTI_PROVIDER_WHITELIST += "virtual/libgl virtual/egl virtual/libgles1 virtual/libgles2"
+
+DEPENDS_remove = "virtual/libgl"
+
+# Preferred providers
+PREFERRED_PROVIDER_virtual/libgles1 = ""
+PREFERRED_PROVIDER_virtual/libgles2 = "ti-sgx-ddk-um"
+PREFERRED_PROVIDER_virtual/egl      = "ti-sgx-ddk-um"
+PREFERRED_PROVIDER_virtual/mesa     = "mesa-gl"
+PREFERRED_PROVIDER_libgbm           = "libgbm"
+
+#Preferred versions
+PREFERRED_VERSION_libgbm            = "10.0.0"
+
+
+# Distribution-specific runtime components
+IMAGE_INSTALL_append = " \
+     ${PACKAGES_GFX}     \
+"
+
 ## ATTENTION, this is needed right now to build meta-ti with AGL: ##
 ## due to meta-ti being based on YP 1.8 instead of YP 2.0
 BBMASK  = "meta-ti/.*eudev"
