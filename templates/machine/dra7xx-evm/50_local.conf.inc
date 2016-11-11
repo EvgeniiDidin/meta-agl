@@ -42,6 +42,7 @@ PREFERRED_VERSION_ipumm-fw          = "3.00.08.02"
 IMAGE_INSTALL_append = " \
      ${PACKAGES_GFX}     \
      ${PACKAGES_MULTIMEDIA}     \
+     cmem \
 "
 
 ## ATTENTION, this is needed right now to build meta-ti with AGL: ##
