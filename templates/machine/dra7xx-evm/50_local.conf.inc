@@ -25,12 +25,16 @@ PREFERRED_VERSION_libgbm            = "10.0.0"
 ## Multimedia section ##
 #-------------------------------------------------
 
+GSTREAMER_PLUGINS = " \
+     gstreamer1.0-plugins-bad-meta \
+"
+
 PACKAGES_MULTIMEDIA   = " \
     ipumm-fw \
     pulseaudio-misc      \
+    ${GSTREAMER_PLUGINS} \
 "
 PREFERRED_VERSION_ipumm-fw          = "3.00.08.02"
-
 
 # Distribution-specific runtime components
 IMAGE_INSTALL_append = " \
