@@ -27,13 +27,15 @@ PREFERRED_VERSION_libgbm            = "10.0.0"
 
 GSTREAMER_PLUGINS = " \
      gstreamer1.0-plugins-bad-meta \
+     gstreamer1.0-plugins-ducati \
+     gstreamer1.0-plugins-vpe \
 "
-
 PACKAGES_MULTIMEDIA   = " \
     ipumm-fw \
     pulseaudio-misc      \
     ${GSTREAMER_PLUGINS} \
 "
+
 PREFERRED_VERSION_ipumm-fw          = "3.00.08.02"
 
 # Distribution-specific runtime components
