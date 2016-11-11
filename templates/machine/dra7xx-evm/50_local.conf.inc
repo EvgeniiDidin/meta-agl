@@ -1,5 +1,8 @@
 MACHINE = "dra7xx-evm"
 
+#-------------------------------------------------
+## Graphics section ##
+#-------------------------------------------------
 PACKAGES_GFX_${MACHINE} = "omapdrm-pvr"
 
 # Enable Gfx Pkgs
@@ -18,10 +21,21 @@ PREFERRED_PROVIDER_libgbm           = "libgbm"
 #Preferred versions
 PREFERRED_VERSION_libgbm            = "10.0.0"
 
+#-------------------------------------------------
+## Multimedia section ##
+#-------------------------------------------------
+
+PACKAGES_MULTIMEDIA   = " \
+    ipumm-fw \
+    pulseaudio-misc      \
+"
+PREFERRED_VERSION_ipumm-fw          = "3.00.08.02"
+
 
 # Distribution-specific runtime components
 IMAGE_INSTALL_append = " \
      ${PACKAGES_GFX}     \
+     ${PACKAGES_MULTIMEDIA}     \
 "
 
 ## ATTENTION, this is needed right now to build meta-ti with AGL: ##
