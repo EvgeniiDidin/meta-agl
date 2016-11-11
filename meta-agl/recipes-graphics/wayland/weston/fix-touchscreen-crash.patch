@@ -1,0 +1,29 @@
+Fix Weston crash on touchscreen input
+
+Check for touch->focus before using it, as some touchscreens will generate
+out-of-screen coordinates and cause touch->focus to be NULL. (e.g. Raspberry Pi
+display, some displays after weston-calibrator)
+
+Bug-AGL: SPEC-309
+
+Upstream-Status: Backport [https://cgit.freedesktop.org/wayland/weston/commit/src/input.c?id=2c40d1d30eabe46706822a8b5c94579aeba58e84]
+===================================================
+--- a/src/input.c        2015-09-14 14:23:28.000000000 -0400
++++ b/src/input.c        2016-11-09 16:06:28.371959318 -0500
+@@ -245,11 +245,14 @@
+ 	struct wl_list *resource_list;
+ 	wl_fixed_t sx, sy;
+ 
++	if (!touch->focus)
++		return;
++
+ 	weston_view_from_global_fixed(touch->focus, x, y, &sx, &sy);
+ 
+ 	resource_list = &touch->focus_resource_list;
+ 
+-	if (!wl_list_empty(resource_list) && touch->focus) {
++	if (!wl_list_empty(resource_list)) {
+ 		serial = wl_display_next_serial(display);
+ 		wl_resource_for_each(resource, resource_list)
+ 			wl_touch_send_down(resource, serial, time,
+

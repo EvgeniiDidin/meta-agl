@@ -4,6 +4,7 @@ SRC_URI_append = "\
     file://0001-compositor-drm.c-Launch-without-input-devices.patch \
     file://weston.service \
     file://weston.ini \
+    file://fix-touchscreen-crash.patch \
     "
 
 inherit systemd
