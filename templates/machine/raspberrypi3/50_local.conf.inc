@@ -28,3 +28,5 @@ UBOOT_MACHINE_sota = "rpi_3_32b_defconfig"
 PREFERRED_PROVIDER_virtual/bootloader_sota = "u-boot"
 # For libomxil
 #LICENSE_FLAGS_WHITELIST = "commercial"
+
+IMAGE_INSTALL_append = " linux-firmware-brcm43430 kernel-modules linux-firmware "
