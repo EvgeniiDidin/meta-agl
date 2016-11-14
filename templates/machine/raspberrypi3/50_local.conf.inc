@@ -30,3 +30,4 @@ PREFERRED_PROVIDER_virtual/bootloader_sota = "u-boot"
 #LICENSE_FLAGS_WHITELIST = "commercial"
 
 IMAGE_INSTALL_append = " linux-firmware-brcm43430 kernel-modules linux-firmware "
+
