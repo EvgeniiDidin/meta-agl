@@ -28,7 +28,12 @@ For information about contributing to the AGL Distro
 
 Quick start guide
 -----------------
-(latest version here: https://wiki.automotivelinux.org/agl-distro/source-code)
+
+The latest version is available at [AGL wiki](https://wiki.automotivelinux.org/agl-distro/source-code) for the following targets:
+* [QEMU](https://wiki.automotivelinux.org/agl-distro/source-code)
+* [Renesas Porter board](https://wiki.automotivelinux.org/start/building_for_the_renesas_r-car_m2)
+* [Raspberry Pi 2/3](https://wiki.automotivelinux.org/agl-distro/agl-raspberrypi)
+
 To build an image from 'meta-agl'
 
 1. Prepare repo:
