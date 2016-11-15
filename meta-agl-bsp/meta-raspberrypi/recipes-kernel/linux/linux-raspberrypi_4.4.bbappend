@@ -44,6 +44,16 @@ do_configure_append() {
     kernel_configure_variable DRM_VC4 y
     kernel_configure_variable FB_BCM2708 n
 
+    # Enable support for TP-Link TL-W722N USB Wifi adapter
+    kernel_configure_variable CONFIG_ATH_CARDS m
+    kernel_configure_variable CONFIG_ATH9K_HTC m
+
+    # Enable support for RTLSDR
+    kernel_configure_variable CONFIG_MEDIA_USB_SUPPORT y
+    kernel_configure_variable CONFIG_MEDIA_DIGITAL_TV_SUPPORT y
+    kernel_configure_variable CONFIG_DVB_USB_V2 m
+    kernel_configure_variable CONFIG_DVB_USB_RTL28XXU m
+
     # KEEP until fixed upstream:
       # Keep this the last line
       # Remove all modified configs and add the rest to .config
