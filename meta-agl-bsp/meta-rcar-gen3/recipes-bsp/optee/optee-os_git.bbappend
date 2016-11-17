@@ -1,9 +1,5 @@
-COMPATIBLE_MACHINE = "(salvator-x|h3ulcb|m3ulcb)"
+FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 
-do_compile() {
-    :
-}
-
-do_deploy() {
-    :
-}
+SRC_URI += " \
+        file://0001-disable-libgcc-detection.patch \
+"
