@@ -1,0 +1,33 @@
+From 93ceff13467e7fb1bee38c0ab6f587f5f99cc594 Mon Sep 17 00:00:00 2001
+From: Nobuhiko Tanibata <NOBUHIKO_TANIBATA@xddp.denso.co.jp>
+Date: Wed, 25 Nov 2015 23:36:09 +0900
+Subject: [PATCH 1/7] ivi-shell: fix TODO which expects only one screen in the
+ system.
+
+It just return the first screen found in screen list.
+
+Signed-off-by: Nobuhiko Tanibata <NOBUHIKO_TANIBATA@xddp.denso.co.jp>
+Reviewed-by: Pekka Paalanen <pekka.paalanen@collabora.co.uk>
+---
+ ivi-shell/ivi-layout.c | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/ivi-shell/ivi-layout.c b/ivi-shell/ivi-layout.c
+index a04076e..efc0da5 100644
+--- a/ivi-shell/ivi-layout.c
++++ b/ivi-shell/ivi-layout.c
+@@ -1484,9 +1484,8 @@ ivi_layout_get_screen_from_id(uint32_t id_screen)
+ 	struct ivi_layout_screen *iviscrn = NULL;
+ 
+ 	wl_list_for_each(iviscrn, &layout->screen_list, link) {
+-/* FIXME : select iviscrn from screen_list by id_screen */
+-		return iviscrn;
+-		break;
++		if (iviscrn->id_screen == id_screen)
++			return iviscrn;
+ 	}
+ 
+ 	return NULL;
+-- 
+2.4.5
+

@@ -1,0 +1,13 @@
+[Unit]
+Description=Weston reference Wayland compositor
+Conflicts=getty@tty1.service
+After=dbus.service rc.pvr.service
+
+[Service]
+ExecStart=/usr/bin/weston-launch -u root -- --backend=drm-backend.so --idle-time=4294967 --config=/etc/xdg/weston/weston.ini
+ExecStop=/usr/bin/killall -s KILL weston
+Restart=always
+Type=simple
+
+[Install]
+WantedBy=multi-user.target

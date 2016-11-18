@@ -1,0 +1,589 @@
+From c89c2d63db3cbe83fb1ddd983e4b0ffe87fab296 Mon Sep 17 00:00:00 2001
+From: Volodymyr Riazantsev <volodymyr.riazantsev@globallogic.com>
+Date: Fri, 1 Jul 2016 00:28:50 -0400
+Subject: [PATCH 8/8] ivi-shell: Add simple IVI shell layout controller
+
+Simple IVI shell layout controller.
+Assign only one application to primary display.
+Second and rest application will go to secondary display if it's
+present.
+
+Signed-off-by: Volodymyr Riazantsev <volodymyr.riazantsev@globallogic.com>
+Signed-off-by: Karthik Ramanan <a0393906@ti.com>
+---
+ Makefile.am                          |  12 +-
+ ivi-shell/ivi-layout-controller-ti.c | 532 +++++++++++++++++++++++++++++++++++
+ 2 files changed, 543 insertions(+), 1 deletion(-)
+ create mode 100644 ivi-shell/ivi-layout-controller-ti.c
+
+diff --git a/Makefile.am b/Makefile.am
+index 55aed6d..a9fe3c8 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -868,7 +868,8 @@ if ENABLE_IVI_SHELL
+ 
+ module_LTLIBRARIES +=				\
+ 	$(ivi_shell)				\
+-	$(hmi_controller)
++	$(hmi_controller)			\
++	$(layout_controller)
+ 
+ ivi_shell = ivi-shell.la
+ ivi_shell_la_LDFLAGS = -module -avoid-version
+@@ -903,6 +904,15 @@ nodist_hmi_controller_la_SOURCES =			\
+ 
+ BUILT_SOURCES += $(nodist_hmi_controller_la_SOURCES)
+ 
++layout_controller = layout-controller.la
++layout_controller_la_LDFLAGS = -module -avoid-version
++layout_controller_la_LIBADD = $(COMPOSITOR_LIBS) libshared.la
++layout_controller_la_CFLAGS = $(AM_CFLAGS) $(COMPOSITOR_CFLAGS)
++layout_controller_la_SOURCES =				\
++	ivi-shell/ivi-layout-export.h			\
++	ivi-shell/ivi-layout-controller-ti.c		\
++	shared/helpers.h
++
+ endif
+ 
+ 
+diff --git a/ivi-shell/ivi-layout-controller-ti.c b/ivi-shell/ivi-layout-controller-ti.c
+new file mode 100644
+index 0000000..b7cf436
+--- /dev/null
++++ b/ivi-shell/ivi-layout-controller-ti.c
+@@ -0,0 +1,532 @@
++/*
++ * Copyright (C) 2016 GlobalLogic Inc
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining
++ * a copy of this software and associated documentation files (the
++ * "Software"), to deal in the Software without restriction, including
++ * without limitation the rights to use, copy, modify, merge, publish,
++ * distribute, sublicense, and/or sell copies of the Software, and to
++ * permit persons to whom the Software is furnished to do so, subject to
++ * the following conditions:
++ *
++ * The above copyright notice and this permission notice (including the
++ * next paragraph) shall be included in all copies or substantial
++ * portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
++ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
++ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
++ * NONINFRINGEMENT.  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
++ * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
++ * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
++ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++ * SOFTWARE.
++ */
++
++#include <stdlib.h>
++#include <string.h>
++#include <assert.h>
++
++#include "ivi-layout-export.h"
++
++#ifndef container_of
++#define container_of(ptr, type, member) ({                              \
++        const __typeof__( ((type *)0)->member ) *__mptr = (ptr);        \
++        (type *)( (char *)__mptr - offsetof(type,member) );})
++#endif
++
++#ifndef BIT
++#define BIT(bit)	(1 << (bit))
++#endif
++
++#define __MODULE__ "layout-controller"
++#define DL_ERR	BIT(0)
++#define DL_WRN	BIT(1)
++#define DL_DBG	BIT(2)
++#define DL_ALL	(~0)
++
++static unsigned debug_level = DL_ALL;
++
++#define __print_log(__dl__, ... ) \
++if (__dl__ & debug_level) \
++		fprintf(__dl__ == DL_ERR ? stderr : stdout," ["__MODULE__"]:" __VA_ARGS__);
++
++#define pr_err(...) __print_log(DL_ERR, "E: " __VA_ARGS__)
++#define pr_dbg(...) __print_log(DL_DBG, "D: " __VA_ARGS__)
++#define pr_wrn(...) __print_log(DL_WRN, "W: " __VA_ARGS__)
++#define TRACE() __print_log(DL_DBG, "TR: %s - %d\n", __func__, __LINE__)
++
++
++#define WINDOWS_TITLE_HEIGHT 30
++#define DEFAULT_SURFACE_ID_FOR_WL_SHELL_APP 0x80000000
++
++/*****************************************************************************
++ *  structure, globals
++ ****************************************************************************/
++struct hmi_controller_layer {
++	struct ivi_layout_layer *ivilayer;
++	uint32_t id_layer;
++	int32_t x;
++	int32_t y;
++	int32_t width;
++	int32_t height;
++	int32_t num_surfaces;
++	pid_t pid;
++	struct wl_list link;
++	struct wl_list screen_link;
++	struct wl_list surfaces_list;
++};
++
++struct hmi_controller_surface {
++	void               *controller;
++	void               *ivisurf;
++	struct wl_list     link;
++	struct wl_listener destroy_listener;
++};
++
++struct hmi_controller_screen {
++	struct ivi_layout_screen *iviscrn;
++	struct wl_list layers_list;
++};
++
++struct hmi_server_setting {
++	uint32_t    base_layer_id;
++	int32_t     panel_height;
++	char       *ivi_homescreen;
++};
++
++struct hmi_controller {
++	int32_t                             current_layer;
++	int32_t                             current_screen;
++	int32_t                             screens_count;
++	int32_t                             workspace_count;
++
++	struct hmi_server_setting          *hmi_setting;
++	struct hmi_controller_screen        screens[4];
++	struct hmi_controller_layer         application_layer;
++	struct weston_compositor           *compositor;
++	struct wl_listener                  destroy_listener;
++	struct wl_client                   *user_interface;
++	struct wl_list                      layers_list;
++};
++
++const struct ivi_controller_interface *ivi_controller_interface;
++
++static void
++hmi_ctrl_surface_destroy(struct wl_listener *listener, void *data);
++
++int
++controller_module_init(struct weston_compositor *ec,
++		       int *argc, char *argv[],
++		       const struct ivi_controller_interface *interface,
++		       size_t interface_version);
++
++/*****************************************************************************
++ *  local functions
++ ****************************************************************************/
++static void *
++fail_on_null(void *p, size_t size, char *file, int32_t line)
++{
++	if (size && !p) {
++		weston_log("%s(%d) %zd: out of memory\n", file, line, size);
++		exit(EXIT_FAILURE);
++	}
++
++	return p;
++}
++
++static void *
++mem_alloc(size_t size, char *file, int32_t line)
++{
++	return fail_on_null(calloc(1, size), size, file, line);
++}
++
++#define MEM_ALLOC(s) mem_alloc((s),__FILE__,__LINE__)
++
++/**
++ * Internal method to create ivi_layer with hmi_controller_layer and
++ * add to a ivi_screen
++ */
++static void
++create_layer(struct ivi_layout_screen *iviscrn,
++	     struct hmi_controller_layer *layer)
++{
++	int32_t ret = 0;
++
++	layer->ivilayer =
++		ivi_controller_interface->layer_create_with_dimension(layer->id_layer,
++						       layer->width,
++						       layer->height);
++	assert(layer->ivilayer != NULL);
++
++	ret = ivi_controller_interface->screen_add_layer(iviscrn, layer->ivilayer);
++
++	assert(!ret);
++
++	ret = ivi_controller_interface->layer_set_destination_rectangle(layer->ivilayer,
++							 layer->x, layer->y,
++							 layer->width,
++							 layer->height);
++	assert(!ret);
++
++	ret = ivi_controller_interface->layer_set_visibility(layer->ivilayer, true);
++
++	assert(!ret);
++
++	ivi_controller_interface->commit_changes();
++
++}
++
++static struct hmi_controller_layer
++*get_layer_for_surface(struct hmi_controller *hmi_ctrl
++			, struct ivi_layout_surface *ivisurf
++			, bool create)
++{
++	struct hmi_controller_layer *layer;
++	struct weston_surface *surface;
++	int32_t i = 0;
++	struct wl_client *client;
++	struct ivi_layout_screen *iviscrn  = NULL;
++	struct weston_output *output = NULL;
++	pid_t pid;
++	uid_t uid;
++	gid_t gid;
++
++	surface = ivi_controller_interface->surface_get_weston_surface(ivisurf);
++
++	if (!surface)
++		goto exit;
++
++	client = wl_resource_get_client(surface->resource);
++
++	wl_client_get_credentials(client, &pid, &uid, &gid);
++
++	wl_list_for_each(layer, &hmi_ctrl->layers_list, link) {
++		if (layer->pid == pid) {
++			pr_dbg("Existed layer for PID=%d was found\n", pid);
++			return layer;
++		}
++	}
++
++	if (!(create && hmi_ctrl->screens_count))
++		goto exit;
++
++	pr_dbg("Existed layer for PID=%d was not found. Creating new\n", pid);
++
++	for(;; i++) {
++		if (wl_list_empty(&hmi_ctrl->screens[i].layers_list) ||
++				(i == (hmi_ctrl->screens_count - 1)))
++			break;
++	};
++
++	iviscrn = hmi_ctrl->screens[i].iviscrn;
++
++	layer = calloc(1, sizeof *layer);
++
++	output = ivi_controller_interface->screen_get_output(iviscrn);
++
++	wl_list_init(&layer->link);
++	wl_list_init(&layer->screen_link);
++	wl_list_init(&layer->surfaces_list);
++
++	layer->width = output->width;
++	layer->height = output->height + WINDOWS_TITLE_HEIGHT;
++	layer->id_layer = hmi_ctrl->hmi_setting->base_layer_id++;
++	layer->pid = pid;
++
++	create_layer(iviscrn, layer);
++
++	wl_list_insert(&hmi_ctrl->layers_list, &layer->link);
++	wl_list_insert(&hmi_ctrl->screens[i].layers_list, &layer->screen_link);
++
++	return layer;
++
++exit:
++	return NULL;
++}
++
++static void
++set_notification_create_surface(struct ivi_layout_surface *ivisurf,
++				void *userdata)
++{
++	struct hmi_controller *hmi_ctrl = userdata;
++	struct hmi_controller_layer *hmi_ctrl_layer = NULL;
++	struct hmi_controller_surface *hmi_ctrl_surf = NULL;
++	struct ivi_layout_layer *dest_layer;
++	struct weston_surface *surface;
++
++	wl_list_for_each(hmi_ctrl_layer, &hmi_ctrl->layers_list, link) {
++		wl_list_for_each(hmi_ctrl_surf, &hmi_ctrl_layer->surfaces_list, link) {
++			if (hmi_ctrl_surf->ivisurf == ivisurf) {
++				pr_dbg("Surface was already configured. Skip add to list\n");
++				return;
++			}
++		}
++	}
++
++	pr_dbg("Surface create: add to list and get the layer\n");
++
++	hmi_ctrl_layer = get_layer_for_surface(hmi_ctrl, ivisurf, true);
++	dest_layer = hmi_ctrl_layer->ivilayer;
++
++	ivi_controller_interface->layer_add_surface(dest_layer, ivisurf);
++
++	hmi_ctrl_surf = calloc(1, sizeof(*hmi_ctrl_surf));
++	hmi_ctrl_surf->ivisurf = ivisurf;
++	wl_list_init(&hmi_ctrl_surf->link);
++	wl_list_insert(&hmi_ctrl_layer->surfaces_list, &hmi_ctrl_surf->link);
++
++
++	/*
++	 * Set destroy signal for surface
++	 * HACK: We trying to track surfaces were created by wl_shell_emulator
++	 */
++	if (ivi_controller_interface->get_id_of_surface(ivisurf) >=
++			DEFAULT_SURFACE_ID_FOR_WL_SHELL_APP) {
++		surface = ivi_controller_interface->surface_get_weston_surface(ivisurf);
++		hmi_ctrl_surf->destroy_listener.notify = hmi_ctrl_surface_destroy;
++		wl_signal_add(&surface->destroy_signal, &hmi_ctrl_surf->destroy_listener);
++		hmi_ctrl_surf->controller = userdata;
++	}
++}
++
++static void
++set_notification_remove_surface(struct ivi_layout_surface *ivisurf,
++				void *userdata)
++{
++	struct hmi_controller *hmi_ctrl = userdata;
++	struct hmi_controller_layer *hmi_ctrl_layer = NULL;
++	struct hmi_controller_surface *surf = NULL;
++	struct ivi_layout_layer *dest_layer;
++
++	wl_list_for_each(hmi_ctrl_layer, &hmi_ctrl->layers_list, link) {
++		wl_list_for_each(surf, &hmi_ctrl_layer->surfaces_list, link) {
++			if (surf->ivisurf == ivisurf) {
++				pr_dbg("Surface remove: surface was found\n");
++				goto remove;
++			}
++		}
++	}
++
++	goto exit;
++
++remove:
++	dest_layer = hmi_ctrl_layer->ivilayer;
++
++	wl_list_remove(&surf->link);
++
++	ivi_controller_interface->layer_remove_surface(dest_layer, ivisurf);
++
++	if (wl_list_empty(&hmi_ctrl_layer->surfaces_list)) {
++		wl_list_remove(&hmi_ctrl_layer->link);
++		wl_list_remove(&hmi_ctrl_layer->screen_link);
++		ivi_controller_interface->layer_destroy(dest_layer);
++		free(hmi_ctrl_layer);
++	}
++
++	free(surf);
++
++exit:
++	ivi_controller_interface->commit_changes();
++}
++
++static void
++hmi_ctrl_surface_destroy(struct wl_listener *listener, void *data)
++{
++	struct hmi_controller_surface *hmi_ctrl_surface =
++		container_of(listener, struct hmi_controller_surface,
++			destroy_listener);
++
++	pr_dbg("Try to remove surface by direct notification\n");
++
++	ivi_controller_interface->surface_destroy(hmi_ctrl_surface->ivisurf);
++}
++
++static void
++set_notification_configure_surface(struct ivi_layout_surface *ivisurf,
++				   void *userdata)
++{
++	struct hmi_controller *hmi_ctrl = userdata;
++	struct hmi_controller_layer *hmi_ctrl_layer = NULL;
++	struct weston_surface *surface;
++	struct hmi_controller_surface *hmi_ctrl_surf = NULL;
++
++	wl_list_for_each(hmi_ctrl_layer, &hmi_ctrl->layers_list, link) {
++		wl_list_for_each(hmi_ctrl_surf, &hmi_ctrl_layer->surfaces_list, link) {
++			if (hmi_ctrl_surf->ivisurf == ivisurf) {
++				pr_dbg("Surface was already configured. Skip add to list\n");
++				goto found;
++			}
++		}
++	}
++
++	hmi_ctrl_layer = NULL;
++found:
++	surface = ivi_controller_interface->surface_get_weston_surface(ivisurf);
++
++	if (surface) {
++
++		ivi_controller_interface->surface_set_source_rectangle(
++			ivisurf, 0, WINDOWS_TITLE_HEIGHT, surface->width,
++			surface->height);
++
++#if 0
++		ivi_controller_interface->surface_set_destination_rectangle(
++			ivisurf, 0, 0, surface->width, surface->height);
++#else
++		if (hmi_ctrl_layer) {
++			ivi_controller_interface->surface_set_destination_rectangle(
++				ivisurf, 0, 0, hmi_ctrl_layer->width, hmi_ctrl_layer->height);
++		} else {
++			ivi_controller_interface->surface_set_destination_rectangle(
++				ivisurf, 0, 0, surface->width, surface->height);
++		}
++#endif
++		ivi_controller_interface->surface_set_visibility(ivisurf, true);
++		ivi_controller_interface->commit_changes();
++	}
++}
++
++static struct hmi_server_setting *
++hmi_server_setting_create(struct weston_compositor *ec)
++{
++	struct hmi_server_setting *setting = MEM_ALLOC(sizeof(*setting));
++	struct weston_config *config = ec->config;
++	struct weston_config_section *shell_section = NULL;
++
++	shell_section = weston_config_get_section(config, "ivi-shell",
++						  NULL, NULL);
++
++	weston_config_section_get_uint(shell_section, "base-layer-id",
++				       &setting->base_layer_id, 1000);
++
++	setting->panel_height = 30;
++
++	return setting;
++}
++
++static void
++hmi_controller_destroy(struct wl_listener *listener, void *data)
++{
++	struct hmi_controller *hmi_ctrl =
++		container_of(listener, struct hmi_controller, destroy_listener);
++
++	free(hmi_ctrl->hmi_setting);
++	free(hmi_ctrl);
++}
++
++static struct hmi_controller *
++hmi_controller_create(struct weston_compositor *ec)
++{
++	struct ivi_layout_screen **pp_screen = NULL;
++	struct ivi_layout_screen *iviscrn  = NULL;
++	int32_t screen_length  = 0;
++	struct hmi_controller *hmi_ctrl = MEM_ALLOC(sizeof(*hmi_ctrl));
++	int i, j = 0;
++
++	hmi_ctrl->hmi_setting = hmi_server_setting_create(ec);
++	hmi_ctrl->compositor = ec;
++
++	ivi_controller_interface->get_screens(&screen_length, &pp_screen);
++
++	for (i = screen_length; i-- ; j++) {
++
++		iviscrn = pp_screen[i];
++		hmi_ctrl->screens[j].iviscrn = iviscrn;
++		wl_list_init(&hmi_ctrl->screens[i].layers_list);
++
++		hmi_ctrl->screens_count++;
++	}
++
++	ivi_controller_interface->add_notification_create_surface(
++		set_notification_create_surface, hmi_ctrl);
++	ivi_controller_interface->add_notification_remove_surface(
++		set_notification_remove_surface, hmi_ctrl);
++	ivi_controller_interface->add_notification_configure_surface(
++		set_notification_configure_surface, hmi_ctrl);
++
++	hmi_ctrl->destroy_listener.notify = hmi_controller_destroy;
++	wl_signal_add(&hmi_ctrl->compositor->destroy_signal,
++		      &hmi_ctrl->destroy_listener);
++
++	wl_list_init(&hmi_ctrl->layers_list);
++
++	free(pp_screen);
++	pp_screen = NULL;
++
++	return hmi_ctrl;
++}
++
++WL_EXPORT const struct wl_interface ivi_hmi_controller_interface = {
++	"ivi_layout_controller", 1,
++	0, NULL,
++	0, NULL,
++};
++
++static void
++bind_hmi_controller(struct wl_client *client,
++		    void *data, uint32_t version, uint32_t id)
++{
++	struct hmi_controller *hmi_ctrl = data;
++
++	if (hmi_ctrl->user_interface != client) {
++		struct wl_resource *res = wl_client_get_object(client, 1);
++		wl_resource_post_error(res,
++				WL_DISPLAY_ERROR_INVALID_OBJECT,
++				"hmi-controller failed: permission denied");
++		return;
++	}
++
++	wl_resource_create(client, &ivi_hmi_controller_interface, 1, id);
++}
++
++static int32_t
++initialize(struct hmi_controller *hmi_ctrl)
++{
++	struct config_command {
++		char *key;
++		uint32_t *dest;
++	};
++
++	struct weston_config *config = hmi_ctrl->compositor->config;
++
++	weston_config_get_section(config, "ivi-shell", NULL, NULL);
++
++	return 1;
++}
++
++/*****************************************************************************
++ *  exported functions
++ ****************************************************************************/
++WL_EXPORT int
++controller_module_init(struct weston_compositor *ec,
++		       int *argc, char *argv[],
++		       const struct ivi_controller_interface *interface,
++		       size_t interface_version)
++{
++	struct hmi_controller *hmi_ctrl = NULL;
++
++
++	if (interface_version < sizeof(struct ivi_controller_interface)) {
++		weston_log("ivi-layout-controller-ti: version mismatch of controller interface");
++		return -1;
++	}
++
++	ivi_controller_interface = interface;
++
++	hmi_ctrl = hmi_controller_create(ec);
++
++	if (!initialize(hmi_ctrl)) {
++		return -1;
++	}
++
++	if (wl_global_create(ec->wl_display,
++			     &ivi_hmi_controller_interface, 1,
++			     hmi_ctrl, bind_hmi_controller) == NULL) {
++		return -1;
++	}
++
++	weston_log("ivi-layout-controller-ti: Successfully started.");
++
++	return 0;
++}
+-- 
+2.4.5
+
