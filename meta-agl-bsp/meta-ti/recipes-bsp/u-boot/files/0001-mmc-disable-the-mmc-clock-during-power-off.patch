@@ -1,0 +1,29 @@
+From 96d42df4e7cb700bde4bdf5106cfd2753749c4e7 Mon Sep 17 00:00:00 2001
+From: Kishon Vijay Abraham I <kishon@ti.com>
+Date: Fri, 11 Nov 2016 19:59:22 +0530
+Subject: [PATCH] mmc: disable the mmc clock during power off
+
+There is no point in having the mmc clock enabled during
+power off. Disable the mmc clock. This is similar to how it's
+programmed in Linux Kernel.
+
+Signed-off-by: Kishon Vijay Abraham I <kishon@ti.com>
+---
+ drivers/mmc/mmc.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/mmc/mmc.c b/drivers/mmc/mmc.c
+index c929a1e..84515a7 100644
+--- a/drivers/mmc/mmc.c
++++ b/drivers/mmc/mmc.c
+@@ -2058,6 +2058,7 @@ static void mmc_power_off(struct mmc *mmc)
+ {
+ 	mmc_set_signal_voltage(mmc, 0);
+ 	mmc_set_vdd(mmc, false);
++	mmc_set_clock(mmc, 1, true);
+ }
+ 
+ static void mmc_power_cycle(struct mmc *mmc)
+-- 
+1.9.1
+
