@@ -352,47 +352,6 @@ NOTE: To boot weston on porter board, we need keyboard and mouse. (USB2.0 can be
 
 3. Have fun! :)
 
-4. (Optional) This is how to test and play multimedia contents with acceleration.
-
-    1. Boot porter without mouse and keyboard, it avoid to boot weston automatically.
-       For now, when running weston, V4L2 deosn't work correctly, so we have to
-       stop weston first (GST plugin `waylandsink` also doesn't work correctly for now).
-
-    2. Execute these instructions
-
-            # Set the mixer
->     $ export LD_LIBRARY_PATH="/lib:/usr/lib:/usr/local/lib:"^
-
-            # Set the mixer
->     $ amixer set "LINEOUT Mixer DACL" on
->     $ amixer set "DVC Out" 10
->
->     $ modprobe -a mmngr mmngrbuf s3ctl uvcs_cmn vspm fdpm
->
->     $ media-ctl -d /dev/media0 -r
->     $ media-ctl -d /dev/media0 -l '"vsp1.2 rpf.0":1 -> "vsp1.2 uds.0":0 [1]'
->     $ media-ctl -d /dev/media0 -l '"vsp1.2 uds.0":1 -> "vsp1.2 wpf.0":0 [1]'
->     $ media-ctl -d /dev/media0 -l '"vsp1.2 wpf.0":1 -> "vsp1.2 lif":0 [1]'
->     $ media-ctl -d /dev/media0 -V '"vsp1.2 rpf.0":0 [fmt:AYUV32/1920x1080]'
->     $ media-ctl -d /dev/media0 -V '"vsp1.2 rpf.0":1 [fmt:AYUV32/1920x1080]'
->     $ media-ctl -d /dev/media0 -V '"vsp1.2 uds.0":0 [fmt:AYUV32/1920x1080]'
->     $ media-ctl -d /dev/media0 -V '"vsp1.2 uds.0":1 [fmt:AYUV32/640x480]'
->     $ media-ctl -d /dev/media0 -V '"vsp1.2 wpf.0":0 [fmt:AYUV32/640x480]'
->     $ media-ctl -d /dev/media0 -V '"vsp1.2 wpf.0":1 [fmt:ARGB32/640x480]'
->     $ media-ctl -d /dev/media0 -V '"vsp1.2 lif":0 [fmt:ARGB32/640x480]'
->
->                 # in case R-Car M2 (HDMI - DU1 - vspd0)
->                 $ modetest -M rcar-du -s 10@8:1280x720@AR24 -d -P '8@19:640x480+100+200@XR24' &
-
-After these command, Test pattern will show on display connected to porter's HDMI port.
-
-Then, you can play H264(MP4) movie like this:
-
->     $ gst-launch-1.0 filesrc location=./sample.mp4  ! qtdemux name=d d. ! \
->            queue ! omxh264dec no-copy=true ! v4l2sink device=/dev/video1 \
->            io-mode=userptr d. ! queue ! faad ! alsasink device=hw:0,0
-
-
 ### Deployment (TFTP/NFS)
 
 NOTE: These instructions are based on Embedded Linux Wiki, [here](http://www.elinux.org/R-Car/Boards/Yocto#Loading_kernel_via_TFTP_and_rootfs_via_NFS). And a Debian (wheezy, ip: 192.168.30.70) is used as the host for this instructions.
