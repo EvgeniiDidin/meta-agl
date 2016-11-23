@@ -11,3 +11,4 @@ Common targets are:
     agl-demo-platform  (* default demo target)
     agl-demo-platform-qa
     agl-demo-platform-crosssdk
+    agl-demo-platform-html5
