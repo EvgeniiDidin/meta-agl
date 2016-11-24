@@ -123,24 +123,6 @@ function find_feature_dir() {
 	return 1
 }
 
-function process-feature-shortcuts() {
-    TOCHECK=$1
-    debug "processing feature shortcut $TOCHECK"
-    if $(echo "$FEATURES" | grep -q "$TOCHECK" 2>&1 ) ; then
-	featuredir=$(find_feature_dir $TOCHECK)
-	if test -d $featuredir; then
-	    tmpfeatures="$FEATURES $(cat $featuredir/included.inc)"
-	    tmpfeatures_uniq=$(echo $tmpfeatures | sed -e "s/$TOCHECK//g" -e 's/  / /g' | tr "[:blank:]" "\n" | sort -u )
-	    export FEATURES=$tmpfeatures_uniq
-	    debug "Features used: $FEATURES"
-	else
-	    error "No feature directory with this name: $TOCHECK"
-	    exit 1
-	fi
-    fi
-}
-
-
 function usage() {
     cat <<EOF >&2
 Usage: . $SCRIPT [options] [feature [feature [... ]]]
@@ -324,9 +306,6 @@ verbose "Command line arguments: ${GLOBAL_ARGS[@]}"
 
 # the remaining args are the features
 FEATURES="$@"
-process-feature-shortcuts agl-all-features
-process-feature-shortcuts agl-ci-change-features
-process-feature-shortcuts agl-ci-snapshot-features
 
 # validate the machine list
 debug "validating machines list"
