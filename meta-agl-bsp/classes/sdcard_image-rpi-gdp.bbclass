@@ -2,12 +2,28 @@ inherit sdcard_image-rpi
 
 IMAGE_CMD_rpi-sdimg () {
 
+	# Get rootfs size
+	if echo "${SDIMG_ROOTFS_TYPE}" | egrep -q "*\.xz"
+	then
+		ROOTPART_SIZE=`xz -l --robot ${SDIMG_ROOTFS} | grep "^file" | cut -f`
+	else
+		ROOTPART_SIZE=`du -Lb ${SDIMG_ROOTFS} | cut -f1`
+	fi
+
+	ROOTPART_SIZE=$(expr ${ROOTPART_SIZE} / 1024)
+
+	# just in case our file system block size is not a multiple of 1KiB
+	if [ $(expr ${ROOTPART_SIZE} % 1024) != 0 ];
+	then
+		ROOTPART_SIZE=$(expr ${ROOTPART_SIZE} + 1)
+	fi
+
 	# Align partitions
 	BOOT_SPACE_ALIGNED=$(expr ${BOOT_SPACE} + ${IMAGE_ROOTFS_ALIGNMENT} - 1)
 	BOOT_SPACE_ALIGNED=$(expr ${BOOT_SPACE_ALIGNED} - ${BOOT_SPACE_ALIGNED} % ${IMAGE_ROOTFS_ALIGNMENT})
-	SDIMG_SIZE=$(expr ${IMAGE_ROOTFS_ALIGNMENT} + ${BOOT_SPACE_ALIGNED} + $ROOTFS_SIZE)
+	SDIMG_SIZE=$(expr ${IMAGE_ROOTFS_ALIGNMENT} + ${BOOT_SPACE_ALIGNED} + $ROOTPART_SIZE)
 
-	echo "Creating filesystem with Boot partition ${BOOT_SPACE_ALIGNED} KiB and RootFS $ROOTFS_SIZE KiB"
+	echo "Creating filesystem with Boot partition ${BOOT_SPACE_ALIGNED} KiB and RootFS $ROOTPART_SIZE KiB"
 
 	# Check if we are building with device tree support
 	DTS="${@get_dts(d, None)}"
