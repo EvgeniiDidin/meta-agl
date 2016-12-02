@@ -8,7 +8,7 @@ MACHINE = "intel-corei7-64"
 #APPEND += "uvesafb.mode_option=1024x768-32"
 #APPEND += "uvesafb.mode_option=1280x1024-32"
 #APPEND += "uvesafb.mode_option=1600x1200-32"
-
+#
 # To avoid corrupt boot screen by systemd message, you can use serial
 # console separated from VGA console or disable all boot messages by
 # kernel command line.
@@ -18,9 +18,3 @@ MACHINE = "intel-corei7-64"
 #
 # All boot message will be off
 #APPEND += "quiet"
-
-# enabling HW acceleration by default
-IMAGE_INSTALL_append += " \
-        libva \
-        va-intel \
-        gstreamer-vaapi-1.0 "
