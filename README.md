@@ -72,10 +72,6 @@ Distribution and other platforms for In-Vehicle Infotainment system.
 `meta-agl-bsp` is a layer which contains required packages to boot AGL
 distribution on an emulated machine(QEMU).
 
-* `meta-agl/meta-agl-security`
-`meta-agl-security` is a layer which contains dependencies
-required by the security framework(s) - not the framework(s) itself.
-
 * `meta-agl/meta-netboot`
 `meta-netboot` contains the netboot initrd support recipes. This is needed
 in case of booting over the network as NFS does not support the securitylabels.
