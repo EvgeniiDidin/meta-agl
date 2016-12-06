@@ -18,3 +18,10 @@ MACHINE = "intel-corei7-64"
 #
 # All boot message will be off
 #APPEND += "quiet"
+
+# Enable Libvaapi for HW accelerated video support
+#
+IMAGE_INSTALL_append = " \
+        libva \
+        va-intel \
+        gstreamer-vaapi-1.0 "
