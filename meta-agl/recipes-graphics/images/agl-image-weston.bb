@@ -8,4 +8,4 @@ inherit core-image distro_features_check
 
 REQUIRED_DISTRO_FEATURES = "wayland"
 
-CORE_IMAGE_BASE_INSTALL += "weston weston-init weston-examples"
+CORE_IMAGE_BASE_INSTALL += "weston weston-examples"
