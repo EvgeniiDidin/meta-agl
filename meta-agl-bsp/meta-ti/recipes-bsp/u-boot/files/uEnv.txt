@@ -1,1 +1,1 @@
-fdtfile=dra7-evm-lcd-lg.dtb
+fdtfile=dra7-evm-lcd-osd.dtb
