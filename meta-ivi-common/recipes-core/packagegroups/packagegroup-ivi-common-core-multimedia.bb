@@ -26,5 +26,4 @@ RDEPENDS_${PN} += "\
         pulseaudio-module-loopback \
         ','', d)} \
     gstreamer1.0-meta-base \
-    audiomanager \
     "
