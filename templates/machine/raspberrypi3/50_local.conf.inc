@@ -31,3 +31,5 @@ PREFERRED_PROVIDER_virtual/bootloader_sota = "u-boot"
 
 IMAGE_INSTALL_append = " linux-firmware-brcm43430 kernel-modules linux-firmware "
 
+# Psplash causes crash on first boot on RPi
+IMAGE_FEATURES_remove = "splash"
