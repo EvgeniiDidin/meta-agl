@@ -9,7 +9,6 @@ LIC_FILES_CHKSUM += "\
 
 SRCREV = "cccb6a0da98372bd66787710249727ad6b0aaf72"
 
-LICENSE_${PN}-ibt              	= "Firmware-ibt_firmware"
 LICENSE_${PN}-ibt-license      	= "Firmware-ibt_firmware"
 LICENSE_${PN}-ibt-11-5 		= "Firmware-ibt_firmware"
 FILES_${PN}-ibt-license		= "/lib/firmware/LICENCE.ibt_firmware"
@@ -18,6 +17,6 @@ FILES_${PN}-ibt-11-5		= " \
 	/lib/firmware/intel/ibt-11-5.ddc \
 "
 
-#RDEPENDS_${PN}-ibt-11-5		= "${PN}-ibt-license"
+RDEPENDS_${PN}-ibt-11-5		+= "${PN}-ibt-license"
 
-PACKAGES =+ " ${PN}-ibt-license ${PN}-ibt ${PN}-ibt-11-5 "
+PACKAGES =+ " ${PN}-ibt-license ${PN}-ibt-11-5 "
