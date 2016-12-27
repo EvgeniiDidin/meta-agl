@@ -1,0 +1,64 @@
+Below are the environment variables that can be set in the u-boot console to boot the porter board in various configurations
+
+################## Gen3 options #####################
+# these options are common to Renesas Gen3 configurations, take care which board
+# you are using (h3ulcb, m3ulcb, salvator...):
+
+setenv 'bootkfile' 'Image'
+setenv 'bootkaddr' '0x48080000'
+
+# For h3ulcb
+setenv 'bootdfile' 'Image-r8a7795-h3ulcb.dtb'
+# For m3ulcb
+setenv 'bootdfile' 'Image-r8a7796-m3ulcb.dtb'
+setenv 'bootdaddr' '0x48000000'
+
+# For h3ulcb
+setenv 'bootifile' 'initramfs-netboot-image-h3ulcb.ext4.gz'
+# For m3ulcb
+setenv 'bootifile' 'initramfs-netboot-image-m3ulcb.ext4.gz'
+
+setenv 'bootiaddr' '0x5C3F9520'
+
+setenv 'bootargs_console' 'console=ttySC0,115200 ignore_loglevel'
+setenv 'bootargs_video' 'vmalloc=384M video=HDMI-A-1:1280x960-32@60'
+setenv 'bootargs_extra' 'rw rootfstype=ext4 rootwait rootdelay=2'
+
+################ Boot on MMC (SDcard) #################
+
+setenv 'bootargs_root' 'root=/dev/mmcblk1p1'
+setenv 'bootmmc' '0:1'
+setenv 'load_ker' 'ext4load mmc 0:1 ${bootkaddr} /boot/${bootkfile}'
+setenv 'load_dtb' 'ext4load mmc 0:1 ${bootdaddr} /boot/${bootdfile}'
+setenv 'bootcmd' 'setenv bootargs ${bootargs_console} ${bootargs_video} ${bootargs_root} ${bootargs_extra}; run bootkload_sd; booti ${bootkaddr} - ${bootdaddr}'
+
+################ Boot on MMC (SDcard) with initrd ######
+
+setenv 'bootargs_root' 'root=/dev/ram0 ramdisk_size=16384'
+setenv 'bootmmc' '1:1'
+setenv 'bootkload_sd' 'ext4load mmc ${bootmmc} ${bootkaddr} boot/${bootkfile}'
+setenv 'bootiload_sd' 'ext4load mmc ${bootmmc} ${bootiaddr} boot/${bootifile}'
+setenv 'load_dtb' 'ext4load mmc 0:1 ${bootdaddr} /boot/${bootdfile}'
+setenv 'bootcmd' 'setenv bootargs ${bootargs_console} ${bootargs_video} ${bootargs_root} ${bootargs_extra}; run bootkload_sd; run bootiload_sd; setenv initrd_size ${filesize}; booti ${bootkaddr} ${bootiaddr}:${initrd_size} ${bootdaddr}'
+
+################ Netboot through TFTP+NBD ##################
+# replace <IP> addresses by appropriate addresses. Example about h3ulcb
+# PLEASE ADJUST TO YOUR BOARD
+
+setenv 'ipaddr' '<board_IP>'
+setenv 'serverip' '<server_IP>'
+
+setenv 'bootargs_root' 'root=/dev/ram0 ramdisk_size=16384 ip=dhcp'
+setenv 'bootdaddr' '0x48000000'
+setenv 'bootdfile' 'Image-r8a7795-h3ulcb.dtb'
+setenv 'bootdload_net' 'tftp ${bootdaddr} h3ulcb/${bootdfile}'
+setenv 'bootkaddr' '0x48080000'
+setenv 'bootkfile' 'Image'
+setenv 'bootkload_net' 'tftp ${bootkaddr} h3ulcb/${bootkfile}'
+setenv 'bootiaddr' '0x5C3F9520'
+setenv 'bootifile' 'initramfs-netboot-image-h3ulcb.ext4.gz'
+setenv 'bootiload_net' 'tftp ${bootraddr} h3ulcb/${bootrfile}'
+setenv 'load_net' 'run bootkload_net; run bootdload_net; run bootiload_net; setenv initrd_size ${filesize}'
+
+setenv 'bootcmd' 'setenv bootargs ${bootargs_console} ${bootargs_video} ${bootargs_root} ${bootargs_extra} nbd.server=${serverip}; run load_net; booti ${bootkaddr} ${bootiaddr}:${initrd_size} ${bootdaddr}'
+
