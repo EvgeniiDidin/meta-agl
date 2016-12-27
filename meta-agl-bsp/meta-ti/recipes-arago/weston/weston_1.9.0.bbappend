@@ -19,17 +19,3 @@ SRC_URI += " \
 "
 
 RDEPENDS_${PN}_remove = "weston-conf"
-
-SRC_URI += " \
-      file://0001-ivi-shell-fix-TODO-which-expects-only-one-screen-in-.patch \
-      file://0002-ivi-shell-multi-screen-support-to-calcuration-of-a-m.patch \
-      file://0003-ivi-shell-avoid-update_prop-on-invisible-surfaces.patch    \
-      file://0004-ivi-shell-fix-layout_layer.view_list-is-not-initiliz.patch \
-      file://0005-ivi-shell-convert-from-screen-to-global-coordinates.patch  \
-      file://0006-ivi-shell-remove-a-code-which-expects-only-a-screen-.patch \
-      file://0007-ivi-shell-layout-Export-surface-destroy-callback.patch     \
-      file://0008-ivi-shell-Add-simple-IVI-shell-layout-controller.patch     \
-      file://0001-ivi-shell-Add-autolaunch-and-launch-rules-functional.patch \
-      file://0001-ivi-shell-layer-controller-ti-Improve-functionality.patch  \
-      file://0001-ivi-shell-Add-screenshooter-option.patch                   \
-      "
