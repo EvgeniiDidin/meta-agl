@@ -1,6 +1,10 @@
 MACHINE = "raspberrypi3"
 
-GPU_MEM = "128"
+GPU_MEM = "512"
+
+ENABLE_CMA = "1"
+CMA_LWM = "16"
+CMA_HWM = "32"
 
 CORE_IMAGE_EXTRA_INSTALL += "wayland weston"
 
