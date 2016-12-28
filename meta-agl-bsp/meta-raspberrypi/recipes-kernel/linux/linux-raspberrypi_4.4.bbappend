@@ -63,7 +63,7 @@ do_configure_append() {
       kernel_do_configure
 }
 
-
+CMDLINE_DEBUG = ""
 CMDLINE_append = " usbhid.mousepoll=0"
 
 KERNEL_MODULE_AUTOLOAD += "snd-bcm2835"
