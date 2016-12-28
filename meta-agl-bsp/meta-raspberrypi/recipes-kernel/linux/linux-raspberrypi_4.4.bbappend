@@ -66,6 +66,9 @@ do_configure_append() {
 CMDLINE_DEBUG = ""
 CMDLINE_append = " usbhid.mousepoll=0"
 
+# Add options to allow CMA to operate
+CMDLINE_append = ' ${@base_conditional("ENABLE_CMA", "1", "coherent_pool=6M smsc95xx.turbo_mode=N", "", d)}'
+
 KERNEL_MODULE_AUTOLOAD += "snd-bcm2835"
 KERNEL_MODULE_AUTOLOAD += "hid-multitouch"
 
