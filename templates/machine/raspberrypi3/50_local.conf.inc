@@ -1,6 +1,8 @@
 MACHINE = "raspberrypi3"
 
-GPU_MEM = "512"
+#GPU_MEM = "512"
+# Increase GPU_MEM for AGL apps (navi/poi)
+GPU_MEM = "640"
 
 ENABLE_CMA = "1"
 CMA_LWM = "16"
