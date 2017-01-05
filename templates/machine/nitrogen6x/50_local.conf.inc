@@ -1,0 +1,2 @@
+MACHINE = "nitrogen6x"
+
