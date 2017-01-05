@@ -21,7 +21,7 @@ KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/btusb.cfg"
 
 SRCREV = "${AUTOREV}"
 
-PV = "4.4.30+git${SRCPV}"
+PV = "4.4.31+git${SRCPV}"
 
 KERNEL_GIT_URI = "git://git.omapzoom.org/kernel/omap"
 BRANCH = "p-ti-lsk-linux-4.4.y-next"
@@ -29,3 +29,14 @@ SRC_URI_append = " \
                 "
 
 KERNEL_DEVICETREE_dra7xx-evm_append = " dra7-evm-vision.dtb dra72-evm-vision.dtb am57xx-evm.dtb"
+
+#-------------------------------------------------------------------------
+# smack patches for handling bluetooth
+
+SRC_URI_append_smack = "\
+       file://0001-Smack-File-receive-for-sockets.patch \
+       file://0002-smack-fix-cache-of-access-labels.patch \
+       file://0003-Smack-ignore-null-signal-in-smack_task_kill.patch \
+       file://0004-Smack-Assign-smack_known_web-label-for-kernel-thread.patch \
+"
+
