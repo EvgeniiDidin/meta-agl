@@ -16,3 +16,5 @@ MODULE_TARBALL_DEPLOY ?= "0"
 # Comment out below if want to use QtWebkit
 PACKAGECONFIG_remove_pn-qtquick1 = "webkit"
 
+
+ASSUME_PROVIDED_remove = "tar-native"
