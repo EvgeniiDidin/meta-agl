@@ -35,7 +35,7 @@ PREFERRED_PROVIDER_virtual/bootloader_sota = "u-boot"
 # For libomxil
 #LICENSE_FLAGS_WHITELIST = "commercial"
 
-IMAGE_INSTALL_append = " linux-firmware-brcm43430 kernel-modules linux-firmware "
+IMAGE_INSTALL_append = " kernel-modules linux-firmware "
 
 # Psplash causes crash on first boot on RPi
 IMAGE_FEATURES_remove = "splash"
