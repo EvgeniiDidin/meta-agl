@@ -21,8 +21,8 @@ IMAGE_FSTYPES_remove_sota = "rpi-sdimg"
 
 KERNEL_DEVICETREE_append = " overlays/vc4-kms-v3d-overlay.dtb"
 KERNEL_IMAGETYPE_sota = "uImage"
-PREFERRED_VERSION_linux-raspberrypi = "4.4.%"
-PREFERRED_VERSION_mesa = "11.%"
+PREFERRED_VERSION_linux-raspberrypi = "4.8.%"
+PREFERRED_VERSION_mesa = "12.%"
 
 PREFERRED_PROVIDER_virtual/egl = "mesa"
 PREFERRED_PROVIDER_virtual/libgles2 = "mesa"
