@@ -1,4 +1,4 @@
-FILESEXTRAPATHS_prepend := "${THISDIR}/pulseaudio-8.0:"
+FILESEXTRAPATHS_prepend := "${THISDIR}/pulseaudio-9.0:"
 
 SRC_URI += " \
 	file://0001-install-files-for-a-module-development.patch \
