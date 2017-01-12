@@ -33,6 +33,7 @@ IMAGE_CLASSES += "${@bb.utils.contains('DISTRO_FEATURES', 'agl-ota', 'image_type
 # normal image is rpi-sdimg, for sota it is rpi-sdimg-ota
 #IMAGE_FSTYPES += "${@bb.utils.contains('DISTRO_FEATURES', 'agl-ota', 'rpi-sdimg-ota', 'rpi-sdimg', d)}"
 ### both rpi-sdimg and rpi-sdimg-ota broken
+IMAGE_FSTYPES += "ext4.xz ext4.bmap tar.xz"
 
 KERNEL_IMAGETYPE_sota = "uImage"
 PREFERRED_PROVIDER_virtual/bootloader_sota = "u-boot"
