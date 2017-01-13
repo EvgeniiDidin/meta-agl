@@ -9,8 +9,8 @@ SPLASH_IMAGES="file://psplash-poky-img.h;outsuffix=default"
 
 inherit systemd
 
-SYSTEMD_PACKAGES = "${@base_contains('DISTRO_FEATURES', 'systemd', '${PN}', '', d)}"
-SYSTEMD_SERVICE_${PN} = "${@base_contains('DISTRO_FEATURES', 'systemd', 'psplash-start.service psplash-quit.service', '', d)}"
+SYSTEMD_PACKAGES = "${@bb.utils.contains('DISTRO_FEATURES', 'systemd', '${PN}', '', d)}"
+SYSTEMD_SERVICE_${PN} = "${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'psplash-start.service psplash-quit.service', '', d)}"
 
 do_configure_append () {
 	cd ${S}
@@ -18,7 +18,7 @@ do_configure_append () {
 }
 
 do_install_append () {
-    if ${@base_contains('DISTRO_FEATURES','systemd','true','false',d)}; then
+    if ${@bb.utils.contains('DISTRO_FEATURES','systemd','true','false',d)}; then
         install -d ${D}${systemd_unitdir}/system
         install -m 644 ${WORKDIR}/*.service ${D}/${systemd_unitdir}/system
     fi
