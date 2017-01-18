@@ -11,6 +11,4 @@ PACKAGES = "\
 
 ALLOW_EMPTY_${PN} = "1"
 
-RDEPENDS_${PN} += "\
-	automotive-message-broker \
-    "
+RDEPENDS_${PN} += " "
