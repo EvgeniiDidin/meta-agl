@@ -20,7 +20,7 @@ visibility: public
 actions:
 - deploy:
     timeout:
-      minutes: 10
+      minutes: 15
     to: nbd
     dtb:
       url: '@REPLACE_URL_PREFIX@/@REPLACE_DTB@'
@@ -31,6 +31,7 @@ actions:
       allow_modify: false
     nbdroot:
       url: '@REPLACE_URL_PREFIX@/@REPLACE_NBDROOT@'
+      compression: @REPLACE_NBDROOT_COMPRESSION@
     os: debian
     failure_retry: 2
 
