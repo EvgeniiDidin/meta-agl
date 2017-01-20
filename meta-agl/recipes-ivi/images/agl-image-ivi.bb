@@ -1,8 +1,11 @@
 SUMMARY = "A basic system of AGL distribution of IVI profile"
-require ${PN}.inc
+
+DESCRIPTION = "Basic image for baseline of AGL Distribution for IVI profile."
+
+require agl-image-ivi.inc
+
+LICENSE = "MIT"
 
 IMAGE_INSTALL_append = "\
-    packagegroup-agl-core \
-    packagegroup-agl-ivi \
-    packagegroup-ivi-common-core \
+    packagegroup-agl-image-ivi \
     "

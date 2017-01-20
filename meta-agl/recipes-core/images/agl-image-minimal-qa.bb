@@ -5,6 +5,8 @@ packages (e.g. commandline tools) for Quality Assurance(QA)."
 
 require agl-image-minimal.bb
 
+LICENSE = "MIT"
+
 IMAGE_INSTALL_append = " \
     packagegroup-ivi-common-test \
     "

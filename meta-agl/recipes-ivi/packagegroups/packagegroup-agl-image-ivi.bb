@@ -5,10 +5,15 @@ LICENSE = "MIT"
 inherit packagegroup
 
 PACKAGES = "\
-    packagegroup-agl-ivi \
+    packagegroup-agl-image-ivi \
     "
 
 ALLOW_EMPTY_${PN} = "1"
+
+RDEPENDS_${PN} += "\
+    packagegroup-agl-image-minimal \
+    packagegroup-ivi-common-core \
+"
 
 RDEPENDS_${PN} += "\
     packagegroup-agl-ivi-automotive \

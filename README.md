@@ -81,10 +81,9 @@ Packagegroups
 
 AGL package group design:
 
-* packagegroup-agl-core*
+* packagegroup-agl-image-minimal
 
         packagegroup-agl-core-automotive.bb
-        packagegroup-agl-core.bb
         packagegroup-agl-core-connectivity.bb
         packagegroup-agl-core-graphics.bb
         packagegroup-agl-core-kernel.bb
@@ -100,10 +99,9 @@ capable of allowing a device to boot.
 Subsystem should maintain packagegroup-agl-core-[subsystem].bb which should
 hold sufficient packages to build ``agl-image-minimal``.
 
-* packagegroup-agl-ivi*
+* packagegroup-agl-image-ivi
 
         packagegroup-agl-ivi-automotive.bb
-        packagegroup-agl-ivi.bb
         packagegroup-agl-ivi-connectivity.bb
         packagegroup-agl-ivi-graphics.bb
         packagegroup-agl-ivi-kernel.bb
