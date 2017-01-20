@@ -1,5 +1,2 @@
-INHERIT += "netboot"
-OVERRIDES .= ":netboot"
-
-# add 256MB of extra space in ext4 output image
-IMAGE_ROOTFS_EXTRA_SPACE ?= "262144"
+#see meta-agl/meta-netboot/conf/include/agl-netboot.inc
+require conf/include/agl-netboot.inc
