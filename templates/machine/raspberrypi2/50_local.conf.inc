@@ -28,3 +28,6 @@ UBOOT_MACHINE_sota = "rpi_3_32b_defconfig"
 PREFERRED_PROVIDER_virtual/bootloader_sota = "u-boot"
 # For libomxil
 #LICENSE_FLAGS_WHITELIST = "commercial"
+
+# Psplash causes crash on first boot on RPi
+IMAGE_FEATURES_remove = "splash"
