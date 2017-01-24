@@ -1,0 +1,33 @@
+From 757d7ace565c06e1302ba7c9244d839455e13881 Mon Sep 17 00:00:00 2001
+From: Gianluca Gennari <gennarone@gmail.com>
+Date: Sun, 2 Jun 2013 14:31:19 -0300
+Subject: [PATCH 3/3] [media] r820t: avoid potential memcpy buffer overflow in
+ shadow_store()
+
+The memcpy in shadow_store() could exceed buffer limits when r > 0.
+
+Signed-off-by: Gianluca Gennari <gennarone@gmail.com>
+Signed-off-by: Michael Krufky <mkrufky@linuxtv.org>
+Signed-off-by: Mauro Carvalho Chehab <mchehab@redhat.com>
+---
+ drivers/media/tuners/r820t.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/media/tuners/r820t.c b/drivers/media/tuners/r820t.c
+index 63062a9..0a5f96b 100644
+--- a/drivers/media/tuners/r820t.c
++++ b/drivers/media/tuners/r820t.c
+@@ -364,8 +364,8 @@ static void shadow_store(struct r820t_priv *priv, u8 reg, const u8 *val,
+ 	}
+ 	if (len <= 0)
+ 		return;
+-	if (len > NUM_REGS)
+-		len = NUM_REGS;
++	if (len > NUM_REGS - r)
++		len = NUM_REGS - r;
+ 
+ 	tuner_dbg("%s: prev  reg=%02x len=%d: %*ph\n",
+ 		  __func__, r + REG_SHADOW_START, len, len, val);
+-- 
+2.9.2
+
