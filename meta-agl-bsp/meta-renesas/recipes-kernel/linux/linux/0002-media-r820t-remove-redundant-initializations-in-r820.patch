@@ -1,0 +1,52 @@
+From e2e324d70defce7ffc4668085dc3c8ae580074e5 Mon Sep 17 00:00:00 2001
+From: Gianluca Gennari <gennarone@gmail.com>
+Date: Sun, 2 Jun 2013 14:30:09 -0300
+Subject: [PATCH 2/3] [media] r820t: remove redundant initializations in
+ r820t_attach()
+
+fe->tuner_priv and fe->ops.tuner_ops are initialized twice in r820t_attach().
+Remove the redundant initializations and also move fe->ops.tuner_ops
+initialization outside of the mutex lock (as in the xc4000 tuner code for example).
+
+Signed-off-by: Gianluca Gennari <gennarone@gmail.com>
+Signed-off-by: Michael Krufky <mkrufky@linuxtv.org>
+Signed-off-by: Mauro Carvalho Chehab <mchehab@redhat.com>
+---
+ drivers/media/tuners/r820t.c | 9 +++------
+ 1 file changed, 3 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/media/tuners/r820t.c b/drivers/media/tuners/r820t.c
+index 64f9738..63062a9 100644
+--- a/drivers/media/tuners/r820t.c
++++ b/drivers/media/tuners/r820t.c
+@@ -2310,8 +2310,6 @@ struct dvb_frontend *r820t_attach(struct dvb_frontend *fe,
+ 		break;
+ 	}
+ 
+-	memcpy(&fe->ops.tuner_ops, &r820t_tuner_ops, sizeof(r820t_tuner_ops));
+-
+ 	if (fe->ops.i2c_gate_ctrl)
+ 		fe->ops.i2c_gate_ctrl(fe, 1);
+ 
+@@ -2326,15 +2324,14 @@ struct dvb_frontend *r820t_attach(struct dvb_frontend *fe,
+ 
+ 	tuner_info("Rafael Micro r820t successfully identified\n");
+ 
+-	fe->tuner_priv = priv;
+-	memcpy(&fe->ops.tuner_ops, &r820t_tuner_ops,
+-			sizeof(struct dvb_tuner_ops));
+-
+ 	if (fe->ops.i2c_gate_ctrl)
+ 		fe->ops.i2c_gate_ctrl(fe, 0);
+ 
+ 	mutex_unlock(&r820t_list_mutex);
+ 
++	memcpy(&fe->ops.tuner_ops, &r820t_tuner_ops,
++			sizeof(struct dvb_tuner_ops));
++
+ 	return fe;
+ err:
+ 	if (fe->ops.i2c_gate_ctrl)
+-- 
+2.9.2
+
