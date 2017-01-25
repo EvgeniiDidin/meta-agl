@@ -27,7 +27,6 @@ RDEPENDS_${PN} += "\
     lmbench \
     ltp \
     nbench-byte \
-    netpipe \
     packagegroup-ivi-common-test-ltp \
     rt-tests \
     stress \
