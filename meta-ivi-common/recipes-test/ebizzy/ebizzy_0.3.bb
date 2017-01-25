@@ -7,6 +7,8 @@ SRC_URI = "http://downloads.sourceforge.net/project/ebizzy/ebizzy/${PV}/ebizzy-$
 SRC_URI[md5sum] = "af038bc506066bb3d28db08aba62bc38"
 SRC_URI[sha256sum] = "77286029d6348f3d9b3f04eae1feadb5ad1ad07b9f688f4d9f002960862467f2"
 
+INSANE_SKIP_${PN} = "ldflags"
+
 do_compile () {
 	${CC} -Wall -Wshadow -lpthread -o ebizzy ebizzy.c
 }

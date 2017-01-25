@@ -7,6 +7,7 @@ SRC_URI = "git://gerrit.automotivelinux.org/gerrit/src/qa-test-misc;protocol=htt
 SRCREV = "87cdfd4626c0cb47fc22f328867e49d6268df85c"
 
 inherit autotools
+INSANE_SKIP_${PN} = "ldflags"
 
 B = "${WORKDIR}/git/linus_stress"
 S = "${WORKDIR}/git"

@@ -15,6 +15,8 @@ SRC_URI[sha256sum] = "cd6309df1929d3e6b7bce1dbecc751849aeaafe17c01e05fd2567dc426
 
 DEPENDS = "cairo virtual/libsdl"
 
+INSANE_SKIP_${PN} = "ldflags"
+
 S = "${WORKDIR}/blobsallad-src"
 
 do_configure () {

@@ -8,6 +8,8 @@ SRCREV = "b355b7e1f43a19938895964f314484ffd8a39542"
 
 inherit autotools
 
+INSANE_SKIP_${PN} = "ldflags"
+
 B = "${WORKDIR}/git/ipv6connect"
 S = "${WORKDIR}/git"
 
