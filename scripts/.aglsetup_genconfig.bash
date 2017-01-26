@@ -324,8 +324,8 @@ for FEATURE in $FEATURES;do
     TMP_FEATURES="$TMP_FEATURES $FEATURE"
     TMP_FEATURES="$TMP_FEATURES $(find_feature_dependency $FEATURE $TMP_FEATURES)"
 done
-FEATURES=$TMP_FEATURES
-echo "Features used: $FEATURES"
+# remove duplicate features if any
+FEATURES=$(for x in $TMP_FEATURES; do echo $x; done | sort -u | awk '{printf("%s ",$1);}')
 
 # validate the features
 for f in $FEATURES; do
