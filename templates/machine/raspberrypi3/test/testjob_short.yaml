@@ -13,6 +13,8 @@ timeouts:
     minutes: 15
   connection:
     minutes: 5
+  bootloader-commands:
+    minutes: 4
 priority: medium
 visibility: public
 
