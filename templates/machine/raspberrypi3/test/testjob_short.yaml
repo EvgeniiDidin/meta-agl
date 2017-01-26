@@ -26,7 +26,7 @@ actions:
       url: '@REPLACE_URL_PREFIX@/@REPLACE_DTB@'
     kernel:
       url: '@REPLACE_URL_PREFIX@/@REPLACE_KERNEL@'
-    initramfs:
+    initrd:
       url: '@REPLACE_URL_PREFIX@/@REPLACE_INITRAMFS@'
       allow_modify: false
     nbdroot:
