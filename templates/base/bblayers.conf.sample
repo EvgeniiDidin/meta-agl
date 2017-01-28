@@ -48,7 +48,7 @@ BBLAYERS ?= " \
 
 BBLAYERS_NON_REMOVABLE ?= " \
   ${METADIR}/poky/meta \
-  ${METADIR}/poky/meta-yocto \
+  ${METADIR}/poky/meta-poky \
   ${METADIR}//meta-agl/meta-agl \
   "
 
