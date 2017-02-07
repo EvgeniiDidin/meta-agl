@@ -2,7 +2,9 @@
 #-------------------------------------------------
 ## Graphics section ##
 #-------------------------------------------------
-PACKAGES_GFX_${MACHINE} = "omapdrm-pvr"
+# disable for morty branch
+# PACKAGES_GFX_${MACHINE} = "omapdrm-pvr"
+PACKAGES_GFX_${MACHINE} = " "
 
 # Enable Gfx Pkgs
 MACHINE_FEATURES_append = " sgx"
@@ -47,7 +49,6 @@ PREFERRED_VERSION_virtual/kernel  = "4.4"
 IMAGE_INSTALL_append = " \
      ${PACKAGES_GFX}     \
      ${PACKAGES_MULTIMEDIA}     \
-     cmem \
 "
 
 ## ATTENTION, this is needed right now to build meta-ti with AGL: ##
