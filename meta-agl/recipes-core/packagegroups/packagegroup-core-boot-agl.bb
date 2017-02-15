@@ -35,6 +35,7 @@ RDEPENDS_${PN} = "\
     base-files \
     base-passwd \
     busybox \
+    run-agl-postinsts \
     ${@bb.utils.contains("DISTRO_FEATURES", "sysvinit", "${SYSVINIT_SCRIPTS}", "", d)} \
     ${@bb.utils.contains("MACHINE_FEATURES", "keyboard", "${VIRTUAL-RUNTIME_keymaps}", "", d)} \
     netbase \
