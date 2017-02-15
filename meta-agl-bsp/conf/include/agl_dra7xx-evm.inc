@@ -2,9 +2,7 @@
 #-------------------------------------------------
 ## Graphics section ##
 #-------------------------------------------------
-# disable for morty branch
-# PACKAGES_GFX_${MACHINE} = "omapdrm-pvr"
-PACKAGES_GFX_${MACHINE} = " "
+PACKAGES_GFX_${MACHINE} = "omapdrm-pvr"
 
 # Enable Gfx Pkgs
 MACHINE_FEATURES_append = " sgx"
