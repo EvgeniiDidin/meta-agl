@@ -340,7 +340,7 @@ NOTE: To boot weston on porter board, we need keyboard and mouse. (USB2.0 can be
 >     => setenv bootargs_console console=ttySC6,${baudrate}
 >     => setenv bootargs_video vmalloc=384M video=HDMI-A-1:1024x768-32@60
 >     => setenv bootcmd_sd 'ext4load mmc 0:1 0x40007fc0 boot/uImage;ext4load mmc 0:1 0x40f00000 boot/uImage-r8a7791-porter.dtb'
->     => setenv bootcmd 'setenv bootargs ${bootargs_console} ${bootargs_video} root=/dev/mmcblk0p1 rw rootfstype=ext3;run bootcmd_sd;bootm 0x40007fc0 - 0x40f00000'
+>     => setenv bootcmd 'setenv bootargs ${bootargs_console} ${bootargs_video} root=/dev/mmcblk0p1 rw rootfstype=ext4;run bootcmd_sd;bootm 0x40007fc0 - 0x40f00000'
 >     => saveenv
 
 ##### Boot from SD card
