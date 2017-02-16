@@ -19,4 +19,5 @@ RDEPENDS_${PN} = "\
         screen \
         usbutils \
         rsync \
+        tree \
         "
