@@ -12,6 +12,7 @@ RDEPENDS_${PN} = "\
         gdb \
         valgrind \
         perf \
+        htop \
         powertop \
         latencytop \
         systemtap \
