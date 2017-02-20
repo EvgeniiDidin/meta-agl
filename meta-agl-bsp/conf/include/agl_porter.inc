@@ -182,7 +182,6 @@ DISTRO_FEATURES_append = " h264avcenc_lib"
 # Commit united image to OSTree, not just uImage
 OSTREE_KERNEL = "uImage+dtb"
 
-# OTA-enabled live image
-IMAGE_CLASSES_append_sota = " image_types_uboot sdcard_image-porter-ota"
-IMAGE_FSTYPES += "${@bb.utils.contains('DISTRO_FEATURES', 'agl-ota', 'porter-sdimg-ota  ', '', d)}"
+IMAGE_CLASSES_append_sota = " image_types_uboot "
+IMAGE_BOOT_FILES_sota = "porter-bootfiles/*"
 
