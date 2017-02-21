@@ -67,6 +67,13 @@ function list_all_machines() {
 	done
 }
 
+function validate_builddir() {
+	if [[ "$BUILDDIR" =~ [[:space:]] ]]; then
+		error "Build dir '$BUILDDIR' shouldn't contain any space"
+	fi
+	debug "Build dir is valid"
+}
+
 function validate_machines() {
 	list_all_machines | sort | uniq -c | while read cnt machine; do
 		[[ $cnt == 1 ]] && continue
@@ -335,7 +342,8 @@ done
 
 # validate build dir
 debug "validating builddir $BUILDDIR"
-BUILDDIR=$(mkdir -p $BUILDDIR && cd $BUILDDIR && pwd -P)
+BUILDDIR=$(mkdir -p "$BUILDDIR" && cd "$BUILDDIR" && pwd -P)
+validate_builddir
 
 ###########################################################################################
 function dump_log() {
