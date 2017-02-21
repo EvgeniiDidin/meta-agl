@@ -12,3 +12,8 @@ PACKAGECONFIG_remove_pn-qtquick1 = "webkit"
 
 
 ASSUME_PROVIDED_remove = "tar-native"
+
+# Use static IDs to enable full-filesystem updates
+USERADDEXTENSION = "useradd-staticids"
+USERADD_ERROR_DYNAMIC = "error"
+
