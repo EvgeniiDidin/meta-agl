@@ -17,4 +17,4 @@ SRC_URI += " file://rtl_sdr.cfg \
 
 # disk drivers for vmdk
 SRC_URI_append_qemux86 = " file://vbox-vmware-sata.cfg "
-SRC_URI_append_qemux86_64 = " file://vbox-vmware-sata.cfg "
+SRC_URI_append_qemux86-64 = " file://vbox-vmware-sata.cfg "
