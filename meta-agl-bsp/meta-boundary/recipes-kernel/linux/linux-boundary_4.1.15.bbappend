@@ -1,5 +1,7 @@
 FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
 
+DEPENDS += "kern-tools-native"
+
 # Enable support for AR9271
 SRC_URI_append = " file://ath9k_htc.cfg"
 
@@ -14,10 +16,6 @@ SRC_URI_append = " file://hid.cfg"
 
 # Enable support for RTLSDR
 SRC_URI_append = " file://rtl_sdr.cfg"
-
-# Set security default to SMACK
-SRC_URI_append = " file://smack.cfg"
-SRC_URI_append = " file://smack-default-lsm.cfg"
 
 # returns all the elements from the src uri that are .cfg files
 def find_cfgs(d):
