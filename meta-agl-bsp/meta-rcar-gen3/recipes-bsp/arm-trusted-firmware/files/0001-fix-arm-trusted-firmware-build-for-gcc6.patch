@@ -1,17 +1,17 @@
-From 8cb6df40576297689752a6434235033f01730473 Mon Sep 17 00:00:00 2001
-From: Ronan <ronan.lemartret@iot.bzh>
-Date: Fri, 6 Jan 2017 17:39:29 +0100
-Subject: [PATCH] fix arm-trusted-firmware build for gcc6
+From 26927f2aff43607b422ce5cb463ee4eccbdaef5a Mon Sep 17 00:00:00 2001
+From: Ronan Le Martret <ronan.lemartret@iot.bzh>
+Date: Thu, 23 Feb 2017 14:18:06 +0100
+Subject: [PATCH] Fix arm-trusted-firmware build for gcc6
 
-Signed-off-by: Ronan <ronan.lemartret@iot.bzh>
+Signed-off-by: Ronan Le Martret <ronan.lemartret@iot.bzh>
 ---
- include/bl31/runtime_svc.h | 2 +-
+ include/lib/smcc.h | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/include/bl31/runtime_svc.h b/include/bl31/runtime_svc.h
-index f112418..0125fc8 100644
---- a/include/bl31/runtime_svc.h
-+++ b/include/bl31/runtime_svc.h
+diff --git a/include/lib/smcc.h b/include/lib/smcc.h
+index c415ba1..e648692 100644
+--- a/include/lib/smcc.h
++++ b/include/lib/smcc.h
 @@ -57,7 +57,7 @@
  #define SMC_64				1
  #define SMC_32				0
