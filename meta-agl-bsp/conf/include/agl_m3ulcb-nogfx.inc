@@ -9,3 +9,4 @@ BBMASK = "gles-user-module|kernel-module-gles|wayland-kms|libgbm"
 # Mask MMP recipes
 BBMASK .= "|kernel-module-uvcs-drv|omx-user-module"
 
+BBMASK .= "|meta-renesas-rcar-gen3/meta-rcar-gen3/recipes-forward-port/"
