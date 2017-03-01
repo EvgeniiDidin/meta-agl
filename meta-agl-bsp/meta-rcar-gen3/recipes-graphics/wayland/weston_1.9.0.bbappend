@@ -6,3 +6,4 @@ FILES_${PN}_append_rcar-gen3 = " \
     ${libexecdir}/weston-desktop-shell \
 "
 
+SRC_URI_remove = "file://fix-touchscreen-crash.patch"
