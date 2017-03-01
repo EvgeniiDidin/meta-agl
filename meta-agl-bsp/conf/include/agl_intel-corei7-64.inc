@@ -12,7 +12,7 @@
 # kernel command line.
 #
 # Configuration for serial console
-#APPEND += "console=ttyS0,115200n8"
+APPEND += "console=ttyS0,115200n8 reboot=efi"
 #
 # All boot message will be off
 #APPEND += "quiet"
