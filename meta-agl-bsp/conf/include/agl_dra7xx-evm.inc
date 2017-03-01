@@ -47,6 +47,7 @@ PREFERRED_VERSION_virtual/kernel  = "4.4"
 IMAGE_INSTALL_append = " \
      ${PACKAGES_GFX}     \
      ${PACKAGES_MULTIMEDIA}     \
+     cmem \
 "
 
 ## ATTENTION, this is needed right now to build meta-ti with AGL: ##
