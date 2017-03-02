@@ -20,6 +20,7 @@ SRC_URI_append = " file://btusb.cfg"
 KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/btusb.cfg"
 
 SRCREV = "${AUTOREV}"
+SRCREV_chinook = "89944627d53a9c9d792f0106dc6fcf8f8d5e98c2"
 
 PV = "4.4.31+git${SRCPV}"
 
