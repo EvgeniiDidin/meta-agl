@@ -1,0 +1,11 @@
+DEVICE_TYPE=renesas-porter-uboot
+DEVICE_NAME=porter
+DEVICE_DTB=uImage-r8a7791-porter.dtb
+DEVICE_KERNEL=uImage
+DEVICE_INITRAMFS=initramfs-netboot-image-porter.ext4.gz.u-boot
+DEVICE_NBDROOT=core-image-minimal-porter.ext4.xz
+DEVICE_NBDROOT_COMPRESSION=xz
+DEVICE_BOOT_METHOD=u-boot
+DEVICE_BOOT_TYPE=bootm
+#DEVICE_URL_PREFIX=https://download.automotivelinux.org/AGL
+#
