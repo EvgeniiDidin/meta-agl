@@ -25,6 +25,7 @@ YOCTO_LAYERS = " \
 AGL_CORE_LAYERS = " \
   ${METADIR}/meta-agl/meta-ivi-common \
   ${METADIR}/meta-agl/meta-agl \
+  ${METADIR}/meta-agl/meta-agl-distro \
   ${METADIR}/meta-agl/meta-agl-bsp \
   "
 
