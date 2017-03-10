@@ -3,7 +3,9 @@ PACKAGECONFIG = "ogg flac wave m3u pls jpeg png"
 
 FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
 
-SRC_URI += "file://lightmediascanner.service"
+SRC_URI += "file://lightmediascanner.service \
+            file://plugin-ogg-fix-chucksize-issue.patch \
+           "
 
 inherit systemd
 
