@@ -7,6 +7,7 @@ PACKAGECONFIG[lms] = "--enable-lms-plugin,--disable-lms-plugin,sqlite3"
 # LightMediaScanner plugin patches
 SRC_URI += "file://0001-Add-LightMediaScanner-plugin.patch \
             file://0002-lms-add-C-source-files.patch \
+            file://0001-Fix-missing-link-to-unistring-for-lms-plugin.patch \
             file://rygel.service \
             "
 
