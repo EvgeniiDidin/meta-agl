@@ -38,7 +38,7 @@ PACKAGES_MULTIMEDIA   = " \
     ${GSTREAMER_PLUGINS} \
 "
 
-PREFERRED_VERSION_ipumm-fw          = "3.00.08.02"
+PREFERRED_VERSION_ipumm-fw          = "3.00.13.00"
 
 PREFERRED_PROVIDER_virtual/kernel  = "linux-ti-staging"
 PREFERRED_VERSION_virtual/kernel  = "4.4"
