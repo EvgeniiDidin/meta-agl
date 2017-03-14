@@ -1,6 +1,5 @@
 SUMMARY = "Provides a set of tools for development for AGL DISTRO"
-
-PR = "r1"
+LICENSE = "MIT"
 
 inherit packagegroup
 
