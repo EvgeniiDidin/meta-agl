@@ -12,10 +12,8 @@ function copy_mm_packages() {
         if [ ! -d $METADIR/binary-tmp ]; then
                 if [ -f $DOWNLOAD_DIR/$ZIP_1 -a -f $DOWNLOAD_DIR/$ZIP_2 ]; then
                         mkdir $METADIR/binary-tmp
-                        cd $METADIR/binary-tmp
-                        unzip -o $DOWNLOAD_DIR/$ZIP_1
-                        unzip -o $DOWNLOAD_DIR/$ZIP_2
-                        cd -
+                        unzip -o $DOWNLOAD_DIR/$ZIP_1 -d $METADIR/binary-tmp
+                        unzip -o $DOWNLOAD_DIR/$ZIP_2 -d $METADIR/binary-tmp
                 else
                         echo -n "The graphics and multimedia acceleration packages for "
                         echo -e "the R-Car Gen3 board can be download from :"
