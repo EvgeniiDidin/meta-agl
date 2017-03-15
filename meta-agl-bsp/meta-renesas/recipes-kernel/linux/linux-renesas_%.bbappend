@@ -11,6 +11,7 @@ SRC_URI += " file://disable_delay_printk.patch \
              file://0001-media-r820t-do-not-double-free-fe-tuner_priv-in-r820.patch \
              file://0002-media-r820t-remove-redundant-initializations-in-r820.patch \
              file://0003-media-r820t-avoid-potential-memcpy-buffer-overflow-i.patch \
+             file://hciattach.cfg \
             "
 
 KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/ath9k_htc.cfg ${WORKDIR}/rtl_sdr.cfg"
