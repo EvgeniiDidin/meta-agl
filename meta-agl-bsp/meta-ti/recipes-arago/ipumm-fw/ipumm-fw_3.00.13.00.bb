@@ -31,5 +31,3 @@ do_install() {
 }
 
 FILES_${PN} += "${base_libdir}/firmware/${TARGET}"
-
-PR = "r5"

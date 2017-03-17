@@ -6,7 +6,6 @@
 SUMMARY = "Minimal boot requirements"
 DESCRIPTION = "The minimal set of packages required to boot the system"
 LICENSE = "MIT"
-PR = "r17"
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
