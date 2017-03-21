@@ -45,3 +45,5 @@ IMAGE_INSTALL_append_rcar-gen3 = " \
 	omx-user-module \
 	weston-bin \
 "
+
+BBMASK .= "|meta-renesas-rcar-gen3/meta-rcar-gen3/recipes-forward-port/"
