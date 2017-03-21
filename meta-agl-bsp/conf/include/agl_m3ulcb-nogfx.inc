@@ -7,5 +7,5 @@ IMAGE_INSTALL_append = " \
 # Mask graphic Pkgs
 BBMASK = "gles-user-module|kernel-module-gles|wayland-kms|libgbm"
 # Mask MMP recipes
-BBMASK .= "|kernel-module-uvcs|omx-user-module"
+BBMASK .= "|kernel-module-uvcs-drv|omx-user-module"
 
