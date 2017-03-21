@@ -1,0 +1,30 @@
+From 1e13c6d494a8b542c2a7f8251afc7aec401e3ad8 Mon Sep 17 00:00:00 2001
+From: Ronan Le Martret <ronan.lemartret@iot.bzh>
+Date: Tue, 7 Feb 2017 17:13:47 +0100
+Subject: [PATCH] Fix ivi-application lib install
+
+ * libivi-application.so must be a link to
+    libivi-application.so.X.X.XX
+ * fix yocto package QA
+
+Signed-off-by: Ronan Le Martret <ronan.lemartret@iot.bzh>
+---
+ protocol/CMakeLists.txt | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/protocol/CMakeLists.txt b/protocol/CMakeLists.txt
+index 613a1a6..09d5126 100644
+--- a/protocol/CMakeLists.txt
++++ b/protocol/CMakeLists.txt
+@@ -170,6 +170,8 @@ install(
+     DESTINATION include/ilm
+ )
+ 
++SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES VERSION ${ILM_API_VERSION} SOVERSION ${ILM_API_VERSION})
++
+ #=============================================================================================
+ # generate documentation for ivi-application API
+ #=============================================================================================
+-- 
+2.6.6
+
