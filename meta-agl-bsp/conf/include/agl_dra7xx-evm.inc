@@ -41,7 +41,7 @@ PACKAGES_MULTIMEDIA   = " \
 PREFERRED_VERSION_ipumm-fw          = "3.00.13.00"
 
 PREFERRED_PROVIDER_virtual/kernel  = "linux-ti-staging"
-PREFERRED_VERSION_virtual/kernel  = "4.4"
+PREFERRED_VERSION_virtual/kernel  = "4.9"
 
 # Distribution-specific runtime components
 IMAGE_INSTALL_append = " \
