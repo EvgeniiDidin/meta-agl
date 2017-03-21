@@ -50,11 +50,5 @@ IMAGE_INSTALL_append = " \
      cmem \
 "
 
-## ATTENTION, this is needed right now to build meta-ti with AGL: ##
-## due to meta-ti being based on YP 1.8 instead of YP 2.0
-BBMASK  = "meta-ti/.*eudev"
-
-
-
 IMAGE_CLASSES_append_sota = " image_types_uboot sdcard_image-dra7xx-evm-ota"
 IMAGE_FSTYPES += "${@bb.utils.contains('DISTRO_FEATURES', 'agl-ota', 'dra7xx-evm-sdimg-ota  ', '', d)}"
