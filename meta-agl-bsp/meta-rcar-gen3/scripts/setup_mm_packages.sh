@@ -7,13 +7,14 @@ COPY_SCRIPT="$METADIR/meta-renesas-rcar-gen3/meta-rcar-gen3/docs/sample/copyscri
 
 test -f ${XDG_CONFIG_HOME:-~/.config}/user-dirs.dirs && source ${XDG_CONFIG_HOME:-~/.config}/user-dirs.dirs
 DOWNLOAD_DIR=${XDG_DOWNLOAD_DIR:-$HOME/Downloads}
+EXTRACT_DIR=$METADIR/binary-tmp
 
 function copy_mm_packages() {
-        if [ ! -d $METADIR/binary-tmp ]; then
+        if [ ! -d $EXTRACT_DIR ]; then
                 if [ -f $DOWNLOAD_DIR/$ZIP_1 -a -f $DOWNLOAD_DIR/$ZIP_2 ]; then
-                        mkdir $METADIR/binary-tmp
-                        unzip -o $DOWNLOAD_DIR/$ZIP_1 -d $METADIR/binary-tmp
-                        unzip -o $DOWNLOAD_DIR/$ZIP_2 -d $METADIR/binary-tmp
+                        mkdir $EXTRACT_DIR
+                        unzip -o $DOWNLOAD_DIR/$ZIP_1 -d $EXTRACT_DIR
+                        unzip -o $DOWNLOAD_DIR/$ZIP_2 -d $EXTRACT_DIR
                 else
                         echo -n "The graphics and multimedia acceleration packages for "
                         echo -e "the R-Car Gen3 board can be downloaded from:"
@@ -30,7 +31,7 @@ function copy_mm_packages() {
 
         if [ -f $COPY_SCRIPT ]; then
                 cd $METADIR/meta-renesas-rcar-gen3/
-                $COPY_SCRIPT -d -f $METADIR/binary-tmp
+                $COPY_SCRIPT -d -f $EXTRACT_DIR
                 cd ..
         else
                 echo "scripts to copy drivers for Gen3 not found."
