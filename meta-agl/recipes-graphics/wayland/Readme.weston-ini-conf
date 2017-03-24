@@ -1,0 +1,36 @@
+#Generate a weston.ini file:
+
+To generate the weston.ini file:
+
+'''
+[core]
+backend=desktop-shell.so
+shell=ivi-shell.so
+'''
+
+Just create a Variable Flag:
+
+'''
+WESTONCORE[backend]??="drm-backend.so"
+WESTONCORE[shell]??="desktop-shell.so"
+'''
+
+And add it to the Variable Flag WESTONSECTION, with the name of the section:
+'''
+WESTONSECTION[WESTONCORE]?="core"
+'''
+
+#You can custumize weston.ini by create a weston-ini-conf.bbappend:
+
+'''
+WESTONCORE[repaint-window] ??= "34"
+'''
+
+This will generate weston.ini file:
+
+'''
+[core]
+backend=desktop-shell.so
+shell=ivi-shell.so
+repaint-window=34
+'''
