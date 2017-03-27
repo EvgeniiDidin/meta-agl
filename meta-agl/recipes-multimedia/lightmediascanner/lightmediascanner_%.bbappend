@@ -5,6 +5,8 @@ FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
 
 SRC_URI += "file://lightmediascanner.service \
             file://plugin-ogg-fix-chucksize-issue.patch \
+            file://lightmediascanner.rules \
+            file://lightmediascanner.sh \
            "
 
 inherit systemd
@@ -19,6 +21,11 @@ do_install_append() {
               mkdir -p ${D}/etc/systemd/user/default.target.wants/
               ln -sf ${systemd_user_unitdir}/lightmediascanner.service ${D}/etc/systemd/user/dbus-org.lightmediascanner.service
               ln -sf ${systemd_user_unitdir}/lightmediascanner.service ${D}/etc/systemd/user/default.target.wants/lightmediascanner.service
+       fi
+
+       if ${@bb.utils.contains('DISTRO_FEATURES', 'automount', 'true', 'false', d)}; then
+              install -m 644 -p -D ${WORKDIR}/lightmediascanner.rules ${D}/etc/udev/rules.d/lightmediascanner.rules
+              install -m 755 -p -D ${WORKDIR}/lightmediascanner.sh ${D}/etc/udev/scripts/lightmediascanner.sh
        fi
 }
 
