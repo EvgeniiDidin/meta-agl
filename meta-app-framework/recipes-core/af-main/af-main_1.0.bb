@@ -59,13 +59,17 @@ SRC_URI += "\
 	file://add-qt-wayland-shell-integration.patch \
 "
 
-do_install_append() {
+do_install_append_class-target() {
     install -d ${D}${bindir}
-    install -d -m 0775 ${D}${systemd_units_root}/{system,user}
-    install -d -m 0775 ${D}${systemd_units_root}/{system,user}/default.target.wants
-    install -d ${D}${afm_datadir}/{applications,icons}
+    install -d -m 0775 ${D}${systemd_units_root}/system
+    install -d -m 0775 ${D}${systemd_units_root}/user
+    install -d -m 0775 ${D}${systemd_units_root}/system/default.target.wants
+    install -d -m 0775 ${D}${systemd_units_root}/user/default.target.wants
+    install -d ${D}${afm_datadir}/applications
+    install -d ${D}${afm_datadir}/icons
     if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
-        mkdir -p ${D}${sysconfdir}/systemd/{system,user}/default.target.wants
+        mkdir -p ${D}${sysconfdir}/systemd/system/default.target.wants
+        mkdir -p ${D}${sysconfdir}/systemd/user/default.target.wants
         ln -sf ${systemd_user_unitdir}/afm-user-daemon.service ${D}${sysconfdir}/systemd/user/default.target.wants
     fi
     install -m 0755 ${WORKDIR}/afm-install ${D}${bindir}
