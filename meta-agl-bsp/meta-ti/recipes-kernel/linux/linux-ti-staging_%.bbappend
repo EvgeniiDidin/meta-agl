@@ -15,17 +15,6 @@ KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/rtl_sdr.cfg"
 SRC_URI_append = " file://btusb.cfg"
 KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/btusb.cfg"
 
-SRCREV = "${AUTOREV}"
-
-PV = "4.4.31+git${SRCPV}"
-
-KERNEL_GIT_URI = "git://git.omapzoom.org/kernel/omap"
-BRANCH = "p-ti-lsk-linux-4.4.y-next"
-SRC_URI_append = " \
-                "
-
-KERNEL_DEVICETREE_dra7xx-evm_append = " dra7-evm-vision.dtb dra72-evm-vision.dtb am57xx-evm.dtb"
-
 #-------------------------------------------------------------------------
 # smack patches for handling bluetooth
 
