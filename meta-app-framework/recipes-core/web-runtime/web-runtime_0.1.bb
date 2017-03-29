@@ -14,6 +14,10 @@ SRC_URI = "\
 
 RDEPENDS_${PN} = "qtwebkit-qmlplugins"
 
+PROVIDES += "virtual/webruntime"
+# add also RPROVIDES to satisfy the packagegroup
+RPROVIDES_${PN} += "virtual/webruntime"
+
 do_configure() {
     :
 }
