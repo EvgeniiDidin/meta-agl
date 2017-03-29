@@ -1,0 +1,26 @@
+From 0b424ab0cd7811f158186d04b868aa2d88559df2 Mon Sep 17 00:00:00 2001
+From: Matt Ranostay <matt.ranostay@konsulko.com>
+Date: Tue, 28 Mar 2017 22:15:21 -0700
+Subject: [PATCH] Fix -Wformat-security issue in named-open
+
+Signed-off-by: Matt Ranostay <matt.ranostay@konsulko.com>
+---
+ src/tests/named-open.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/tests/named-open.c b/src/tests/named-open.c
+index 025aa506dad6..dea885babaae 100644
+--- a/src/tests/named-open.c
++++ b/src/tests/named-open.c
+@@ -49,7 +49,7 @@ main (int argc, char *argv[])
+ 	uiomux_list_device(&name, &count);
+ 
+ 	for (i = 0; i < count; i++)
+-		printf(name[i]);
++		printf("%s", name[i]);
+ 
+ 	uiomux_list_device(&name2, &count);
+ 
+-- 
+2.11.0
+
