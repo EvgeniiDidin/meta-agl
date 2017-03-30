@@ -20,6 +20,9 @@ APPEND += "quiet"
 # Build updatable image. Only takes effect when sota.bbclass is inherited
 DISTRO_FEATURES_append = " sota"
 
+# Image support
+AGL_EXTRA_IMAGE_FSTYPES = "vmdk.xz"
+
 # Root device
 ROOT_VM = "root=PARTUUID=${DISK_SIGNATURE}-02"
 
