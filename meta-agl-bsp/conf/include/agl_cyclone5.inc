@@ -1,0 +1,1 @@
+OSTREE_BOOTLOADER ?= "u-boot"

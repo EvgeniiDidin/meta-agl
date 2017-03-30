@@ -8,3 +8,4 @@ IMAGE_INSTALL_append = " \
         libva \
         va-intel \
         gstreamer-vaapi-1.0 "
+OSTREE_BOOTLOADER ?= "u-boot"

@@ -48,3 +48,4 @@ IMAGE_INSTALL_append_rcar-gen3 = " \
 "
 
 BBMASK .= "|meta-renesas-rcar-gen3/meta-rcar-gen3/recipes-forward-port/"
+OSTREE_BOOTLOADER ?= "u-boot"

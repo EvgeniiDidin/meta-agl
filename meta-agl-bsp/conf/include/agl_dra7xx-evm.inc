@@ -50,3 +50,4 @@ IMAGE_INSTALL_append = " \
 
 IMAGE_CLASSES_append_sota = " image_types_uboot sdcard_image-dra7xx-evm-ota"
 IMAGE_FSTYPES += "${@bb.utils.contains('DISTRO_FEATURES', 'agl-ota', 'dra7xx-evm-sdimg-ota  ', '', d)}"
+OSTREE_BOOTLOADER ?= "u-boot"

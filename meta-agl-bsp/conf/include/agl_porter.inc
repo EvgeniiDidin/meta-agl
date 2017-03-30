@@ -185,3 +185,4 @@ OSTREE_KERNEL = "uImage+dtb"
 IMAGE_CLASSES_append_sota = " image_types_uboot "
 IMAGE_BOOT_FILES_sota = "porter-bootfiles/*"
 
+OSTREE_BOOTLOADER ?= "u-boot"

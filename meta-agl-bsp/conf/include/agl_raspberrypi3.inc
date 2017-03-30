@@ -44,3 +44,4 @@ IMAGE_INSTALL_append = " kernel-modules linux-firmware "
 
 # Psplash causes crash on first boot on RPi
 IMAGE_FEATURES_remove = "splash"
+OSTREE_BOOTLOADER ?= "u-boot"
