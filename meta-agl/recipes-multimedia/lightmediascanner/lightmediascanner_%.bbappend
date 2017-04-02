@@ -5,6 +5,7 @@ FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
 
 SRC_URI += "file://lightmediascanner.service \
             file://plugin-ogg-fix-chucksize-issue.patch \
+            file://dbus-lightmediascanner.conf \
             file://lightmediascanner.rules \
             file://lightmediascanner.sh \
            "
@@ -27,6 +28,9 @@ do_install_append() {
               install -m 644 -p -D ${WORKDIR}/lightmediascanner.rules ${D}/etc/udev/rules.d/lightmediascanner.rules
               install -m 755 -p -D ${WORKDIR}/lightmediascanner.sh ${D}/etc/udev/scripts/lightmediascanner.sh
        fi
+
+       install -d ${D}/etc/dbus-1/session.d
+       install -m 0644 ${WORKDIR}/dbus-lightmediascanner.conf ${D}/etc/dbus-1/session.d/lightmediascanner.conf
 }
 
 FILES_${PN} += " \
