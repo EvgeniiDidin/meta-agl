@@ -23,4 +23,8 @@ IMAGE_INSTALL_append = " \
         libva \
         va-intel \
         gstreamer-vaapi-1.0 "
+
 OSTREE_BOOTLOADER ?= "u-boot"
+PREFERRED_PROVIDER_virtual/bootloader_sota ?= "u-boot-ota"
+UBOOT_MACHINE_sota ?= "minnowmax_defconfig"
+
