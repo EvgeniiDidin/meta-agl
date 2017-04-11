@@ -179,11 +179,4 @@ DISTRO_FEATURES_append = " h264avcenc_lib"
 # ARM AAC Encode Middleware for Linux
 #DISTRO_FEATURES_append = " aacenc_mdw"
 
-# Commit united image to OSTree, not just uImage
-OSTREE_KERNEL = "uImage+dtb"
-
-EXTRA_IMAGEDEPENDS_append_sota = " porter-bootfiles"
-IMAGE_CLASSES_append_sota = " image_types_uboot "
-IMAGE_BOOT_FILES_sota = "porter-bootfiles/*"
-
-OSTREE_BOOTLOADER ?= "u-boot"
+include conf/include/local/sota_porter.inc
