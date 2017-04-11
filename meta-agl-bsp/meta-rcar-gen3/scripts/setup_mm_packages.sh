@@ -1,7 +1,7 @@
 #!/bin/bash
 
-ZIP_1="R-Car_Gen3_Series_Evaluation_Software_Package_for_Linux-20170125.zip"
-ZIP_2="R-Car_Gen3_Series_Evaluation_Software_Package_of_Linux_Drivers-20170125.zip"
+ZIP_1="R-Car_Gen3_Series_Evaluation_Software_Package_for_Linux-20170324.zip"
+ZIP_2="R-Car_Gen3_Series_Evaluation_Software_Package_of_Linux_Drivers-20170324.zip"
 
 COPY_SCRIPT="$METADIR/meta-renesas-rcar-gen3/meta-rcar-gen3/docs/sample/copyscript/copy_evaproprietary_softwares.sh"
 
@@ -26,8 +26,7 @@ function copy_mm_packages() {
         else
                 echo -n "The graphics and multimedia acceleration packages for "
                 echo -e "the R-Car Gen3 board can be downloaded from:"
-                echo -e " https://www.renesas.com/en-us/software/D6000821.html"
-                echo -e " https://www.renesas.com/en-us/software/D6000822.html"
+                echo -e " <http://www.renesas.com/secret/r_car_download/rcar_demoboard.jsp>"
                 echo -e
                 echo -n "These 2 files from there should be stored in your"
                 echo -e "'$DOWNLOAD_DIR' directory."
