@@ -6,10 +6,13 @@ SECTION = "net"
 DEPENDS = "libgcrypt gnutls file"
 
 SRC_URI = "http://ftp.gnu.org/gnu/libmicrohttpd/${BPN}-${PV}.tar.gz"
-SRC_URI[md5sum] = "3209aa2ac6199b874a6325342b86edbc"
-SRC_URI[sha256sum] = "9407d8252548ab97ace3276e0032f073820073c0599d43baff832902a8dab11c"
+SRC_URI[md5sum] = "9ed8171c7ee8cedce86959635c1db3ae"
+SRC_URI[sha256sum] = "bcc721895d4a114b0548a39d2241c35caacb9e2e072d40e11b55c60e3d5ddcbe"
 
-inherit autotools lib_package pkgconfig
+FILESEXTRAPATHS_append := ":${THISDIR}/${PN}"
+SRC_URI += " file://Check-response-existence-on-upgrade.patch"
+
+inherit autotools lib_package pkgconfig gettext
 
 EXTRA_OECONF += "--disable-static --with-gnutls=${STAGING_LIBDIR}/../"
 
