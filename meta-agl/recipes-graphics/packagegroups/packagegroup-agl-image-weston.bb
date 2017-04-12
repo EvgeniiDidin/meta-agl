@@ -9,7 +9,7 @@ PACKAGES = "\
 
 ALLOW_EMPTY_${PN} = "1"
 
-RDEPENDS_${PN} += "weston weston-ini-conf weston-examples"
+RDEPENDS_${PN} += "weston weston-init weston-ini-conf weston-examples"
 
 RDEPENDS_${PN} += "\
     packagegroup-agl-image-minimal \
