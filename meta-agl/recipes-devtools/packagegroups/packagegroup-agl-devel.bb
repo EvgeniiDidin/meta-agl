@@ -7,6 +7,7 @@ RDEPENDS_${PN} = "\
         strace \
         ldd \
         less \
+        vim \
         lsof \
         gdb \
         valgrind \
