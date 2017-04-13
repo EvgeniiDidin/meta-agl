@@ -20,4 +20,5 @@ RDEPENDS_${PN} = "\
         usbutils \
         rsync \
         tree \
+        pstree \
         "
