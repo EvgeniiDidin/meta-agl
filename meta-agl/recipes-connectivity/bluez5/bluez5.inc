@@ -23,6 +23,7 @@ SRC_URI = "\
     file://run-ptest \
     ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', '', 'file://0001-Allow-using-obexd-without-systemd-in-the-user-sessio.patch', d)} \
     file://0001-tests-add-a-target-for-building-tests-without-runnin.patch \
+    file://bluetooth.conf \
 "
 SRCREV = "c64b4d9e8dc3e36672061f39a9dba19ad0fb1ef1"
 S = "${WORKDIR}/git"
@@ -61,6 +62,8 @@ do_install_append() {
 	if [ -f ${S}/profiles/input/input.conf ]; then
 	    install -m 0644 ${S}/profiles/input/input.conf ${D}/${sysconfdir}/bluetooth/
 	fi
+
+        install -m 0644 ${WORKDIR}/bluetooth.conf ${D}${sysconfdir}/dbus-1/system.d/bluetooth.conf
 
   if [ -f ${D}/${sysconfdir}/init.d/bluetooth ]; then
     sed -i -e 's#@LIBEXECDIR@#${libexecdir}#g' ${D}/${sysconfdir}/init.d/bluetooth
