@@ -21,3 +21,10 @@ KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/ath9k_htc.cfg"
 # Enable support for RTLSDR
 SRC_URI += " file://rtl_sdr.cfg "
 KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/rtl_sdr.cfg"
+
+# Enable support for smack
+KERNEL_CONFIG_FRAGMENTS_append_smack = "\
+       ${WORKDIR}/audit.cfg \
+       ${WORKDIR}/smack.cfg \
+       ${WORKDIR}/smack-default-lsm.cfg \
+"
