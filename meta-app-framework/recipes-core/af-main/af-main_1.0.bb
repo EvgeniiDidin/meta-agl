@@ -56,7 +56,6 @@ SRC_URI += "\
 # tools used to install wgt at first boot
 SRC_URI += "\
 	file://afm-install \
-	file://add-qt-wayland-shell-integration.patch \
 "
 
 do_install_append_class-target() {
@@ -73,10 +72,11 @@ do_install_append_class-target() {
         ln -sf ${systemd_user_unitdir}/afm-user-daemon.service ${D}${sysconfdir}/systemd/user/default.target.wants
     fi
     install -m 0755 ${WORKDIR}/afm-install ${D}${bindir}
+    echo "QT_WAYLAND_SHELL_INTEGRATION=ivi-shell" > ${D}${afm_confdir}/unit.env.d/qt-for-ivi-shell
 }
 
-do_install_append_qemux86-64() {
-    sed -i -e '/LD_PRELOAD=\/usr\/lib\/libEGL.so/d' ${D}${systemd_user_unitdir}/afm-user-daemon.service
+do_install_append_porter() {
+	echo "LD_PRELOAD=/usr/lib/libEGL.so" > ${D}${afm_confdir}/unit.env.d/preload-libEGL
 }
 
 pkg_postinst_${PN}() {
