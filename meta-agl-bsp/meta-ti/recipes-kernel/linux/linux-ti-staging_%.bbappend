@@ -22,3 +22,9 @@ SRC_URI_append_smack = "\
        file://0004-Smack-Assign-smack_known_web-label-for-kernel-thread.patch \
 "
 
+# Enable support for smack
+KERNEL_CONFIG_FRAGMENTS_append_smack = "\
+       ${WORKDIR}/audit.cfg \
+       ${WORKDIR}/smack.cfg \
+       ${WORKDIR}/smack-default-lsm.cfg \
+"
