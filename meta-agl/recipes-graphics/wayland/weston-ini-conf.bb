@@ -13,8 +13,9 @@ WESTONCORE[shell]??="desktop-shell.so"
 WESTONCORE[backend]??="drm-backend.so"
 
 WESTONSHELL[locking]="true"
-# Uncomment below to hide panel
-#WESTONSHELL[panel-location]="none"
+# hide panel
+WESTONSHELL[panel-location]="none"
+
 
 WESTONOUTPUT1[agl_screen]??="DEFAULT_SCREEN"
 

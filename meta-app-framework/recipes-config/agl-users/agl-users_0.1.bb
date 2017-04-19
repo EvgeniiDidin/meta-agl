@@ -7,15 +7,14 @@ DESCRIPTION = "This is a core framework component that\
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
 
-
-SRC_URI = ""
-
 ALLOW_EMPTY_${PN} = "1"
 
 USERADD_PACKAGES = "${PN}"
 
-USERADD_PARAM_${PN} = "\
-  -g users -d /home/agl-driver -m -K PASS_MAX_DAYS=-1 agl-driver ; \
-  -g users -d /home/agl-passenger -m -K PASS_MAX_DAYS=-1 agl-passenger \
-"
+GROUPADD_PARAM_${PN} = " --system display ; --system weston-launch"
 
+USERADD_PARAM_${PN} = "\
+  -g users -G display -d /home/agl-driver -m -K PASS_MAX_DAYS=-1 agl-driver ; \
+  -g users -G display -d /home/agl-passenger -m -K PASS_MAX_DAYS=-1 agl-passenger ; \
+  --gid display --groups weston-launch,video,input --home-dir /run/platform/display --shell /bin/false --comment \"Display daemon\" --key PASS_MAX_DAYS=-1 display \
+"

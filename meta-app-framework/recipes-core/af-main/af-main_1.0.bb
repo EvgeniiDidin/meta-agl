@@ -76,27 +76,37 @@ do_install_append_class-target() {
 }
 
 do_install_append_porter() {
-	echo "LD_PRELOAD=/usr/lib/libEGL.so" > ${D}${afm_confdir}/unit.env.d/preload-libEGL
+    echo "LD_PRELOAD=/usr/lib/libEGL.so" > ${D}${afm_confdir}/unit.env.d/preload-libEGL
 }
 
 pkg_postinst_${PN}() {
     if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
-        chgrp ${afm_name} $D${systemd_units_root}/{system,user}/{default.target.wants,.}
+        for SYS in "system" "user";do
+           for DEST in "default.target.wants" ".";do
+              chgrp ${afm_name} $D${systemd_units_root}/${SYS}/${DEST};
+           done
+        done
     fi
-    chown ${afm_name}:${afm_name} $D${afm_datadir}/{applications,icons,.}
+    for DEST in "applications" "icons" ".";do
+        chown ${afm_name}:${afm_name} $D${afm_datadir}/${DEST};
+    done
     setcap cap_mac_override,cap_dac_override=ep $D${bindir}/afm-system-daemon
-    setcap cap_mac_override,cap_mac_admin,cap_setgid=ep $D${bindir}/afm-user-daemon
 }
 
 pkg_postinst_${PN}_smack() {
     if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
-        chgrp ${afm_name} $D${systemd_units_root}/{system,user}/{default.target.wants,.}
-        chsmack -a 'System::Shared' -t $D${systemd_units_root}/{system,user}/{default.target.wants,.}
+        for SYS in "system" "user";do
+           for DEST in "default.target.wants" ".";do
+              chgrp ${afm_name} $D${systemd_units_root}/${SYS}/${DEST};
+              chsmack -a 'System::Shared' -t $D${systemd_units_root}/${SYS}/${DEST};
+           done
+        done
     fi
-    chown ${afm_name}:${afm_name} $D${afm_datadir}/{applications,icons,.}
-    chsmack -a 'System::Shared' -t $D${afm_datadir}/{applications,icons,.}
+    for DEST in "applications" "icons" ".";do
+        chown ${afm_name}:${afm_name} $D${afm_datadir}/${DEST};
+        chsmack -a 'System::Shared' -t $D${afm_datadir}/${DEST};
+    done
     setcap cap_mac_override,cap_dac_override=ep $D${bindir}/afm-system-daemon
-    setcap cap_mac_override,cap_mac_admin,cap_setgid=ep $D${bindir}/afm-user-daemon
 }
 FILES_${PN} += " ${systemd_units_root} "
 
@@ -107,4 +117,3 @@ FILES_${PN}-binding-dbg = " ${afb_binding_dir}/.debug/afm-main-binding.so "
 PACKAGES =+ "${PN}-tools ${PN}-tools-dbg"
 FILES_${PN}-tools = "${bindir}/wgtpkg-*"
 FILES_${PN}-tools-dbg = "${bindir}/.debug/wgtpkg-*"
-

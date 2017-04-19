@@ -26,3 +26,7 @@ RDEPENDS_${PN} += "\
     packagegroup-agl-ivi-security \
     packagegroup-agl-ivi-kernel \
     "
+
+RDEPENDS_${PN} += "\
+    agl-login-manager \
+    "
