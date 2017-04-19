@@ -6,7 +6,7 @@ FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
 SRC_URI += "file://lightmediascanner.service \
             file://plugin-ogg-fix-chucksize-issue.patch \
             file://dbus-lightmediascanner.conf \
-            file://lightmediascanner.rules \
+            file://90-lightmediascanner.rules \
             file://lightmediascanner.sh \
            "
 
@@ -25,7 +25,7 @@ do_install_append() {
        fi
 
        if ${@bb.utils.contains('DISTRO_FEATURES', 'automount', 'true', 'false', d)}; then
-              install -m 644 -p -D ${WORKDIR}/lightmediascanner.rules ${D}/etc/udev/rules.d/lightmediascanner.rules
+              install -m 644 -p -D ${WORKDIR}/90-lightmediascanner.rules ${D}/etc/udev/rules.d/90-lightmediascanner.rules
               install -m 755 -p -D ${WORKDIR}/lightmediascanner.sh ${D}/etc/udev/scripts/lightmediascanner.sh
        fi
 
