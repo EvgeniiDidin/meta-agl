@@ -16,7 +16,7 @@ do_install_append() {
     install -m 644 -p -D ${WORKDIR}/e2fsck.conf ${D}${sysconfdir}/e2fsck.conf
 
     if ${@bb.utils.contains('DISTRO_FEATURES', 'automount', 'true', 'false', d)}; then
-        install -m 644 -p -D ${WORKDIR}/automount-rules ${D}${sysconfdir}/udev/rules.d/automount.rules
+        install -m 644 -p -D ${WORKDIR}/automount-rules ${D}${sysconfdir}/udev/rules.d/10-automount.rules
         install -m 755 -p -D ${WORKDIR}/mount.sh ${D}${sysconfdir}/udev/scripts/mount.sh
     fi
 
