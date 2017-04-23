@@ -24,4 +24,7 @@ IMAGE_INSTALL_append = " \
         va-intel \
         gstreamer-vaapi-1.0 "
 
-include conf/include/local/sota_minnowboard.inc
+OSTREE_BOOTLOADER ?= "u-boot"
+PREFERRED_PROVIDER_virtual/bootloader_sota ?= "u-boot-ota"
+UBOOT_MACHINE_sota ?= "minnowmax_defconfig"
+
