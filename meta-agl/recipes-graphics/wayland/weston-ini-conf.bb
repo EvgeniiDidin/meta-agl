@@ -6,7 +6,7 @@ S = "${WORKDIR}"
 
 require weston-ini-conf/screen.inc
 
-DEFAULT_SCREEN[transform]?="90"
+DEFAULT_SCREEN[transform]?="270"
 DEFAULT_SCREEN[name]?="HDMI-A-1"
 
 WESTONCORE[shell]??="desktop-shell.so"
