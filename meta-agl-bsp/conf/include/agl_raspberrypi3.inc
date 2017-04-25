@@ -30,4 +30,4 @@ IMAGE_INSTALL_append = " kernel-modules linux-firmware "
 # Psplash causes crash on first boot on RPi
 IMAGE_FEATURES_remove = "splash"
 
-require conf/include/local/sota_raspberrypi.inc
+include conf/include/local/sota_raspberrypi.inc
