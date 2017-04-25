@@ -23,5 +23,3 @@ IMAGE_INSTALL_append = " \
         libva \
         va-intel \
         gstreamer-vaapi-1.0 "
-
-require conf/include/local/sota_minnowboard.inc

@@ -18,5 +18,3 @@ UBOOT_MACHINE = "porter_vin_config"
 
 PREFERRED_PROVIDER_virtual/libgles2 = "mesa"
 PREFERRED_PROVIDER_virtual/egl = "mesa"
-
-require conf/include/local/sota_porter.inc

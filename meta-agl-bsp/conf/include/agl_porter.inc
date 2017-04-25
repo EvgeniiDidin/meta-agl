@@ -178,5 +178,3 @@ DISTRO_FEATURES_append = " h264avcenc_lib"
 #DISTRO_FEATURES_append = " aacsdec_mdw"
 # ARM AAC Encode Middleware for Linux
 #DISTRO_FEATURES_append = " aacenc_mdw"
-
-require conf/include/local/sota_porter.inc
