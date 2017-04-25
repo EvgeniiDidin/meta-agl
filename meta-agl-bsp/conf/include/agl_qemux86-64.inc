@@ -17,5 +17,3 @@ APPEND += "console=ttyS0,115200n8"
 #
 # All boot message will be off
 APPEND += "quiet"
-
-include conf/include/local/sota_qemux86-64.inc
