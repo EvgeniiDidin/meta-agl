@@ -15,9 +15,10 @@ METADIR  := "${@os.path.abspath('##OEROOT##/..')}"
 YOCTO_LAYERS = " \
   ${METADIR}/poky/meta \
   ${METADIR}/poky/meta-poky \
-  ${METADIR}/poky/meta-yocto-bsp \
   "
-
+#  this is added for the boards where necessary, not globally
+#  ${METADIR}/poky/meta-yocto-bsp \
+#
 # These are the AGL CORE Layers that make up the basis
 # - they create a minimal bootable filesystem
 #   with some automotive tools/libraries
