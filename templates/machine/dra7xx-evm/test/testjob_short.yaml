@@ -1,0 +1,51 @@
+# Your first LAVA JOB definition for a vayu board
+device_type: @REPLACE_DEVICE_TYPE@
+job_name: AGL-short-smoke
+
+protocols:
+  lava-xnbd:
+    port: auto
+
+timeouts:
+  job:
+    minutes: 30
+  action:
+    minutes: 15
+  connection:
+    minutes: 5
+  bootloader-commands:
+    minutes: 4
+priority: medium
+visibility: public
+
+# ACTION_BLOCK
+actions:
+- deploy:
+    timeout:
+      minutes: 15
+    to: nbd
+    dtb:
+      url: '@REPLACE_URL_PREFIX@/@REPLACE_DTB@'
+    kernel:
+      url: '@REPLACE_URL_PREFIX@/@REPLACE_KERNEL@'
+    initrd:
+      url: '@REPLACE_URL_PREFIX@/@REPLACE_INITRAMFS@'
+      allow_modify: false
+    nbdroot:
+      url: '@REPLACE_URL_PREFIX@/@REPLACE_NBDROOT@'
+      compression: @REPLACE_NBDROOT_COMPRESSION@
+    os: debian
+    failure_retry: 2
+
+# BOOT_BLOCK
+- boot:
+    method: @REPLACE_BOOT_METHOD@
+    commands: nbd
+    type: @REPLACE_BOOT_TYPE@
+    prompts: ["root@@REPLACE_MACHINE@:~"]
+    auto_login:
+      login_prompt: "login:"
+      username: root
+    failure_retry: 2
+
+

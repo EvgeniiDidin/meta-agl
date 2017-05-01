@@ -1,0 +1,11 @@
+DEVICE_TYPE=ti-vayu-uboot
+DEVICE_NAME=dra7xx-evm
+DEVICE_DTB=zImage-dra7-evm-lcd-lg.dtb
+DEVICE_KERNEL=zImage
+DEVICE_INITRAMFS=initramfs-netboot-image-dra7xx-evm.ext4.gz
+DEVICE_NBDROOT=agl-demo-platform-dra7xx-evm.ext4.xz
+DEVICE_NBDROOT_COMPRESSION=xz
+DEVICE_BOOT_METHOD=u-boot
+DEVICE_BOOT_TYPE=bootz
+#DEVICE_URL_PREFIX=https://download.automotivelinux.org/AGL
+#
