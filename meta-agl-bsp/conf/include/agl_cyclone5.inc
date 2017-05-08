@@ -1,2 +1,2 @@
 OSTREE_BOOTLOADER ?= "u-boot"
-DEFAULTTUNE="armv7athf-neon"
+DISTRO_FEATURE_append = " agl-medium-arm-compiler"
