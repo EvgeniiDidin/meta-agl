@@ -12,7 +12,12 @@ SRC_URI = "\
 	file://web-runtime-webkit.qml;md5sum=4daf9df39078634c27a7923d37e82e3d \
 "
 
-RDEPENDS_${PN} = "qtwebkit-qmlplugins"
+RDEPENDS_${PN} = "\
+  qtdeclarative-tools \
+  qtwebkit-qmlplugins \
+  qtwayland-qmlplugins \
+  qtquickcontrols-qmlplugins \
+"
 
 PROVIDES += "virtual/webruntime"
 # add also RPROVIDES to satisfy the packagegroup
