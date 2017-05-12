@@ -20,6 +20,13 @@ PREFERRED_PROVIDER_libgbm           = "libgbm"
 #Preferred versions
 PREFERRED_VERSION_libgbm            = "10.0.0"
 
+SECURITY_CFLAGS_pn-mozjs = ""
+SECURITY_LDFLAGS_pn-mozjs = ""
+SECURITY_CFLAGS_pn-gpm = ""
+SECURITY_LDFLAGS_pn-gpm = ""
+SECURITY_CFLAGS_pn-libatasmart = ""
+SECURITY_LDFLAGS_pn-libatasmart = ""
+
 #-------------------------------------------------
 ## Multimedia section ##
 #-------------------------------------------------
