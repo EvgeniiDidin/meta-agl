@@ -15,22 +15,30 @@ SRC_URI = "${SRC_URI_git} \
            ${SRC_URI_files} \
           "
 
-SRCREV = "ae6f684d830871e81b0b4168424f6a4873eabbff"
+SRCREV = "8abd9262e343aec71e07388bdf829d4f76d6529e"
 S = "${WORKDIR}/git"
 
 inherit cmake pkgconfig
-
-FILES_${PN} += "${datadir}"
 
 pkg_postinst_${PN}() {
 	mkdir -p "$D${libdir}/afb"
 }
 
 #############################################
-# setup meta package
+# setup package
 #############################################
-PACKAGES += "${PN}-meta"
+PACKAGES += "${PN}-tools ${PN}-meta"
+
+FILES_${PN} += "${datadir}"
+
 ALLOW_EMPTY_${PN}-meta = "1"
+
+FILES_${PN}-tools = "\
+	${bindir}/afb-client-demo \
+	${bindir}/afb-genskel \
+"
+
+RDEPENDS_${PN}-dev += "${PN}-tools libafbwsc-dev"
 
 #############################################
 # setup sample binding packages
@@ -64,7 +72,6 @@ FILES_libafbwsc = "\
 FILES_libafbwsc-dev = "\
 	${includedir}/afb/afb-wsj1.h \
 	${includedir}/afb/afb-ws-client.h \
-	${bindir}/afb-client-demo \
 	${libdir}/libafbwsc.so \
 	${libdir}/pkgconfig/libafbwsc.pc \
 "
@@ -74,5 +81,4 @@ FILES_libafbwsc-dbg = "\
 "
 RDEPENDS_libafbwsc-dbg += "${PN}-dbg libafbwsc-dev"
 
-RDEPENDS_${PN}-dev += "libafbwsc-dev"
 
