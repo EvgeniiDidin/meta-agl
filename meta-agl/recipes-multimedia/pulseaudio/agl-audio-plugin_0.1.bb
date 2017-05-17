@@ -20,7 +20,7 @@ inherit cmake pkgconfig
 
 FULL_OPTIMIZATION = "-O1 -pipe ${DEBUG_FLAGS}"
 
-PULSE_PV="8.0"
+PULSE_PV="9.0"
 
 EXTRA_OECMAKE_append = " -DPULSE_PV:STRING=${PULSE_PV}"
 
