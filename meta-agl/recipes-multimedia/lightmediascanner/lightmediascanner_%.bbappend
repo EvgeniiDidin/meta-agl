@@ -10,6 +10,8 @@ SRC_URI += "file://lightmediascanner.service \
             file://lightmediascanner.sh \
            "
 
+CFLAGS_append = " -D_FILE_OFFSET_BITS=64"
+
 inherit systemd
 
 do_install_append() {
