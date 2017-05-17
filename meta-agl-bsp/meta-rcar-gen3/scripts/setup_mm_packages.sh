@@ -9,6 +9,30 @@ test -f ${XDG_CONFIG_HOME:-~/.config}/user-dirs.dirs && source ${XDG_CONFIG_HOME
 DOWNLOAD_DIR=${XDG_DOWNLOAD_DIR:-$HOME/Downloads}
 EXTRACT_DIR=$METADIR/binary-tmp
 
+stdout_in_terminal=1
+[[ -t 1 ]] && stdout_in_terminal=1
+function color {
+	[[ $stdout_in_terminal == 0 ]] && return
+	for k in $*; do
+		case $k in
+			bold) tput bold 2>/dev/null;;
+			none) tput sgr0 2>/dev/null;;
+			*) tput setaf $k 2>/dev/null;;
+		esac
+	done
+}
+color_green=$(color bold 2)
+color_yellow=$(color bold 3)
+color_red=$(color bold 1)
+color_none=$(color none)
+
+function error() {
+	echo "${color_red}$@${color_none}" >&2
+}
+
+function log() {
+	echo "$@" >&2
+}
 
 function copy_mm_packages() {
         if [ -f $DOWNLOAD_DIR/$ZIP_1 -a -f $DOWNLOAD_DIR/$ZIP_2 ]; then
@@ -16,14 +40,16 @@ function copy_mm_packages() {
                 cp --update $DOWNLOAD_DIR/$ZIP_1 $EXTRACT_DIR
                 cp --update $DOWNLOAD_DIR/$ZIP_2 $EXTRACT_DIR
         else
-                echo -n "The graphics and multimedia acceleration packages for "
-                echo -e "the R-Car Gen3 board BSP 2.19 can be downloaded from:"
-                echo -e " <https://www.renesas.com/solutions/automotive/rcar-demoboard.html>"
-                echo -e
-                echo -n "These 2 files from there should be stored in your"
-                echo -e "'$DOWNLOAD_DIR' directory."
-                echo -e "  $ZIP_1"
-                echo -e "  $ZIP_2"
+                error "ERROR: FILES \""+$DOWNLOAD_DIR/$ZIP_1+"\" NOT EXTRACTING CORRECTLY"
+                error "ERROR: FILES \""+$DOWNLOAD_DIR/$ZIP_2+"\" NOT EXTRACTING CORRECTLY"
+                log   "The graphics and multimedia acceleration packages for "
+                log   "the R-Car Gen3 board BSP 2.19 can be downloaded from:"
+                log   " <https://www.renesas.com/solutions/automotive/rcar-demoboard.html>"
+                log
+                error  "These 2 files from there should be stored in your"
+                error  "'$DOWNLOAD_DIR' directory."
+                error  "  $ZIP_1"
+                error  "  $ZIP_2"
                 return 1
         fi
 
@@ -32,7 +58,7 @@ function copy_mm_packages() {
                 $COPY_SCRIPT -d -f $EXTRACT_DIR
                 cd ..
         else
-                echo "scripts to copy drivers for Gen3 not found."
+                log   "scripts to copy drivers for Gen3 not found."
                 return 1
         fi
 }
