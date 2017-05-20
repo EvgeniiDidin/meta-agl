@@ -1,2 +1,5 @@
 OSTREE_BOOTLOADER ?= "u-boot"
-DISTRO_FEATURE_append = " agl-medium-arm-compiler"
+
+# DEFAULTTUNE for cortex-a9
+DISTRO_FEATURES_append = " agl-medium-arm-compiler"
+
