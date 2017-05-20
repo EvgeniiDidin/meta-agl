@@ -2,6 +2,7 @@
 Description=Run pending agl postinsts
 DefaultDependencies=no
 After=#SYSTEMD_SERVICE_AFTER#
+Before=#SYSTEMD_SERVICE_BEFORE#
 ConditionPathExists=#SYSCONFDIR#/agl-postinsts
 
 [Service]

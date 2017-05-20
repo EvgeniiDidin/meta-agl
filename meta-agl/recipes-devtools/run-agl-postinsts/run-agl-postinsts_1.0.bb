@@ -16,6 +16,8 @@ SYSTEMD_SERVICE_${PN} = "run-agl-postinsts.service"
 
 SYSTEMD_SERVICE_AFTER ?= "dbus.service cynara.service"
 
+SYSTEMD_SERVICE_BEFORE ?= "systemd-user-sessions.service"
+
 do_configure() {
     :
 }
@@ -39,6 +41,7 @@ do_install() {
                ${D}${systemd_unitdir}/system/run-agl-postinsts.service
  
     sed -i -e 's:#SYSTEMD_SERVICE_AFTER#:${SYSTEMD_SERVICE_AFTER}:g' \
+               -e 's:#SYSTEMD_SERVICE_BEFORE#:${SYSTEMD_SERVICE_BEFORE}:g' \
                ${D}${systemd_unitdir}/system/run-agl-postinsts.service
 }
 
