@@ -1,0 +1,230 @@
+From bf20be14fc1b3f7e096bdac9c5ff67362b391479 Mon Sep 17 00:00:00 2001
+From: Yuichi Kusakabe <yuichi.kusakabe@jp.fujitsu.com>
+Date: Thu, 18 May 2017 17:46:24 +0900
+Subject: [PATCH 12/15] Add rcar-gpio hibernation code
+
+Signed-off-by: Yuichi Kusakabe <yuichi.kusakabe@jp.fujitsu.com>
+---
+ drivers/pinctrl/sh-pfc/core.c | 141 +++++++++++++++++++++++++++++++++++++++---
+ drivers/pinctrl/sh-pfc/core.h |   4 ++
+ 2 files changed, 138 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/pinctrl/sh-pfc/core.c b/drivers/pinctrl/sh-pfc/core.c
+index b9e025d..c37418e 100644
+--- a/drivers/pinctrl/sh-pfc/core.c
++++ b/drivers/pinctrl/sh-pfc/core.c
+@@ -24,6 +24,7 @@
+ #include <linux/pinctrl/machine.h>
+ #include <linux/platform_device.h>
+ #include <linux/slab.h>
++#include <linux/cpu_pm.h>
+ 
+ #include "core.h"
+ 
+@@ -201,19 +202,117 @@ static void sh_pfc_config_reg_helper(struct sh_pfc *pfc,
+ 	}
+ }
+ 
++#ifdef CONFIG_CPU_PM
++struct reg_record {
++	void __iomem *reg;
++	unsigned long width;
++	unsigned long data;
++};
++
++struct reg_config {
++	bool unlock;
++	struct reg_record unlock_reg;
++	struct reg_record actual_reg;
++	struct list_head list;
++};
++
++static struct reg_config *regs_list;
++
++struct reg_range {
++	int start;
++	int end;
++};
++
++static int sh_pfc_cpu_pm_notify(struct notifier_block *self,
++				    unsigned long action, void *hcpu)
++{
++	struct reg_config  *tmp = NULL;
++	struct sh_pfc *pfc = container_of(self, struct sh_pfc, pm_notify);
++	/* We don't setup pinmux in kernel - store all registers */
++	struct reg_range ranges[] = {
++		{0x0, 0x5c}, {0x160, 0x160}, {0x90, 0x98},
++		{0x100, 0x118}, {0x70, 0x70}, {0x60, 0x64},
++		{0x84, 0x8c}, {0x240, 0x248},
++	};
++
++	if (action == CPU_PM_ENTER) {
++		if (!regs_list) {
++			/* No pinmux configuration, storing all registers */
++			int store_cnt = 0;
++			int i;
++			for (i = 0; i < ARRAY_SIZE(ranges); i++) {
++				int j;
++				for (j = ranges[i].start; j <= ranges[i].end; j += sizeof(u32)) {
++					pfc->stored_regs[store_cnt] =
++						sh_pfc_read_raw_reg(sh_pfc_phys_to_virt(pfc, 0xe6060000 + j), 32);
++					pr_debug("PFC: %08x => %08x\n", 0xe6060000 + j, pfc->stored_regs[store_cnt]);
++					store_cnt++;
++					if (store_cnt >= ARRAY_SIZE(pfc->stored_regs)) {
++						pr_err("read: Register store overflow\n");
++						goto out;
++					}
++				}
++			}
++		}
++	} else if (action == CPU_PM_ENTER_FAILED || action == CPU_PM_EXIT) {
++		if (!regs_list) {
++			/* No list, restoring all registers */
++			int store_cnt = 0;
++			int i;
++			for (i = 0; i < ARRAY_SIZE(ranges); i++) {
++				int j;
++				for (j = ranges[i].start; j <= ranges[i].end; j += sizeof(u32)) {
++					sh_pfc_write_raw_reg(sh_pfc_phys_to_virt(pfc, 0xe6060000 + j), 32,
++						pfc->stored_regs[store_cnt]);
++					pr_debug("PFC: %08x => %08x\n", 0xe6060000 + j, pfc->stored_regs[store_cnt]);
++					store_cnt++;
++					if (store_cnt >= ARRAY_SIZE(pfc->stored_regs)) {
++						pr_err("write: Register store overflow\n");
++						goto out;
++					}
++				}
++			}
++			goto out;
++		}
++		list_for_each_entry(tmp , &(regs_list->list), list) {
++		if (tmp->unlock)
++			sh_pfc_write_raw_reg(tmp->unlock_reg.reg,
++					     tmp->unlock_reg.width,
++					     tmp->unlock_reg.data);
++		sh_pfc_write_raw_reg(tmp->actual_reg.reg,
++				     tmp->actual_reg.width,
++				     tmp->actual_reg.data);
++		}
++	}
++out:
++	return NOTIFY_OK;
++}
++
++static int __init sh_pfc_cpu_pm_init(struct sh_pfc *pfc)
++{
++	memset(&pfc->pm_notify, 0, sizeof(pfc->pm_notify));
++	pfc->pm_notify.notifier_call = sh_pfc_cpu_pm_notify;
++	return cpu_pm_register_notifier(&pfc->pm_notify);
++}
++#else
++static int __init sh_pfc_cpu_pm_init(struct sh_pfc *pfc)
++{
++	return 0;
++}
++#endif
++
++
+ static void sh_pfc_write_config_reg(struct sh_pfc *pfc,
+ 				    const struct pinmux_cfg_reg *crp,
+ 				    unsigned long field, unsigned long value)
+ {
+ 	void __iomem *mapped_reg;
+ 	unsigned long mask, pos, data;
+-
++#ifdef CONFIG_CPU_PM
++	struct reg_config *tmp;
++#endif
+ 	sh_pfc_config_reg_helper(pfc, crp, field, &mapped_reg, &mask, &pos);
+ 
+-	dev_dbg(pfc->dev, "write_reg addr = %lx, value = %ld, field = %ld, "
+-		"r_width = %ld, f_width = %ld\n",
+-		crp->reg, value, field, crp->reg_width, crp->field_width);
+-
+ 	mask = ~(mask << pos);
+ 	value = value << pos;
+ 
+@@ -221,14 +320,39 @@ static void sh_pfc_write_config_reg(struct sh_pfc *pfc,
+ 	data &= mask;
+ 	data |= value;
+ 
+-	if (pfc->info->unlock_reg)
++#ifdef CONFIG_CPU_PM
++	tmp = kzalloc(sizeof(struct reg_config), GFP_KERNEL);
++	BUG_ON(!tmp);
++
++	if (!regs_list) {
++		regs_list = tmp;
++		INIT_LIST_HEAD(&regs_list->list);
++	}
++#endif
++
++	if (pfc->info->unlock_reg) {
++#ifdef CONFIG_CPU_PM
++		tmp->unlock = true;
++		tmp->unlock_reg.reg = sh_pfc_phys_to_virt(pfc,
++				pfc->info->unlock_reg);
++		tmp->unlock_reg.width = 32;
++		tmp->unlock_reg.data = ~data;
++#endif
+ 		sh_pfc_write_raw_reg(
+ 			sh_pfc_phys_to_virt(pfc, pfc->info->unlock_reg), 32,
+ 			~data);
++	}
++
++#ifdef CONFIG_CPU_PM
++	tmp->actual_reg.reg = mapped_reg;
++	tmp->actual_reg.width = crp->reg_width;
++	tmp->actual_reg.data = data;
++
++	list_add(&tmp->list, &regs_list->list);
++#endif
+ 
+ 	sh_pfc_write_raw_reg(mapped_reg, crp->reg_width, data);
+ }
+-
+ static int sh_pfc_get_config_reg(struct sh_pfc *pfc, u16 enum_id,
+ 				 const struct pinmux_cfg_reg **crp, int *fieldp,
+ 				 int *valuep)
+@@ -574,6 +698,8 @@ static int sh_pfc_probe(struct platform_device *pdev)
+ 
+ 	platform_set_drvdata(pdev, pfc);
+ 
++	sh_pfc_cpu_pm_init(pfc);
++
+ 	dev_info(pfc->dev, "%s support registered\n", info->name);
+ 
+ 	return 0;
+@@ -596,6 +722,7 @@ static int sh_pfc_remove(struct platform_device *pdev)
+ 	if (pfc->info->ops && pfc->info->ops->exit)
+ 		pfc->info->ops->exit(pfc);
+ 
++
+ 	return 0;
+ }
+ 
+diff --git a/drivers/pinctrl/sh-pfc/core.h b/drivers/pinctrl/sh-pfc/core.h
+index 75ecb67..5471a6c 100644
+--- a/drivers/pinctrl/sh-pfc/core.h
++++ b/drivers/pinctrl/sh-pfc/core.h
+@@ -14,6 +14,7 @@
+ #include <linux/compiler.h>
+ #include <linux/spinlock.h>
+ #include <linux/types.h>
++#include <linux/notifier.h>
+ 
+ #include "sh_pfc.h"
+ 
+@@ -51,6 +52,9 @@ struct sh_pfc {
+ 	struct sh_pfc_chip *func;
+ 
+ 	struct sh_pfc_pinctrl *pinctrl;
++	struct notifier_block pm_notify;
++#define STORE_REGS_COUNT	50
++	u32 stored_regs[STORE_REGS_COUNT];
+ };
+ 
+ int sh_pfc_register_gpiochip(struct sh_pfc *pfc);
+-- 
+1.8.3.1
+

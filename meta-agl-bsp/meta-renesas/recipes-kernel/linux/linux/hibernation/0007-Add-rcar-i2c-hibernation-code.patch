@@ -1,0 +1,69 @@
+From 6c133013b75d88d5b4514dfecb3089f830b82d65 Mon Sep 17 00:00:00 2001
+From: Yuichi Kusakabe <yuichi.kusakabe@jp.fujitsu.com>
+Date: Thu, 18 May 2017 17:35:37 +0900
+Subject: [PATCH 07/15] Add rcar-i2c hibernation code
+
+Signed-off-by: Yuichi Kusakabe <yuichi.kusakabe@jp.fujitsu.com>
+---
+ drivers/i2c/busses/i2c-rcar.c | 38 ++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 38 insertions(+)
+
+diff --git a/drivers/i2c/busses/i2c-rcar.c b/drivers/i2c/busses/i2c-rcar.c
+index 8242002..c6a5a4b 100644
+--- a/drivers/i2c/busses/i2c-rcar.c
++++ b/drivers/i2c/busses/i2c-rcar.c
+@@ -754,6 +754,43 @@ static int rcar_i2c_probe(struct platform_device *pdev)
+ 
+ 	return 0;
+ }
++static int rcar_i2c_suspend(struct device *dev)
++{
++	struct platform_device *pdev = to_platform_device(dev);
++	struct rcar_i2c_priv *priv = platform_get_drvdata(pdev);
++	pr_debug("suspend: i2c adapter name %s", priv->adap.name);
++	pr_debug("suspend: ICSCR: %08x\n", readl(priv->io + ICSCR));
++	pr_debug("suspend: ICMCR: %08x\n", readl(priv->io + ICMCR));
++	pr_debug("suspend: ICSSR: %08x\n", readl(priv->io + ICSSR));
++	pr_debug("suspend: ICMSR: %08x\n", readl(priv->io + ICMSR));
++	pr_debug("suspend: ICSIER: %08x\n", readl(priv->io + ICSIER));
++	pr_debug("suspend: ICMIER: %08x\n", readl(priv->io + ICMIER));
++	pr_debug("suspend: ICCCR: %08x\n", readl(priv->io + ICCCR));
++	pr_debug("suspend: ICSAR: %08x\n", readl(priv->io + ICSAR));
++	pr_debug("suspend: ICMAR: %08x\n", readl(priv->io + ICMAR));
++	clk_disable(priv->clk);
++	return 0;
++}
++static int rcar_i2c_resume(struct device *dev)
++{
++	struct platform_device *pdev = to_platform_device(dev);
++	struct rcar_i2c_priv *priv = platform_get_drvdata(pdev);
++	clk_enable(priv->clk);
++	pr_debug("resume: i2c adapter name %s", priv->adap.name);
++	pr_debug("resume: ICSCR: %08x\n", readl(priv->io + ICSCR));
++	pr_debug("resume: ICMCR: %08x\n", readl(priv->io + ICMCR));
++	pr_debug("resume: ICSSR: %08x\n", readl(priv->io + ICSSR));
++	pr_debug("resume: ICMSR: %08x\n", readl(priv->io + ICMSR));
++	pr_debug("resume: ICSIER: %08x\n", readl(priv->io + ICSIER));
++	pr_debug("resume: ICMIER: %08x\n", readl(priv->io + ICMIER));
++	pr_debug("resume: ICCCR: %08x\n", readl(priv->io + ICCCR));
++	pr_debug("resume: ICSAR: %08x\n", readl(priv->io + ICSAR));
++	pr_debug("resume: ICMAR: %08x\n", readl(priv->io + ICMAR));
++	return 0;
++}
++static const struct dev_pm_ops rcar_i2c_pm_ops = {
++	SET_SYSTEM_SLEEP_PM_OPS(rcar_i2c_suspend, rcar_i2c_resume)
++};
+ 
+ static int rcar_i2c_remove(struct platform_device *pdev)
+ {
+@@ -780,6 +817,7 @@ static struct platform_driver rcar_i2c_driver = {
+ 		.name	= "i2c-rcar",
+ 		.owner	= THIS_MODULE,
+ 		.of_match_table = rcar_i2c_dt_ids,
++		.pm = &rcar_i2c_pm_ops,
+ 	},
+ 	.probe		= rcar_i2c_probe,
+ 	.remove		= rcar_i2c_remove,
+-- 
+1.8.3.1
+

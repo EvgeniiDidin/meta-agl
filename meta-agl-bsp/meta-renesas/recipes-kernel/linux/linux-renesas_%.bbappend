@@ -16,3 +16,22 @@ SRC_URI += " file://disable_delay_printk.patch \
             "
 
 KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/ath9k_htc.cfg ${WORKDIR}/rtl_sdr.cfg"
+
+#SRC_URI += " file://hibernation/0001-Add-Hibernation-kernel-base-code.patch \
+#             file://hibernation/0002-Add-Hibernation-arch-code-Only-R-CAR-M2W.patch \
+#             file://hibernation/0003-Add-sata-hibernation-code.patch \
+#             file://hibernation/0004-Add-firmware-hibernation-code.patch \
+#             file://hibernation/0005-Add-rcar-dma-hibernation-code.patch \
+#             file://hibernation/0006-Add-rcar-du-hibernation-code.patch \
+#             file://hibernation/0007-Add-rcar-i2c-hibernation-code.patch \
+#             file://hibernation/0008-Add-rcar-mmc-hibernation-code.patch \
+#             file://hibernation/0009-Add-hibernation-store-area.patch \
+#             file://hibernation/0010-Add-rcar-eth-hibernation-code.patch \
+#             file://hibernation/0011-Add-rcar-pci-hibernation-code.patch \
+#             file://hibernation/0012-Add-rcar-gpio-hibernation-code.patch \
+#             file://hibernation/0013-Add-rcar-spi-hibernation-code.patch \
+#             file://hibernation/0014-Add-rcar-sci-hibernation-code.patch \
+#             file://hibernation/0015-Add-rcar-usbphy-hibernation-code.patch \
+#             file://hibernation/hibernation.cfg \
+#            "
+

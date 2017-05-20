@@ -1,0 +1,168 @@
+From c1b129172a91046a7555a3c198b49eb1b45aafd7 Mon Sep 17 00:00:00 2001
+From: Yuichi Kusakabe <yuichi.kusakabe@jp.fujitsu.com>
+Date: Thu, 18 May 2017 17:58:28 +0900
+Subject: [PATCH 13/15] Add rcar-spi hibernation code
+
+Signed-off-by: Yuichi Kusakabe <yuichi.kusakabe@jp.fujitsu.com>
+---
+ drivers/spi/spi-rspi.c | 109 ++++++++++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 108 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/spi/spi-rspi.c b/drivers/spi/spi-rspi.c
+index 215be3b..a2432de 100644
+--- a/drivers/spi/spi-rspi.c
++++ b/drivers/spi/spi-rspi.c
+@@ -38,6 +38,7 @@
+ #include <linux/sh_dma.h>
+ #include <linux/spi/spi.h>
+ #include <linux/spi/rspi.h>
++#include <linux/delay.h>
+ 
+ #define RSPI_SPCR		0x00	/* Control Register */
+ #define RSPI_SSLP		0x01	/* Slave Select Polarity Register */
+@@ -208,6 +209,12 @@ struct rspi_data {
+ 	u8 sppcr;
+ 	int rx_irq, tx_irq;
+ 	const struct spi_ops *ops;
++	u32 save_spbmul0;
++	u32 save_spbmul1;
++	u32 save_spbmul2;
++	u32 save_spbmul3;
++	u8 save_spbfcr;
++	u8 save_spscr;
+ 
+ 	unsigned dma_callbacked:1;
+ 	unsigned byte_access:1;
+@@ -238,6 +245,11 @@ static u16 rspi_read16(const struct rspi_data *rspi, u16 offset)
+ 	return ioread16(rspi->addr + offset);
+ }
+ 
++static u16 rspi_read32(const struct rspi_data *rspi, u16 offset)
++{
++	return ioread32(rspi->addr + offset);
++}
++
+ #define rspi_update8(spi, mask, val, reg) \
+ 	rspi_write8(spi, (rspi_read8(spi, reg) & ~mask) | val, reg);
+ 
+@@ -504,7 +516,6 @@ static int rspi_pio_transfer_in(struct rspi_data *rspi, u8 *rx, unsigned int n)
+ 	if (!rx)
+ 		return 0;
+ 
+-
+ 	while (n > 0) {
+ 		count = min(n, SPI_BUFFER_SIZE);
+ 		if (count >= SPI_BUFFER_SIZE) {
+@@ -1278,6 +1289,101 @@ error1:
+ 	return ret;
+ }
+ 
++int rspi_suspend(struct device *dev)
++{
++	struct rspi_data *rspi = platform_get_drvdata(to_platform_device(dev));
++	clk_disable_unprepare(rspi->clk);
++	return 0;
++}
++
++int rspi_resume(struct device *dev)
++{
++	struct rspi_data *rspi = platform_get_drvdata(to_platform_device(dev));
++	clk_prepare_enable(rspi->clk);
++	return 0;
++}
++
++#define PR_REG8(dev, rspi, reg) \
++	dev_dbg(dev, "QSPI REG: " #reg " = %08x\n", \
++			rspi_read8(rspi, reg))
++#define PR_REG16(dev, rspi, reg) \
++	dev_dbg(dev, "QSPI REG: " #reg " = %08x\n", \
++			rspi_read16(rspi, reg))
++#define PR_REG32(dev, rspi, reg) \
++	dev_dbg(dev, "QSPI REG: " #reg " = %08x\n", \
++			rspi_read32(rspi, reg))
++
++#ifdef DEBUG
++static void pr_regs(struct device *dev)
++{
++	struct rspi_data *rspi = platform_get_drvdata(to_platform_device(dev));
++	PR_REG8(dev, rspi, RSPI_SPCR);
++	PR_REG8(dev, rspi, RSPI_SSLP);
++	PR_REG8(dev, rspi, RSPI_SPPCR);
++	PR_REG8(dev, rspi, RSPI_SPDR);
++	PR_REG8(dev, rspi, RSPI_SPSCR);
++	PR_REG8(dev, rspi, RSPI_SPBR);
++	PR_REG8(dev, rspi, RSPI_SPDCR);
++	PR_REG8(dev, rspi, RSPI_SPCKD);
++	PR_REG8(dev, rspi, RSPI_SSLND);
++	PR_REG8(dev, rspi, RSPI_SPND);
++	PR_REG16(dev, rspi, RSPI_SPCMD0);
++	PR_REG16(dev, rspi, RSPI_SPCMD1);
++	PR_REG16(dev, rspi, RSPI_SPCMD2);
++	PR_REG16(dev, rspi, RSPI_SPCMD3);
++	PR_REG8(dev, rspi, QSPI_SPBFCR);
++	PR_REG16(dev, rspi, QSPI_SPBDCR);
++	PR_REG32(dev, rspi, QSPI_SPBMUL0);
++	PR_REG32(dev, rspi, QSPI_SPBMUL1);
++	PR_REG32(dev, rspi, QSPI_SPBMUL2);
++	PR_REG32(dev, rspi, QSPI_SPBMUL3);
++}
++#endif
++
++int rspi_freeze(struct device *dev)
++{
++	struct rspi_data *rspi = platform_get_drvdata(to_platform_device(dev));
++	rspi_write8(rspi, rspi_read8(rspi, RSPI_SPCR) & ~SPCR_SPE, RSPI_SPCR);
++	rspi->save_spbmul0 = rspi_read32(rspi, QSPI_SPBMUL0);
++	rspi->save_spbmul1 = rspi_read32(rspi, QSPI_SPBMUL1);
++	rspi->save_spbmul2 = rspi_read32(rspi, QSPI_SPBMUL2);
++	rspi->save_spbmul3 = rspi_read32(rspi, QSPI_SPBMUL3);
++	rspi->save_spbfcr = rspi_read8(rspi, QSPI_SPBFCR);
++	rspi->save_spscr = rspi_read8(rspi, RSPI_SPSCR);
++	dev_info(dev, "freeze\n");
++#ifdef DEBUG
++	pr_regs(dev);
++#endif
++	return 0;
++}
++
++
++int rspi_restore(struct device *dev)
++{
++	struct rspi_data *rspi = platform_get_drvdata(to_platform_device(dev));
++	clk_prepare_enable(rspi->clk);
++	udelay(16);
++	set_config_register(rspi, 8);
++	rspi_write8(rspi, rspi_read8(rspi, RSPI_SPCR) & ~SPCR_SPE, RSPI_SPCR);
++	rspi_write8(rspi, rspi->save_spscr, RSPI_SPSCR);
++	rspi_write8(rspi, rspi->save_spbfcr, QSPI_SPBFCR);
++	rspi_write32(rspi, rspi->save_spbmul3, QSPI_SPBMUL3);
++	rspi_write32(rspi, rspi->save_spbmul2, QSPI_SPBMUL2);
++	rspi_write32(rspi, rspi->save_spbmul1, QSPI_SPBMUL1);
++	rspi_write32(rspi, rspi->save_spbmul0, QSPI_SPBMUL0);
++	dev_info(dev, "restore\n");
++#ifdef DEBUG
++	pr_regs(dev);
++#endif
++	return 0;
++}
++
++const struct dev_pm_ops rspi_pm_ops = {
++	SET_SYSTEM_SLEEP_PM_OPS(rspi_suspend, rspi_resume)
++	.restore = rspi_restore,
++	.freeze = rspi_freeze,
++};
++
+ static struct platform_device_id spi_driver_ids[] = {
+ 	{ "rspi",	(kernel_ulong_t)&rspi_ops },
+ 	{ "rspi-rz",	(kernel_ulong_t)&rspi_rz_ops },
+@@ -1295,6 +1401,7 @@ static struct platform_driver rspi_driver = {
+ 		.name = "renesas_spi",
+ 		.owner	= THIS_MODULE,
+ 		.of_match_table = of_match_ptr(rspi_of_match),
++		.pm = &rspi_pm_ops,
+ 	},
+ };
+ module_platform_driver(rspi_driver);
+-- 
+1.8.3.1
+

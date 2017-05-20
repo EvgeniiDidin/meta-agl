@@ -1,0 +1,56 @@
+From 5d87144a96085d74b6002bd6d8c093c37bf128b7 Mon Sep 17 00:00:00 2001
+From: Yuichi Kusakabe <yuichi.kusakabe@jp.fujitsu.com>
+Date: Thu, 18 May 2017 17:04:33 +0900
+Subject: [PATCH 03/15] Add sata hibernation code
+
+Signed-off-by: Yuichi Kusakabe <yuichi.kusakabe@jp.fujitsu.com>
+---
+ drivers/ata/sata_rcar.c | 29 +++++++++++++++++++++++++++++
+ 1 file changed, 29 insertions(+)
+
+diff --git a/drivers/ata/sata_rcar.c b/drivers/ata/sata_rcar.c
+index 92abfdd..4c82b5e 100644
+--- a/drivers/ata/sata_rcar.c
++++ b/drivers/ata/sata_rcar.c
+@@ -1003,9 +1003,38 @@ static int sata_rcar_resume(struct device *dev)
+ 	return 0;
+ }
+ 
++static int sata_rcar_restore(struct device *dev)
++{
++	struct ata_host *host = dev_get_drvdata(dev);
++	struct sata_rcar_priv *priv = host->private_data;
++	int ret;
++
++	clk_prepare_enable(priv->clk);
++
++	ret = sata_rcar_setup_port(host);
++	if (ret)
++		goto cleanup;
++
++	/* initialize host controller */
++	sata_rcar_init_controller(host);
++
++	ata_host_resume(host);
++
++	return 0;
++
++cleanup:
++	clk_disable_unprepare(priv->clk);
++
++	return ret;
++}
++
+ static const struct dev_pm_ops sata_rcar_pm_ops = {
+ 	.suspend	= sata_rcar_suspend,
+ 	.resume		= sata_rcar_resume,
++	.freeze		= sata_rcar_suspend,
++	.restore	= sata_rcar_restore,
++	.thaw		= sata_rcar_resume,
++	.poweroff	= sata_rcar_suspend
+ };
+ #endif
+ 
+-- 
+1.8.3.1
+
