@@ -1,0 +1,26 @@
+From 37d06787ad78741bee9cc4daee81666b0abd20f3 Mon Sep 17 00:00:00 2001
+From: Sergey Lapin <slapin@ossfans.org>
+Date: Wed, 15 Apr 2015 12:42:15 +0300
+Subject: [PATCH] Fixed PM hooks for hibernate to work
+
+---
+ services4/srvkm/env/linux/module.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/services4/srvkm/env/linux/module.c b/services4/srvkm/env/linux/module.c
+index 7df256b..ca4baf5 100644
+--- a/services4/srvkm/env/linux/module.c
++++ b/services4/srvkm/env/linux/module.c
+@@ -285,8 +285,7 @@ static struct platform_device_id powervr_id_table[] __devinitdata = {
+ #endif
+ 
+ static struct dev_pm_ops powervr_dev_pm_ops = {
+-	.suspend	= PVRSRVDriverSuspend,
+-	.resume		= PVRSRVDriverResume,
++	SET_SYSTEM_SLEEP_PM_OPS(PVRSRVDriverSuspend, PVRSRVDriverResume)
+ };
+ 
+ static LDM_DRV powervr_driver = {
+-- 
+2.1.3
+

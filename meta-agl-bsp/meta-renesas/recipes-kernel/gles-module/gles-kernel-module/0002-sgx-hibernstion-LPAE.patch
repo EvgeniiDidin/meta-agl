@@ -1,0 +1,40 @@
+From 99392247dce7271a30e5e460a7c04e5ac53ad644 Mon Sep 17 00:00:00 2001
+From: Sergey Lapin <sergey.lapin@cogentembedded.com>
+Date: Fri, 22 Apr 2016 17:01:08 +0300
+Subject: [PATCH 2/2] debug
+
+---
+ services4/srvkm/common/power.c        |  6 ++++--
+ services4/srvkm/common/pvrsrv.c       |  2 ++
+ services4/srvkm/devices/sgx/sgxinit.c |  2 ++
+ services4/srvkm/env/linux/module.c    | 10 ++++++++++
+ services4/system/renesas/sysconfig.c  | 10 ++++++++++
+ services4/system/renesas/sysutils.c   |  1 +
+ 6 files changed, 29 insertions(+), 2 deletions(-)
+
+diff --git a/services4/srvkm/env/linux/module.c b/services4/srvkm/env/linux/module.c
+index 3bbf04b..85ac24f 100644
+--- a/services4/srvkm/env/linux/module.c
++++ b/services4/srvkm/env/linux/module.c
+@@ -284,8 +284,18 @@ static struct platform_device_id powervr_id_table[] __devinitdata = {
+ };
+ #endif
+ 
++int pvrsrv_restore_noirq(struct device *dev)
++{
++#if defined(CONFIG_ARM_LPAE) && defined(SUPPORT_RCAR_IPMMU)
++	extern int r8a779x_ipmmu_initialize(void);
++	r8a779x_ipmmu_initialize();
++#endif
++	return 0;
++}
++
+ static struct dev_pm_ops powervr_dev_pm_ops = {
+ 	SET_SYSTEM_SLEEP_PM_OPS(PVRSRVDriverSuspend, PVRSRVDriverResume)
++	.restore_noirq = pvrsrv_restore_noirq,
+ };
+ 
+ static LDM_DRV powervr_driver = {
+-- 
+2.1.3
+
