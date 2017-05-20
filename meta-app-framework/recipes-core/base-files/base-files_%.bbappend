@@ -4,6 +4,13 @@ RDEPENDS_${PN}_append_smack = " smack-userspace"
 do_install_append() {
     install -d ${D}/${sysconfdir}/skel/app-data
     install -d ${D}/${sysconfdir}/skel/.config
+    install -m 0755 -d ${D}/var
+    if [ -d ${D}/usr/local ]; then
+        mv ${D}/usr/local ${D}/var
+    else
+        install -m 0755 -d ${D}/var/local
+    fi
+    ln -s ../../var/local ${D}/usr/local
 }
 
 do_install_append_smack () {
