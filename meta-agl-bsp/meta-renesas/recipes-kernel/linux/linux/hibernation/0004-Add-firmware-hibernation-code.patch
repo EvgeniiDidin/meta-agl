@@ -1,0 +1,25 @@
+From 33d4c0afe2a4e39c0afdc993f28a8d2d6228df01 Mon Sep 17 00:00:00 2001
+From: Yuichi Kusakabe <yuichi.kusakabe@jp.fujitsu.com>
+Date: Thu, 18 May 2017 17:31:24 +0900
+Subject: [PATCH 04/15] Add firmware hibernation code
+
+Signed-off-by: Yuichi Kusakabe <yuichi.kusakabe@jp.fujitsu.com>
+---
+ drivers/base/firmware_class.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/base/firmware_class.c b/drivers/base/firmware_class.c
+index 01e2103..6123148 100644
+--- a/drivers/base/firmware_class.c
++++ b/drivers/base/firmware_class.c
+@@ -1464,6 +1464,7 @@ static int fw_pm_notify(struct notifier_block *notify_block,
+ 	switch (mode) {
+ 	case PM_HIBERNATION_PREPARE:
+ 	case PM_SUSPEND_PREPARE:
++	case PM_RESTORE_PREPARE:
+ 		device_cache_fw_images();
+ 		break;
+ 
+-- 
+1.8.3.1
+

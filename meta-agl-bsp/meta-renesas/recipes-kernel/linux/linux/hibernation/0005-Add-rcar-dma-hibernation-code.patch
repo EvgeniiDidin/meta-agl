@@ -1,0 +1,113 @@
+From c094e905cb0f542acdeb5d7009ab9edc812897f7 Mon Sep 17 00:00:00 2001
+From: Yuichi Kusakabe <yuichi.kusakabe@jp.fujitsu.com>
+Date: Thu, 18 May 2017 17:32:30 +0900
+Subject: [PATCH 05/15] Add rcar-dma hibernation code
+
+Signed-off-by: Yuichi Kusakabe <yuichi.kusakabe@jp.fujitsu.com>
+---
+ drivers/dma/sh/rcar-dmac.c | 27 +++++++++++++++++++++++++++
+ 1 file changed, 27 insertions(+)
+
+diff --git a/drivers/dma/sh/rcar-dmac.c b/drivers/dma/sh/rcar-dmac.c
+index e5e60ee..3b4a684 100644
+--- a/drivers/dma/sh/rcar-dmac.c
++++ b/drivers/dma/sh/rcar-dmac.c
+@@ -121,6 +121,7 @@ struct rcar_dmac_desc_page {
+  * struct rcar_dmac_chan - R-Car Gen2 DMA Controller Channel
+  * @chan: base DMA channel object
+  * @iomem: channel I/O memory base
++ * @backup: channel I/O memory backup base
+  * @index: index of this channel in the controller
+  * @src_xfer_size: size (in bytes) of hardware transfers on the source side
+  * @dst_xfer_size: size (in bytes) of hardware transfers on the destination side
+@@ -140,6 +141,7 @@ struct rcar_dmac_desc_page {
+ struct rcar_dmac_chan {
+ 	struct dma_chan chan;
+ 	void __iomem *iomem;
++	void *backup;
+ 	unsigned int index;
+ 
+ 	unsigned int src_xfer_size;
+@@ -171,6 +173,7 @@ struct rcar_dmac_chan {
+  * @engine: base DMA engine object
+  * @dev: the hardware device
+  * @iomem: remapped I/O memory base
++ * @backup: remapped I/O memory backup base
+  * @n_channels: number of available channels
+  * @channels: array of DMAC channels
+  * @modules: bitmask of client modules in use
+@@ -179,6 +182,7 @@ struct rcar_dmac {
+ 	struct dma_device engine;
+ 	struct device *dev;
+ 	void __iomem *iomem;
++	void *backup;
+ 
+ 	unsigned int n_channels;
+ 	struct rcar_dmac_chan *channels;
+@@ -277,6 +281,7 @@ static void rcar_dmac_write(struct rcar_dmac *dmac, u32 reg, u32 data)
+ 		writew(data, dmac->iomem + reg);
+ 	else
+ 		writel(data, dmac->iomem + reg);
++	writel(data, dmac->backup + reg);
+ }
+ 
+ static u32 rcar_dmac_read(struct rcar_dmac *dmac, u32 reg)
+@@ -301,6 +306,7 @@ static void rcar_dmac_chan_write(struct rcar_dmac_chan *chan, u32 reg, u32 data)
+ 		writew(data, chan->iomem + reg);
+ 	else
+ 		writel(data, chan->iomem + reg);
++	writel(data, chan->backup + reg);
+ }
+ 
+ /* -----------------------------------------------------------------------------
+@@ -1548,10 +1554,25 @@ static int rcar_dmac_runtime_resume(struct device *dev)
+ }
+ #endif
+ 
++static int rcar_dmac_freeze(struct device *dev)
++{
++	return 0;
++}
++
++static int rcar_dmac_restore(struct device *dev)
++{
++	int ret;
++	struct rcar_dmac *dmac = dev_get_drvdata(dev);
++	ret = rcar_dmac_init(dmac);
++	return ret;
++}
++
+ static const struct dev_pm_ops rcar_dmac_pm = {
+ 	SET_SYSTEM_SLEEP_PM_OPS(rcar_dmac_sleep_suspend, rcar_dmac_sleep_resume)
+ 	SET_RUNTIME_PM_OPS(rcar_dmac_runtime_suspend, rcar_dmac_runtime_resume,
+ 			   NULL)
++	.freeze = rcar_dmac_freeze,
++	.restore = rcar_dmac_restore,
+ };
+ 
+ /* -----------------------------------------------------------------------------
+@@ -1571,6 +1592,7 @@ static int rcar_dmac_chan_probe(struct rcar_dmac *dmac,
+ 
+ 	rchan->index = index;
+ 	rchan->iomem = dmac->iomem + RCAR_DMAC_CHAN_OFFSET(index);
++	rchan->backup = dmac->backup + RCAR_DMAC_CHAN_OFFSET(index);
+ 	rchan->mid_rid = -EINVAL;
+ 
+ 	spin_lock_init(&rchan->lock);
+@@ -1657,8 +1679,13 @@ static int rcar_dmac_probe(struct platform_device *pdev)
+ 	/* Request resources. */
+ 	mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+ 	dmac->iomem = devm_ioremap_resource(&pdev->dev, mem);
++	dmac->backup = devm_kzalloc(&pdev->dev, resource_size(mem), GFP_KERNEL);
+ 	if (IS_ERR(dmac->iomem))
+ 		return PTR_ERR(dmac->iomem);
++	dmac->backup = devm_kzalloc(&pdev->dev, resource_size(mem), GFP_KERNEL);
++	if (IS_ERR(dmac->backup)) {
++		return PTR_ERR(dmac->backup);
++	}
+ 
+ 	irq = platform_get_irq_byname(pdev, "error");
+ 	if (irq < 0) {
+-- 
+1.8.3.1
+

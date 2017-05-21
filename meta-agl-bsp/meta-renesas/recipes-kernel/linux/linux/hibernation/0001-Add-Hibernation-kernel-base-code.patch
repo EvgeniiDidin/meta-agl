@@ -1,0 +1,853 @@
+From 60123966221b74199e4cf0c18d43396b4f00a94a Mon Sep 17 00:00:00 2001
+From: Yuichi Kusakabe <yuichi.kusakabe@jp.fujitsu.com>
+Date: Thu, 18 May 2017 16:44:34 +0900
+Subject: [PATCH 01/15] Add Hibernation kernel base code
+
+Signed-off-by: Yuichi Kusakabe <yuichi.kusakabe@jp.fujitsu.com>
+---
+ include/linux/sched.h    |   1 +
+ include/linux/suspend.h  |   2 +
+ kernel/auditfilter.c     |   2 +-
+ kernel/power/console.c   |   2 +
+ kernel/power/hibernate.c | 146 +++++++++++++++++++++++++++++++----------------
+ kernel/power/main.c      |   4 --
+ kernel/power/power.h     |   8 ++-
+ kernel/power/process.c   |  35 ++++++++----
+ kernel/power/snapshot.c  |  33 +++++++----
+ kernel/power/suspend.c   |   4 +-
+ kernel/power/swap.c      |  50 ++++++++++++++--
+ 11 files changed, 201 insertions(+), 86 deletions(-)
+
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index f87e9a8..8e3270c 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -1644,6 +1644,7 @@ extern void thread_group_cputime_adjusted(struct task_struct *p, cputime_t *ut,
+ #define PF_MEMPOLICY	0x10000000	/* Non-default NUMA mempolicy */
+ #define PF_MUTEX_TESTER	0x20000000	/* Thread belongs to the rt mutex tester */
+ #define PF_FREEZER_SKIP	0x40000000	/* Freezer should not count it as freezable */
++#define PF_SUSPEND_TASK 0x80000000      /* this thread called freeze_processes and should not be frozen */
+ 
+ /*
+  * Only the _current_ task can read/write to tsk->flags, but other
+diff --git a/include/linux/suspend.h b/include/linux/suspend.h
+index d4e3f16..243ff56 100644
+--- a/include/linux/suspend.h
++++ b/include/linux/suspend.h
+@@ -320,6 +320,8 @@ extern unsigned long get_safe_page(gfp_t gfp_mask);
+ extern void hibernation_set_ops(const struct platform_hibernation_ops *ops);
+ extern int hibernate(void);
+ extern bool system_entering_hibernation(void);
++asmlinkage int swsusp_save(void);
++extern struct pbe *restore_pblist;
+ #else /* CONFIG_HIBERNATION */
+ static inline void register_nosave_region(unsigned long b, unsigned long e) {}
+ static inline void register_nosave_region_late(unsigned long b, unsigned long e) {}
+diff --git a/kernel/auditfilter.c b/kernel/auditfilter.c
+index 6bd4a90..ac08a9a 100644
+--- a/kernel/auditfilter.c
++++ b/kernel/auditfilter.c
+@@ -423,7 +423,7 @@ static struct audit_entry *audit_data_to_entry(struct audit_rule_data *data,
+ 		f->lsm_rule = NULL;
+ 
+ 		/* Support legacy tests for a valid loginuid */
+-		if ((f->type == AUDIT_LOGINUID) && (f->val == 4294967295)) {
++		if ((f->type == AUDIT_LOGINUID) && (f->val == 0xFFFFFFFF)) {
+ 			f->type = AUDIT_LOGINUID_SET;
+ 			f->val = 0;
+ 		}
+diff --git a/kernel/power/console.c b/kernel/power/console.c
+index 463aa67..aba9c54 100644
+--- a/kernel/power/console.c
++++ b/kernel/power/console.c
+@@ -9,6 +9,7 @@
+ #include <linux/kbd_kern.h>
+ #include <linux/vt.h>
+ #include <linux/module.h>
++#include <linux/slab.h>
+ #include "power.h"
+ 
+ #define SUSPEND_CONSOLE	(MAX_NR_CONSOLES-1)
+@@ -81,6 +82,7 @@ void pm_vt_switch_unregister(struct device *dev)
+ 	list_for_each_entry(tmp, &pm_vt_switch_list, head) {
+ 		if (tmp->dev == dev) {
+ 			list_del(&tmp->head);
++			kfree(tmp);
+ 			break;
+ 		}
+ 	}
+diff --git a/kernel/power/hibernate.c b/kernel/power/hibernate.c
+index b26f5f1..524dcf5 100644
+--- a/kernel/power/hibernate.c
++++ b/kernel/power/hibernate.c
+@@ -34,12 +34,13 @@
+ 
+ static int nocompress;
+ static int noresume;
++static int nohibernate;
+ static int resume_wait;
+-static int resume_delay;
++static unsigned int resume_delay;
+ static char resume_file[256] = CONFIG_PM_STD_PARTITION;
+ dev_t swsusp_resume_device;
+ sector_t swsusp_resume_block;
+-int in_suspend __nosavedata;
++__visible int in_suspend __nosavedata;
+ 
+ enum {
+ 	HIBERNATION_INVALID,
+@@ -61,6 +62,11 @@ bool freezer_test_done;
+ 
+ static const struct platform_hibernation_ops *hibernation_ops;
+ 
++bool hibernation_available(void)
++{
++	return (nohibernate == 0);
++}
++
+ /**
+  * hibernation_set_ops - Set the global hibernate operations.
+  * @ops: Hibernation operations to use in subsequent hibernation transitions.
+@@ -82,6 +88,7 @@ void hibernation_set_ops(const struct platform_hibernation_ops *ops)
+ 
+ 	unlock_system_sleep();
+ }
++EXPORT_SYMBOL_GPL(hibernation_set_ops);
+ 
+ static bool entering_platform_hibernation;
+ 
+@@ -227,19 +234,23 @@ static void platform_recover(int platform_mode)
+ void swsusp_show_speed(struct timeval *start, struct timeval *stop,
+ 			unsigned nr_pages, char *msg)
+ {
+-	s64 elapsed_centisecs64;
+-	int centisecs;
+-	int k;
+-	int kps;
++	u64 elapsed_centisecs64;
++	unsigned int centisecs;
++	unsigned int k;
++	unsigned int kps;
+ 
+ 	elapsed_centisecs64 = timeval_to_ns(stop) - timeval_to_ns(start);
++	/*
++	 * If "(s64)elapsed_centisecs64 < 0", it will print long elapsed time,
++	 * it is obvious enough for what went wrong.
++	 */
+ 	do_div(elapsed_centisecs64, NSEC_PER_SEC / 100);
+ 	centisecs = elapsed_centisecs64;
+ 	if (centisecs == 0)
+ 		centisecs = 1;	/* avoid div-by-zero */
+ 	k = nr_pages * (PAGE_SIZE / 1024);
+ 	kps = (k * 100) / centisecs;
+-	printk(KERN_INFO "PM: %s %d kbytes in %d.%02d seconds (%d.%02d MB/s)\n",
++	pr_info("PM: %s %u kbytes in %u.%02u seconds (%u.%02u MB/s)\n",
+ 			msg, k,
+ 			centisecs / 100, centisecs % 100,
+ 			kps / 1000, (kps % 1000) / 10);
+@@ -293,10 +304,10 @@ static int create_image(int platform_mode)
+ 			error);
+ 	/* Restore control flow magically appears here */
+ 	restore_processor_state();
+-	if (!in_suspend) {
++	if (!in_suspend)
+ 		events_check_enabled = false;
+-		platform_leave(platform_mode);
+-	}
++
++	platform_leave(platform_mode);
+ 
+  Power_up:
+ 	syscore_resume();
+@@ -594,7 +605,8 @@ static void power_down(void)
+ 	case HIBERNATION_PLATFORM:
+ 		hibernation_platform_enter();
+ 	case HIBERNATION_SHUTDOWN:
+-		kernel_power_off();
++		if (pm_power_off)
++			kernel_power_off();
+ 		break;
+ #ifdef CONFIG_SUSPEND
+ 	case HIBERNATION_SUSPEND:
+@@ -622,7 +634,8 @@ static void power_down(void)
+ 	 * corruption after resume.
+ 	 */
+ 	printk(KERN_CRIT "PM: Please power down manually\n");
+-	while(1);
++	while (1)
++		cpu_relax();
+ }
+ 
+ /**
+@@ -632,6 +645,11 @@ int hibernate(void)
+ {
+ 	int error;
+ 
++	if (!hibernation_available()) {
++		pr_debug("PM: Hibernation not available.\n");
++		return -EPERM;
++	}
++
+ 	lock_system_sleep();
+ 	/* The snapshot device should not be opened while we're running */
+ 	if (!atomic_add_unless(&snapshot_device_available, -1, 0)) {
+@@ -644,22 +662,22 @@ int hibernate(void)
+ 	if (error)
+ 		goto Exit;
+ 
+-	/* Allocate memory management structures */
+-	error = create_basic_memory_bitmaps();
+-	if (error)
+-		goto Exit;
+-
+ 	printk(KERN_INFO "PM: Syncing filesystems ... ");
+ 	sys_sync();
+ 	printk("done.\n");
+ 
+ 	error = freeze_processes();
+ 	if (error)
+-		goto Free_bitmaps;
++		goto Exit;
++
++	/* Allocate memory management structures */
++	error = create_basic_memory_bitmaps();
++	if (error)
++		goto Thaw;
+ 
+ 	error = hibernation_snapshot(hibernation_mode == HIBERNATION_PLATFORM);
+ 	if (error || freezer_test_done)
+-		goto Thaw;
++		goto Free_bitmaps;
+ 
+ 	if (in_suspend) {
+ 		unsigned int flags = 0;
+@@ -682,14 +700,13 @@ int hibernate(void)
+ 		pr_debug("PM: Image restored successfully.\n");
+ 	}
+ 
++ Free_bitmaps:
++	free_basic_memory_bitmaps();
+  Thaw:
+ 	thaw_processes();
+ 
+ 	/* Don't bother checking whether freezer_test_done is true */
+ 	freezer_test_done = false;
+-
+- Free_bitmaps:
+-	free_basic_memory_bitmaps();
+  Exit:
+ 	pm_notifier_call_chain(PM_POST_HIBERNATION);
+ 	pm_restore_console();
+@@ -723,7 +740,7 @@ static int software_resume(void)
+ 	/*
+ 	 * If the user said "noresume".. bail out early.
+ 	 */
+-	if (noresume)
++	if (noresume || !hibernation_available())
+ 		return 0;
+ 
+ 	/*
+@@ -806,21 +823,19 @@ static int software_resume(void)
+ 	pm_prepare_console();
+ 	error = pm_notifier_call_chain(PM_RESTORE_PREPARE);
+ 	if (error)
+-		goto close_finish;
+-
+-	error = create_basic_memory_bitmaps();
+-	if (error)
+-		goto close_finish;
++		goto Close_Finish;
+ 
+ 	pr_debug("PM: Preparing processes for restore.\n");
+ 	error = freeze_processes();
+-	if (error) {
+-		swsusp_close(FMODE_READ);
+-		goto Done;
+-	}
++	if (error)
++		goto Close_Finish;
+ 
+ 	pr_debug("PM: Loading hibernation image.\n");
+ 
++	error = create_basic_memory_bitmaps();
++	if (error)
++		goto Thaw;
++
+ 	error = swsusp_read(&flags);
+ 	swsusp_close(FMODE_READ);
+ 	if (!error)
+@@ -828,9 +843,9 @@ static int software_resume(void)
+ 
+ 	printk(KERN_ERR "PM: Failed to load hibernation image, recovering.\n");
+ 	swsusp_free();
+-	thaw_processes();
+- Done:
+ 	free_basic_memory_bitmaps();
++ Thaw:
++	thaw_processes();
+  Finish:
+ 	pm_notifier_call_chain(PM_POST_RESTORE);
+ 	pm_restore_console();
+@@ -840,12 +855,12 @@ static int software_resume(void)
+ 	mutex_unlock(&pm_mutex);
+ 	pr_debug("PM: Hibernation image not present or could not be loaded.\n");
+ 	return error;
+-close_finish:
++ Close_Finish:
+ 	swsusp_close(FMODE_READ);
+ 	goto Finish;
+ }
+ 
+-late_initcall(software_resume);
++late_initcall_sync(software_resume);
+ 
+ 
+ static const char * const hibernation_modes[] = {
+@@ -889,6 +904,9 @@ static ssize_t disk_show(struct kobject *kobj, struct kobj_attribute *attr,
+ 	int i;
+ 	char *start = buf;
+ 
++	if (!hibernation_available())
++		return sprintf(buf, "[disabled]\n");
++
+ 	for (i = HIBERNATION_FIRST; i <= HIBERNATION_MAX; i++) {
+ 		if (!hibernation_modes[i])
+ 			continue;
+@@ -923,6 +941,9 @@ static ssize_t disk_store(struct kobject *kobj, struct kobj_attribute *attr,
+ 	char *p;
+ 	int mode = HIBERNATION_INVALID;
+ 
++	if (!hibernation_available())
++		return -EPERM;
++
+ 	p = memchr(buf, '\n', n);
+ 	len = p ? p - buf : n;
+ 
+@@ -971,16 +992,20 @@ static ssize_t resume_show(struct kobject *kobj, struct kobj_attribute *attr,
+ static ssize_t resume_store(struct kobject *kobj, struct kobj_attribute *attr,
+ 			    const char *buf, size_t n)
+ {
+-	unsigned int maj, min;
+ 	dev_t res;
+-	int ret = -EINVAL;
++	int len = n;
++	char *name;
+ 
+-	if (sscanf(buf, "%u:%u", &maj, &min) != 2)
+-		goto out;
++	if (len && buf[len-1] == '\n')
++		len--;
++	name = kstrndup(buf, len, GFP_KERNEL);
++	if (!name)
++		return -ENOMEM;
+ 
+-	res = MKDEV(maj,min);
+-	if (maj != MAJOR(res) || min != MINOR(res))
+-		goto out;
++	res = name_to_dev_t(name);
++	kfree(name);
++	if (!res)
++		return -EINVAL;
+ 
+ 	lock_system_sleep();
+ 	swsusp_resume_device = res;
+@@ -988,20 +1013,20 @@ static ssize_t resume_store(struct kobject *kobj, struct kobj_attribute *attr,
+ 	printk(KERN_INFO "PM: Starting manual resume from disk\n");
+ 	noresume = 0;
+ 	software_resume();
+-	ret = n;
+- out:
+-	return ret;
++	return n;
+ }
+ 
+ power_attr(resume);
+ 
+-static ssize_t image_size_show(struct kobject *kobj, struct kobj_attribute *attr,
++static ssize_t image_size_show(struct kobject *kobj,
++			       struct kobj_attribute *attr,
+ 			       char *buf)
+ {
+ 	return sprintf(buf, "%lu\n", image_size);
+ }
+ 
+-static ssize_t image_size_store(struct kobject *kobj, struct kobj_attribute *attr,
++static ssize_t image_size_store(struct kobject *kobj,
++				struct kobj_attribute *attr,
+ 				const char *buf, size_t n)
+ {
+ 	unsigned long size;
+@@ -1065,7 +1090,7 @@ static int __init resume_setup(char *str)
+ 	if (noresume)
+ 		return 1;
+ 
+-	strncpy( resume_file, str, 255 );
++	strncpy(resume_file, str, 255);
+ 	return 1;
+ }
+ 
+@@ -1088,6 +1113,10 @@ static int __init hibernate_setup(char *str)
+ 		noresume = 1;
+ 	else if (!strncmp(str, "nocompress", 10))
+ 		nocompress = 1;
++	else if (!strncmp(str, "no", 2)) {
++		noresume = 1;
++		nohibernate = 1;
++	}
+ 	return 1;
+ }
+ 
+@@ -1105,13 +1134,30 @@ static int __init resumewait_setup(char *str)
+ 
+ static int __init resumedelay_setup(char *str)
+ {
+-	resume_delay = simple_strtoul(str, NULL, 0);
++	int rc = kstrtouint(str, 0, &resume_delay);
++
++	if (rc)
++		return rc;
++	return 1;
++}
++
++static int __init nohibernate_setup(char *str)
++{
++	noresume = 1;
++	nohibernate = 1;
+ 	return 1;
+ }
+ 
++static int __init kaslr_nohibernate_setup(char *str)
++{
++	return nohibernate_setup(str);
++}
++
+ __setup("noresume", noresume_setup);
+ __setup("resume_offset=", resume_offset_setup);
+ __setup("resume=", resume_setup);
+ __setup("hibernate=", hibernate_setup);
+ __setup("resumewait", resumewait_setup);
+ __setup("resumedelay=", resumedelay_setup);
++__setup("nohibernate", nohibernate_setup);
++__setup("kaslr", kaslr_nohibernate_setup);
+diff --git a/kernel/power/main.c b/kernel/power/main.c
+index d77663b..ac615e4 100644
+--- a/kernel/power/main.c
++++ b/kernel/power/main.c
+@@ -610,7 +610,6 @@ static struct attribute_group attr_group = {
+ 	.attrs = g,
+ };
+ 
+-#ifdef CONFIG_PM_RUNTIME
+ struct workqueue_struct *pm_wq;
+ EXPORT_SYMBOL_GPL(pm_wq);
+ 
+@@ -620,9 +619,6 @@ static int __init pm_start_workqueue(void)
+ 
+ 	return pm_wq ? 0 : -ENOMEM;
+ }
+-#else
+-static inline int pm_start_workqueue(void) { return 0; }
+-#endif
+ 
+ static int __init pm_init(void)
+ {
+diff --git a/kernel/power/power.h b/kernel/power/power.h
+index 7d4b7ff..c5821ca 100644
+--- a/kernel/power/power.h
++++ b/kernel/power/power.h
+@@ -2,6 +2,7 @@
+ #include <linux/suspend_ioctls.h>
+ #include <linux/utsname.h>
+ #include <linux/freezer.h>
++#include <linux/compiler.h>
+ 
+ struct swsusp_info {
+ 	struct new_utsname	uts;
+@@ -11,7 +12,8 @@ struct swsusp_info {
+ 	unsigned long		image_pages;
+ 	unsigned long		pages;
+ 	unsigned long		size;
+-} __attribute__((aligned(PAGE_SIZE)));
++	char			archdata[1024];
++} __aligned(PAGE_SIZE);
+ 
+ #ifdef CONFIG_HIBERNATION
+ /* kernel/power/snapshot.c */
+@@ -37,6 +39,8 @@ static inline char *check_image_kernel(struct swsusp_info *info)
+ }
+ #endif /* CONFIG_ARCH_HIBERNATION_HEADER */
+ 
++extern void __weak swsusp_arch_add_info(char *archdata);
++
+ /*
+  * Keep some memory free so that I/O operations can succeed without paging
+  * [Might this be more than 4 MB?]
+@@ -49,6 +53,8 @@ static inline char *check_image_kernel(struct swsusp_info *info)
+  */
+ #define SPARE_PAGES	((1024 * 1024) >> PAGE_SHIFT)
+ 
++asmlinkage int swsusp_save(void);
++
+ /* kernel/power/hibernate.c */
+ extern bool freezer_test_done;
+ 
+diff --git a/kernel/power/process.c b/kernel/power/process.c
+index 0695319..04559b4 100644
+--- a/kernel/power/process.c
++++ b/kernel/power/process.c
+@@ -30,9 +30,10 @@ static int try_to_freeze_tasks(bool user_only)
+ 	unsigned int todo;
+ 	bool wq_busy = false;
+ 	struct timeval start, end;
+-	u64 elapsed_csecs64;
+-	unsigned int elapsed_csecs;
++	u64 elapsed_msecs64;
++	unsigned int elapsed_msecs;
+ 	bool wakeup = false;
++	int sleep_usecs = USEC_PER_MSEC;
+ 
+ 	do_gettimeofday(&start);
+ 
+@@ -68,22 +69,25 @@ static int try_to_freeze_tasks(bool user_only)
+ 
+ 		/*
+ 		 * We need to retry, but first give the freezing tasks some
+-		 * time to enter the refrigerator.
++		 * time to enter the refrigerator.  Start with an initial
++		 * 1 ms sleep followed by exponential backoff until 8 ms.
+ 		 */
+-		msleep(10);
++		usleep_range(sleep_usecs / 2, sleep_usecs);
++		if (sleep_usecs < 8 * USEC_PER_MSEC)
++			sleep_usecs *= 2;
+ 	}
+ 
+ 	do_gettimeofday(&end);
+-	elapsed_csecs64 = timeval_to_ns(&end) - timeval_to_ns(&start);
+-	do_div(elapsed_csecs64, NSEC_PER_SEC / 100);
+-	elapsed_csecs = elapsed_csecs64;
++	elapsed_msecs64 = timeval_to_ns(&end) - timeval_to_ns(&start);
++	do_div(elapsed_msecs64, NSEC_PER_MSEC);
++	elapsed_msecs = elapsed_msecs64;
+ 
+ 	if (todo) {
+ 		printk("\n");
+-		printk(KERN_ERR "Freezing of tasks %s after %d.%02d seconds "
++		printk(KERN_ERR "Freezing of tasks %s after %d.%03d seconds "
+ 		       "(%d tasks refusing to freeze, wq_busy=%d):\n",
+ 		       wakeup ? "aborted" : "failed",
+-		       elapsed_csecs / 100, elapsed_csecs % 100,
++		       elapsed_msecs / 1000, elapsed_msecs % 1000,
+ 		       todo - wq_busy, wq_busy);
+ 
+ 		if (!wakeup) {
+@@ -96,8 +100,8 @@ static int try_to_freeze_tasks(bool user_only)
+ 			read_unlock(&tasklist_lock);
+ 		}
+ 	} else {
+-		printk("(elapsed %d.%02d seconds) ", elapsed_csecs / 100,
+-			elapsed_csecs % 100);
++		printk("(elapsed %d.%03d seconds) ", elapsed_msecs / 1000,
++			elapsed_msecs % 1000);
+ 	}
+ 
+ 	return todo ? -EBUSY : 0;
+@@ -139,6 +143,9 @@ int freeze_processes(void)
+ 	if (error)
+ 		return error;
+ 
++	/* Make sure this task doesn't get frozen */
++	current->flags |= PF_SUSPEND_TASK;
++
+ 	if (!pm_freezing)
+ 		atomic_inc(&system_freezing_cnt);
+ 
+@@ -202,6 +209,7 @@ int freeze_kernel_threads(void)
+ void thaw_processes(void)
+ {
+ 	struct task_struct *g, *p;
++	struct task_struct *curr = current;
+ 
+ 	if (pm_freezing)
+ 		atomic_dec(&system_freezing_cnt);
+@@ -217,10 +225,15 @@ void thaw_processes(void)
+ 
+ 	read_lock(&tasklist_lock);
+ 	do_each_thread(g, p) {
++		/* No other threads should have PF_SUSPEND_TASK set */
++		WARN_ON((p != curr) && (p->flags & PF_SUSPEND_TASK));
+ 		__thaw_task(p);
+ 	} while_each_thread(g, p);
+ 	read_unlock(&tasklist_lock);
+ 
++	WARN_ON(!(curr->flags & PF_SUSPEND_TASK));
++	curr->flags &= ~PF_SUSPEND_TASK;
++
+ 	usermodehelper_enable();
+ 
+ 	schedule();
+diff --git a/kernel/power/snapshot.c b/kernel/power/snapshot.c
+index 91c04f1..a673f7b 100644
+--- a/kernel/power/snapshot.c
++++ b/kernel/power/snapshot.c
+@@ -27,6 +27,7 @@
+ #include <linux/highmem.h>
+ #include <linux/list.h>
+ #include <linux/slab.h>
++#include <linux/compiler.h>
+ 
+ #include <asm/uaccess.h>
+ #include <asm/mmu_context.h>
+@@ -155,7 +156,7 @@ static inline void free_image_page(void *addr, int clear_nosave_free)
+ struct linked_page {
+ 	struct linked_page *next;
+ 	char data[LINKED_PAGE_DATA_SIZE];
+-} __attribute__((packed));
++} __packed;
+ 
+ static inline void
+ free_list_of_pages(struct linked_page *list, int clear_page_nosave)
+@@ -352,7 +353,7 @@ static int create_mem_extents(struct list_head *list, gfp_t gfp_mask)
+ 		struct mem_extent *ext, *cur, *aux;
+ 
+ 		zone_start = zone->zone_start_pfn;
+-		zone_end = zone->zone_start_pfn + zone->spanned_pages;
++		zone_end = zone_end_pfn(zone);
+ 
+ 		list_for_each_entry(ext, list, hook)
+ 			if (zone_start <= ext->end)
+@@ -642,8 +643,9 @@ __register_nosave_region(unsigned long start_pfn, unsigned long end_pfn,
+ 	region->end_pfn = end_pfn;
+ 	list_add_tail(&region->list, &nosave_regions);
+  Report:
+-	printk(KERN_INFO "PM: Registered nosave memory: %016lx - %016lx\n",
+-		start_pfn << PAGE_SHIFT, end_pfn << PAGE_SHIFT);
++	printk(KERN_INFO "PM: Registered nosave memory: [mem %#010llx-%#010llx]\n",
++		(unsigned long long) start_pfn << PAGE_SHIFT,
++		((unsigned long long) end_pfn << PAGE_SHIFT) - 1);
+ }
+ 
+ /*
+@@ -742,7 +744,10 @@ int create_basic_memory_bitmaps(void)
+ 	struct memory_bitmap *bm1, *bm2;
+ 	int error = 0;
+ 
+-	BUG_ON(forbidden_pages_map || free_pages_map);
++	if (forbidden_pages_map && free_pages_map)
++		return 0;
++	else
++		BUG_ON(forbidden_pages_map || free_pages_map);
+ 
+ 	bm1 = kzalloc(sizeof(struct memory_bitmap), GFP_KERNEL);
+ 	if (!bm1)
+@@ -788,7 +793,8 @@ void free_basic_memory_bitmaps(void)
+ {
+ 	struct memory_bitmap *bm1, *bm2;
+ 
+-	BUG_ON(!(forbidden_pages_map && free_pages_map));
++	if (WARN_ON(!(forbidden_pages_map && free_pages_map)))
++		return;
+ 
+ 	bm1 = forbidden_pages_map;
+ 	bm2 = free_pages_map;
+@@ -883,7 +889,7 @@ static unsigned int count_highmem_pages(void)
+ 			continue;
+ 
+ 		mark_free_pages(zone);
+-		max_zone_pfn = zone->zone_start_pfn + zone->spanned_pages;
++		max_zone_pfn = zone_end_pfn(zone);
+ 		for (pfn = zone->zone_start_pfn; pfn < max_zone_pfn; pfn++)
+ 			if (saveable_highmem_page(zone, pfn))
+ 				n++;
+@@ -947,7 +953,7 @@ static unsigned int count_data_pages(void)
+ 			continue;
+ 
+ 		mark_free_pages(zone);
+-		max_zone_pfn = zone->zone_start_pfn + zone->spanned_pages;
++		max_zone_pfn = zone_end_pfn(zone);
+ 		for (pfn = zone->zone_start_pfn; pfn < max_zone_pfn; pfn++)
+ 			if (saveable_page(zone, pfn))
+ 				n++;
+@@ -1040,7 +1046,7 @@ copy_data_pages(struct memory_bitmap *copy_bm, struct memory_bitmap *orig_bm)
+ 		unsigned long max_zone_pfn;
+ 
+ 		mark_free_pages(zone);
+-		max_zone_pfn = zone->zone_start_pfn + zone->spanned_pages;
++		max_zone_pfn = zone_end_pfn(zone);
+ 		for (pfn = zone->zone_start_pfn; pfn < max_zone_pfn; pfn++)
+ 			if (page_is_saveable(zone, pfn))
+ 				memory_bm_set_bit(orig_bm, pfn);
+@@ -1092,7 +1098,7 @@ void swsusp_free(void)
+ 	unsigned long pfn, max_zone_pfn;
+ 
+ 	for_each_populated_zone(zone) {
+-		max_zone_pfn = zone->zone_start_pfn + zone->spanned_pages;
++		max_zone_pfn = zone_end_pfn(zone);
+ 		for (pfn = zone->zone_start_pfn; pfn < max_zone_pfn; pfn++)
+ 			if (pfn_valid(pfn)) {
+ 				struct page *page = pfn_to_page(pfn);
+@@ -1580,7 +1586,7 @@ swsusp_alloc(struct memory_bitmap *orig_bm, struct memory_bitmap *copy_bm,
+ 	return -ENOMEM;
+ }
+ 
+-asmlinkage int swsusp_save(void)
++asmlinkage __visible int swsusp_save(void)
+ {
+ 	unsigned int nr_pages, nr_highmem;
+ 
+@@ -1628,6 +1634,7 @@ static int init_header_complete(struct swsusp_info *info)
+ {
+ 	memcpy(&info->uts, init_utsname(), sizeof(struct new_utsname));
+ 	info->version_code = LINUX_VERSION_CODE;
++	swsusp_arch_add_info(info->archdata);
+ 	return 0;
+ }
+ 
+@@ -1647,6 +1654,8 @@ static char *check_image_kernel(struct swsusp_info *info)
+ }
+ #endif /* CONFIG_ARCH_HIBERNATION_HEADER */
+ 
++void __weak swsusp_arch_add_info(char *archdata) {}
++
+ unsigned long snapshot_get_image_size(void)
+ {
+ 	return nr_copy_pages + nr_meta_pages + 1;
+@@ -1758,7 +1767,7 @@ static int mark_unsafe_pages(struct memory_bitmap *bm)
+ 
+ 	/* Clear page flags */
+ 	for_each_populated_zone(zone) {
+-		max_zone_pfn = zone->zone_start_pfn + zone->spanned_pages;
++		max_zone_pfn = zone_end_pfn(zone);
+ 		for (pfn = zone->zone_start_pfn; pfn < max_zone_pfn; pfn++)
+ 			if (pfn_valid(pfn))
+ 				swsusp_unset_page_free(pfn_to_page(pfn));
+diff --git a/kernel/power/suspend.c b/kernel/power/suspend.c
+index bef86d1..deec937 100644
+--- a/kernel/power/suspend.c
++++ b/kernel/power/suspend.c
+@@ -156,13 +156,13 @@ static int suspend_prepare(suspend_state_t state)
+ }
+ 
+ /* default implementation */
+-void __attribute__ ((weak)) arch_suspend_disable_irqs(void)
++void __weak arch_suspend_disable_irqs(void)
+ {
+ 	local_irq_disable();
+ }
+ 
+ /* default implementation */
+-void __attribute__ ((weak)) arch_suspend_enable_irqs(void)
++void __weak arch_suspend_enable_irqs(void)
+ {
+ 	local_irq_enable();
+ }
+diff --git a/kernel/power/swap.c b/kernel/power/swap.c
+index 7c33ed2..a6a1c55 100644
+--- a/kernel/power/swap.c
++++ b/kernel/power/swap.c
+@@ -91,17 +91,28 @@ struct swap_map_handle {
+ 	unsigned int k;
+ 	unsigned long reqd_free_pages;
+ 	u32 crc32;
++#ifdef CONFIG_ARCH_SHMOBILE
++	unsigned int img_size; /* add */
++#endif
+ };
+ 
+ struct swsusp_header {
++#ifdef CONFIG_ARCH_SHMOBILE
++	char reserved[PAGE_SIZE - 20 - sizeof(sector_t) - sizeof(int) -
++		      sizeof(u32) - (sizeof(unsigned int)*4) - sizeof(u32)];
++	unsigned int comp_crc32[4];
++	u32 img_size;
++#else
+ 	char reserved[PAGE_SIZE - 20 - sizeof(sector_t) - sizeof(int) -
+-	              sizeof(u32)];
++		      sizeof(u32) - sizeof(u32)];
++	u32	comp_crc32;
++#endif
+ 	u32	crc32;
+ 	sector_t image;
+ 	unsigned int flags;	/* Flags to pass to the "boot" kernel */
+ 	char	orig_sig[10];
+ 	char	sig[10];
+-} __attribute__((packed));
++} __packed;
+ 
+ static struct swsusp_header *swsusp_header;
+ 
+@@ -230,6 +241,11 @@ static int mark_swapfiles(struct swap_map_handle *handle, unsigned int flags)
+ 		swsusp_header->flags = flags;
+ 		if (flags & SF_CRC32_MODE)
+ 			swsusp_header->crc32 = handle->crc32;
++
++#ifdef CONFIG_ARCH_SHMOBILE
++		swsusp_header->img_size = handle->img_size;
++#endif
++
+ 		error = hib_bio_write_page(swsusp_resume_block,
+ 					swsusp_header, NULL);
+ 	} else {
+@@ -587,7 +603,11 @@ static int save_image_lzo(struct swap_map_handle *handle,
+ 	unsigned char *page = NULL;
+ 	struct cmp_data *data = NULL;
+ 	struct crc_data *crc = NULL;
++	int compr = 0;
+ 
++#ifdef CONFIG_ARCH_SHMOBILE
++	unsigned int comp_imgtotal = 0;
++#endif
+ 	/*
+ 	 * We'll limit the number of threads for compression to limit memory
+ 	 * footprint.
+@@ -733,7 +753,12 @@ static int save_image_lzo(struct swap_map_handle *handle,
+ 			}
+ 
+ 			*(size_t *)data[thr].cmp = data[thr].cmp_len;
+-
++			compr += data[thr].cmp_len;
++#ifdef CONFIG_ARCH_SHMOBILE
++			comp_imgtotal += (data[thr].cmp_len
++					+ LZO_HEADER + (PAGE_SIZE - 1))
++				& ~(PAGE_SIZE - 1);
++#endif
+ 			/*
+ 			 * Given we are writing one page at a time to disk, we
+ 			 * copy that much from the buffer, although the last
+@@ -746,7 +771,6 @@ static int save_image_lzo(struct swap_map_handle *handle,
+ 			     off < LZO_HEADER + data[thr].cmp_len;
+ 			     off += PAGE_SIZE) {
+ 				memcpy(page, data[thr].cmp + off, PAGE_SIZE);
+-
+ 				ret = swap_write_page(handle, page, &bio);
+ 				if (ret)
+ 					goto out_finish;
+@@ -762,8 +786,24 @@ out_finish:
+ 	do_gettimeofday(&stop);
+ 	if (!ret)
+ 		ret = err2;
+-	if (!ret)
++	if (!ret) {
++#ifdef CONFIG_ARCH_SHMOBILE
++		const unsigned int ds = comp_imgtotal +
++			((comp_imgtotal
++			  / ((2 * 1024 * 1024)
++				  - PAGE_SIZE)) * PAGE_SIZE);
++		const unsigned int swaped =
++			(swp_offset(get_swap_page_of_type(root_swap))
++			 - 2) * PAGE_SIZE;
++		if (ds < swaped)
++			handle->img_size = swaped;
++		else
++			handle->img_size = ds;
++#endif
+ 		printk(KERN_INFO "PM: Image saving done.\n");
++		printk(KERN_INFO "PM: Compressed output size: %d [%d] (imgsize=%d/swaped size=%d)\n",
++				compr, handle->img_size, ds, swaped);
++	}
+ 	swsusp_show_speed(&start, &stop, nr_to_write, "Wrote");
+ out_clean:
+ 	if (crc) {
+-- 
+1.8.3.1
+

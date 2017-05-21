@@ -1,0 +1,41 @@
+From 947b9e15ff36a9dcd517bb932303cc32f8356550 Mon Sep 17 00:00:00 2001
+From: Yuichi Kusakabe <yuichi.kusakabe@jp.fujitsu.com>
+Date: Thu, 18 May 2017 17:59:40 +0900
+Subject: [PATCH 14/15] Add rcar-sci hibernation code
+
+Signed-off-by: Yuichi Kusakabe <yuichi.kusakabe@jp.fujitsu.com>
+---
+ drivers/tty/serial/sh-sci.c | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/tty/serial/sh-sci.c b/drivers/tty/serial/sh-sci.c
+index e3abfb7..2f0dc7a 100644
+--- a/drivers/tty/serial/sh-sci.c
++++ b/drivers/tty/serial/sh-sci.c
+@@ -2852,6 +2852,7 @@ static int sci_probe(struct platform_device *dev)
+ 	return 0;
+ }
+ 
++#ifdef CONFIG_PM_SLEEP
+ static int sci_suspend(struct device *dev)
+ {
+ 	struct sci_port *sport = dev_get_drvdata(dev);
+@@ -2871,10 +2872,13 @@ static int sci_resume(struct device *dev)
+ 
+ 	return 0;
+ }
++#else
++#define sci_suspend NULL
++#define sci_resume NULL
++#endif
+ 
+ static const struct dev_pm_ops sci_dev_pm_ops = {
+-	.suspend	= sci_suspend,
+-	.resume		= sci_resume,
++	SET_SYSTEM_SLEEP_PM_OPS(sci_suspend, sci_resume)
+ };
+ 
+ static struct platform_driver sci_driver = {
+-- 
+1.8.3.1
+

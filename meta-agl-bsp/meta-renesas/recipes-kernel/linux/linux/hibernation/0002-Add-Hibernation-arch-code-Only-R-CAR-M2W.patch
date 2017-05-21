@@ -1,0 +1,1529 @@
+From 34a419b3fd88a2275ca681c99a5787b937e0f39d Mon Sep 17 00:00:00 2001
+From: Yuichi Kusakabe <yuichi.kusakabe@jp.fujitsu.com>
+Date: Thu, 18 May 2017 16:47:29 +0900
+Subject: [PATCH 02/15] Add Hibernation arch code(Only R-CAR M2W)
+
+Signed-off-by: Yuichi Kusakabe <yuichi.kusakabe@jp.fujitsu.com>
+---
+ arch/arm/Kconfig                         |   5 +
+ arch/arm/include/asm/memory.h            |   1 +
+ arch/arm/include/asm/smp.h               |   4 +
+ arch/arm/include/asm/suspend.h           |   3 +
+ arch/arm/kernel/Makefile                 |   1 +
+ arch/arm/kernel/hibernate.c              | 139 ++++++++++++++
+ arch/arm/kernel/process.c                |   7 +-
+ arch/arm/kernel/sleep.S                  |   8 +
+ arch/arm/kernel/smp.c                    |   6 +
+ arch/arm/kernel/suspend.c                |  64 ++++---
+ arch/arm/mach-shmobile/Kconfig           |  65 +++++++
+ arch/arm/mach-shmobile/Makefile          |   1 +
+ arch/arm/mach-shmobile/common.h          |   8 +
+ arch/arm/mach-shmobile/crc32_word4.c     | 299 +++++++++++++++++++++++++++++++
+ arch/arm/mach-shmobile/crc32_word4.h     |  23 +++
+ arch/arm/mach-shmobile/headsmp.S         |   2 -
+ arch/arm/mach-shmobile/hibernation.c     | 243 +++++++++++++++++++++++++
+ arch/arm/mach-shmobile/platsmp-apmu.c    |  13 +-
+ arch/arm/mach-shmobile/platsmp-rst.c     |   3 +-
+ arch/arm/mach-shmobile/pm-r8a7791.c      |  27 +--
+ arch/arm/mach-shmobile/rcar-gen2.h       |  39 ++++
+ arch/arm/mach-shmobile/setup-r8a7791.c   |  10 +-
+ arch/arm/mach-shmobile/setup-rcar-gen2.c |  14 +-
+ arch/arm/mach-shmobile/smp-r8a7791.c     |   8 +-
+ arch/arm/mm/proc-v7.S                    |  31 ++--
+ 25 files changed, 947 insertions(+), 77 deletions(-)
+ create mode 100644 arch/arm/kernel/hibernate.c
+ create mode 100644 arch/arm/mach-shmobile/crc32_word4.c
+ create mode 100644 arch/arm/mach-shmobile/crc32_word4.h
+ create mode 100644 arch/arm/mach-shmobile/hibernation.c
+
+diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
+index 4dd95dd..eb76182 100644
+--- a/arch/arm/Kconfig
++++ b/arch/arm/Kconfig
+@@ -2232,6 +2232,11 @@ config ARCH_SUSPEND_POSSIBLE
+ config ARM_CPU_SUSPEND
+ 	def_bool PM_SLEEP
+ 
++config ARCH_HIBERNATION_POSSIBLE
++	bool
++	depends on MMU
++	default y if ARCH_SUSPEND_POSSIBLE
++
+ endmenu
+ 
+ source "net/Kconfig"
+diff --git a/arch/arm/include/asm/memory.h b/arch/arm/include/asm/memory.h
+index 48cb2b3..01158e7 100644
+--- a/arch/arm/include/asm/memory.h
++++ b/arch/arm/include/asm/memory.h
+@@ -241,6 +241,7 @@ static inline void *phys_to_virt(phys_addr_t x)
+ #define __pa(x)			__virt_to_phys((unsigned long)(x))
+ #define __va(x)			((void *)__phys_to_virt((phys_addr_t)(x)))
+ #define pfn_to_kaddr(pfn)	__va((pfn) << PAGE_SHIFT)
++#define virt_to_pfn(kaddr)      (__pa(kaddr) >> PAGE_SHIFT)
+ 
+ /*
+  * Virtual <-> DMA view memory address translations
+diff --git a/arch/arm/include/asm/smp.h b/arch/arm/include/asm/smp.h
+index d3a22be..b718040 100644
+--- a/arch/arm/include/asm/smp.h
++++ b/arch/arm/include/asm/smp.h
+@@ -42,6 +42,10 @@ void handle_IPI(int ipinr, struct pt_regs *regs);
+  */
+ extern void smp_init_cpus(void);
+ 
++/*
++ * Provide a function to call machine specific cpu initialization sequence
++ */
++extern void arch_smp_prepare_cpus(unsigned int max_cpus);
+ 
+ /*
+  * Provide a function to raise an IPI cross call on CPUs in callmap.
+diff --git a/arch/arm/include/asm/suspend.h b/arch/arm/include/asm/suspend.h
+index 1c0a551..709afa4 100644
+--- a/arch/arm/include/asm/suspend.h
++++ b/arch/arm/include/asm/suspend.h
+@@ -3,5 +3,8 @@
+ 
+ extern void cpu_resume(void);
+ extern int cpu_suspend(unsigned long, int (*)(unsigned long));
++extern const void __nosave_begin, __nosave_end;
++extern void cpu_resume_restore_nosave(u32, u32, u32);
++extern void call_with_stack(void (*fn)(void *), void *arg, void *sp);
+ 
+ #endif
+diff --git a/arch/arm/kernel/Makefile b/arch/arm/kernel/Makefile
+index 5f3338e..70f439f 100644
+--- a/arch/arm/kernel/Makefile
++++ b/arch/arm/kernel/Makefile
+@@ -32,6 +32,7 @@ obj-$(CONFIG_ARTHUR)		+= arthur.o
+ obj-$(CONFIG_ISA_DMA)		+= dma-isa.o
+ obj-$(CONFIG_PCI)		+= bios32.o isa.o
+ obj-$(CONFIG_ARM_CPU_SUSPEND)	+= sleep.o suspend.o
++obj-$(CONFIG_HIBERNATION)		+= hibernate.o
+ obj-$(CONFIG_SMP)		+= smp.o smp_tlb.o
+ obj-$(CONFIG_HAVE_ARM_SCU)	+= smp_scu.o
+ obj-$(CONFIG_HAVE_ARM_TWD)	+= smp_twd.o
+diff --git a/arch/arm/kernel/hibernate.c b/arch/arm/kernel/hibernate.c
+new file mode 100644
+index 0000000..9380fe2
+--- /dev/null
++++ b/arch/arm/kernel/hibernate.c
+@@ -0,0 +1,139 @@
++/*
++ * Hibernation support specific for ARM
++ *
++ * Derived from work on ARM hibernation support by:
++ *
++ * Ubuntu project, hibernation support for mach-dove
++ * Copyright (C) 2010 Nokia Corporation (Hiroshi Doyu)
++ * Copyright (C) 2010 Texas Instruments, Inc. (Teerth Reddy et al.)
++ *  https://lkml.org/lkml/2010/6/18/4
++ *  https://lists.linux-foundation.org/pipermail/linux-pm/2010-June/027422.html
++ *  https://patchwork.kernel.org/patch/96442/
++ *
++ * Copyright (C) 2006 Rafael J. Wysocki <rjw at sisk.pl>
++ *
++ * License terms: GNU General Public License (GPL) version 2
++ */
++
++#include <linux/mm.h>
++#include <linux/suspend.h>
++#include <asm/system_misc.h>
++#include <asm/idmap.h>
++#include <asm/suspend.h>
++#include <asm/memory.h>
++
++struct swsusp_archdata {
++	u32 nosave_backup_phys;
++	u32 nosave_begin_phys;
++	u32 nosave_end_phys;
++	/* Function pointer */
++	u32 cpu_resume_restore_nosave;
++};
++
++static struct swsusp_archdata __archdata;
++
++void swsusp_arch_add_info(char *archdata)
++{
++	memcpy((void *)archdata, (void *)&__archdata,
++			sizeof(struct swsusp_archdata));
++}
++
++int pfn_is_nosave(unsigned long pfn)
++{
++	unsigned long nosave_begin_pfn = virt_to_pfn(&__nosave_begin);
++	unsigned long nosave_end_pfn = virt_to_pfn(&__nosave_end - 1);
++
++	return (pfn >= nosave_begin_pfn) && (pfn <= nosave_end_pfn);
++}
++
++void notrace save_processor_state(void)
++{
++	WARN_ON(num_online_cpus() != 1);
++	local_fiq_disable();
++}
++
++void notrace restore_processor_state(void)
++{
++	local_fiq_enable();
++}
++
++/*
++ * Snapshot kernel memory and reset the system.
++ *
++ * swsusp_save() is executed in the suspend finisher so that the CPU
++ * context pointer and memory are part of the saved image, which is
++ * required by the resume kernel image to restart execution from
++ * swsusp_arch_suspend().
++ *
++ * soft_restart is not technically needed, but is used to get success
++ * returned from cpu_suspend.
++ *
++ * When soft reboot completes, the hibernation snapshot is written out.
++ */
++static int notrace arch_save_image(unsigned long unused)
++{
++	int ret;
++	ret = swsusp_save();
++	if (ret == 0)
++		soft_restart(virt_to_phys(cpu_resume));
++	return ret;
++}
++
++/*
++ * Save the current CPU state before suspend / poweroff.
++ */
++int notrace swsusp_arch_suspend(void)
++{
++	return cpu_suspend(0, arch_save_image);
++}
++
++/*
++ * Restore page contents for physical pages that were in use during loading
++ * hibernation image.  Switch to idmap_pgd so the physical page tables
++ * are overwritten with the same contents.
++ */
++static void notrace arch_restore_image(void *unused)
++{
++	struct pbe *pbe;
++
++
++	cpu_switch_mm(idmap_pgd, &init_mm);
++	for (pbe = restore_pblist; pbe; pbe = pbe->next)
++		copy_page(pbe->orig_address, pbe->address);
++
++	soft_restart(virt_to_phys(cpu_resume));
++}
++static u64 resume_stack[PAGE_SIZE/2/sizeof(u64)] __nosavedata;
++
++/*
++ * Resume from the hibernation image.
++ * Due to the kernel heap / data restore, stack contents change underneath
++ * and that would make function calls impossible; switch to a temporary
++ * stack within the nosave region to avoid that problem.
++ */
++int swsusp_arch_resume(void)
++{
++	call_with_stack(arch_restore_image, 0,
++		resume_stack + ARRAY_SIZE(resume_stack));
++	return 0;
++}
++
++static int __init swsusp_arch_init(void)
++{
++	char *backup;
++	size_t len;
++
++	len = &__nosave_end - &__nosave_begin;
++	backup = kmalloc(len, GFP_KERNEL);
++	if (backup)
++		memcpy(backup, &__nosave_begin, len);
++
++	__archdata.nosave_backup_phys = virt_to_phys(backup);
++	__archdata.nosave_begin_phys = virt_to_phys(&__nosave_begin);
++	__archdata.nosave_end_phys = virt_to_phys(&__nosave_end);
++	__archdata.cpu_resume_restore_nosave =
++		virt_to_phys(cpu_resume_restore_nosave);
++
++	return 0;
++}
++late_initcall(swsusp_arch_init);
+diff --git a/arch/arm/kernel/process.c b/arch/arm/kernel/process.c
+index 7927629..ae56f0b 100644
+--- a/arch/arm/kernel/process.c
++++ b/arch/arm/kernel/process.c
+@@ -98,7 +98,7 @@ void soft_restart(unsigned long addr)
+ 	u64 *stack = soft_restart_stack + ARRAY_SIZE(soft_restart_stack);
+ 
+ 	/* Disable interrupts first */
+-	local_irq_disable();
++	raw_local_irq_disable();
+ 	local_fiq_disable();
+ 
+ 	/* Disable the L2 if we're the last man standing. */
+@@ -284,12 +284,17 @@ void __show_regs(struct pt_regs *regs)
+ 	buf[3] = flags & PSR_V_BIT ? 'V' : 'v';
+ 	buf[4] = '\0';
+ 
++#ifndef CONFIG_CPU_V7M
+ 	printk("Flags: %s  IRQs o%s  FIQs o%s  Mode %s  ISA %s  Segment %s\n",
+ 		buf, interrupts_enabled(regs) ? "n" : "ff",
+ 		fast_interrupts_enabled(regs) ? "n" : "ff",
+ 		processor_modes[processor_mode(regs)],
+ 		isa_modes[isa_mode(regs)],
+ 		get_fs() == get_ds() ? "kernel" : "user");
++#else
++	printk("xPSR: %08lx\n", regs->ARM_cpsr);
++#endif
++
+ #ifdef CONFIG_CPU_CP15
+ 	{
+ 		unsigned int ctrl;
+diff --git a/arch/arm/kernel/sleep.S b/arch/arm/kernel/sleep.S
+index 987dcf3..e4d092f 100644
+--- a/arch/arm/kernel/sleep.S
++++ b/arch/arm/kernel/sleep.S
+@@ -98,6 +98,14 @@ THUMB(	mov	sp, r2			)
+ THUMB(	bx	r3			)
+ ENDPROC(cpu_resume)
+ 
++	.align
++ENTRY(cpu_resume_restore_nosave)
++1:	ldmia	r0!, {r3-r10}
++	stmia	r1!, {r3-r10}
++	cmp	r1, r2
++	bne	1b
++	b	cpu_resume
++
+ sleep_save_sp:
+ 	.rept	CONFIG_NR_CPUS
+ 	.long	0				@ preserve stack phys ptr here
+diff --git a/arch/arm/kernel/smp.c b/arch/arm/kernel/smp.c
+index 5919eb4..c9a2991 100644
+--- a/arch/arm/kernel/smp.c
++++ b/arch/arm/kernel/smp.c
+@@ -125,6 +125,12 @@ void __init smp_init_cpus(void)
+ 		smp_ops.smp_init_cpus();
+ }
+ 
++void arch_smp_prepare_cpus(unsigned int max_cpus)
++{
++	if (smp_ops.smp_prepare_cpus)
++		smp_ops.smp_prepare_cpus(max_cpus);
++}
++
+ int __cpuinit boot_secondary(unsigned int cpu, struct task_struct *idle)
+ {
+ 	if (smp_ops.smp_boot_secondary)
+diff --git a/arch/arm/kernel/suspend.c b/arch/arm/kernel/suspend.c
+index c59c97e..38a5067 100644
+--- a/arch/arm/kernel/suspend.c
++++ b/arch/arm/kernel/suspend.c
+@@ -10,6 +10,42 @@
+ extern int __cpu_suspend(unsigned long, int (*)(unsigned long));
+ extern void cpu_resume_mmu(void);
+ 
++#ifdef CONFIG_MMU
++/*
++ * Hide the first two arguments to __cpu_suspend - these are an implementation
++ * detail which platform code shouldn't have to know about.
++ */
++int cpu_suspend(unsigned long arg, int (*fn)(unsigned long))
++{
++	struct mm_struct *mm = current->active_mm;
++	int ret;
++
++	if (!idmap_pgd)
++		return -EINVAL;
++
++	/*
++	 * Provide a temporary page table with an identity mapping for
++	 * the MMU-enable code, required for resuming.  On successful
++	 * resume (indicated by a zero return code), we need to switch
++	 * back to the correct page tables.
++	 */
++	ret = __cpu_suspend(arg, fn);
++	if (ret == 0) {
++		cpu_switch_mm(mm->pgd, mm);
++		local_flush_bp_all();
++		local_flush_tlb_all();
++	}
++
++	return ret;
++}
++#else
++int cpu_suspend(unsigned long arg, int (*fn)(unsigned long))
++{
++	return __cpu_suspend(arg, fn);
++}
++#define	idmap_pgd	NULL
++#endif
++
+ /*
+  * This is called by __cpu_suspend() to save the state, and do whatever
+  * flushing is required to ensure that when the CPU goes to sleep we have
+@@ -46,31 +82,3 @@ void __cpu_suspend_save(u32 *ptr, u32 ptrsz, u32 sp, u32 *save_ptr)
+ 	outer_clean_range(virt_to_phys(save_ptr),
+ 			  virt_to_phys(save_ptr) + sizeof(*save_ptr));
+ }
+-
+-/*
+- * Hide the first two arguments to __cpu_suspend - these are an implementation
+- * detail which platform code shouldn't have to know about.
+- */
+-int cpu_suspend(unsigned long arg, int (*fn)(unsigned long))
+-{
+-	struct mm_struct *mm = current->active_mm;
+-	int ret;
+-
+-	if (!idmap_pgd)
+-		return -EINVAL;
+-
+-	/*
+-	 * Provide a temporary page table with an identity mapping for
+-	 * the MMU-enable code, required for resuming.  On successful
+-	 * resume (indicated by a zero return code), we need to switch
+-	 * back to the correct page tables.
+-	 */
+-	ret = __cpu_suspend(arg, fn);
+-	if (ret == 0) {
+-		cpu_switch_mm(mm->pgd, mm);
+-		local_flush_bp_all();
+-		local_flush_tlb_all();
+-	}
+-
+-	return ret;
+-}
+diff --git a/arch/arm/mach-shmobile/Kconfig b/arch/arm/mach-shmobile/Kconfig
+index 7c15245..73371de 100644
+--- a/arch/arm/mach-shmobile/Kconfig
++++ b/arch/arm/mach-shmobile/Kconfig
+@@ -64,6 +64,25 @@ config MACH_KOELSCH
+ 	select MICREL_PHY if SH_ETH
+ 	select SND_SOC_AK4642 if SND_SIMPLE_CARD
+ 
++config MACH_KOELSCH_FTEN
++	bool "FTEN spf development environment"
++	depends on MACH_KOELSCH
++
++config MACH_FTEN
++       bool
++
++config MACH_FTEN_DT
++	bool
++
++config MACH_FTEN_M2W
++	bool "FTEN R-Car M2W board"
++	depends on ARCH_R8A7791
++	select MACH_FTEN
++	select MACH_FTEN_DT
++	select HAVE_IDE
++	select FIQ
++	select SND_SOC_DIRANA3 if SND_SIMPLE_CARD
++
+ config MACH_LAGER
+ 	bool "Lager board"
+ 	depends on ARCH_R8A7790
+@@ -76,6 +95,15 @@ config MACH_GOSE
+ 	select MICREL_PHY if SH_ETH
+ 	select SND_SOC_AK4642 if SND_SIMPLE_CARD
+ 
++config MACH_FTEN_M2N
++	bool "FTEN R-Car M2N board"
++	depends on ARCH_R8A7793
++	select MACH_FTEN
++	select MACH_FTEN_DT
++	select HAVE_IDE
++	select FIQ
++	select SND_SOC_DIRANA3 if SND_SIMPLE_CARD
++
+ config MACH_ALT
+ 	bool "Alt board"
+ 	depends on ARCH_R8A7794
+@@ -287,6 +315,19 @@ config MACH_KOELSCH
+ 	select USE_OF
+ 	select MICREL_PHY if SH_ETH
+ 
++config MACH_FTEN
++	bool "FTEN strawberry board"
++	depends on ARCH_R8A7791
++	select USE_OF
++	select HAVE_IDE
++
++config MACH_FTEN_DT
++	bool "FTEN strawberry board - Device Tree Implementation"
++	depends on ARCH_R8A7791
++	select USE_OF
++	select HAVE_IDE
++	select SND_SOC_DIRANA3 if SND_SIMPLE_CARD
++
+ config MACH_KZM9G
+ 	bool "KZM-A9-GT board"
+ 	depends on ARCH_SH73A0
+@@ -360,4 +401,28 @@ config EM_TIMER_STI
+ 
+ endmenu
+ 
++if HIBERNATION
++
++menu "Hibernation area parameters"
++
++config SWSUSP_AREA
++	hex "RAM hibernation area address"
++	default "0x44000000"
++	depends on HIBERNATION
++	---help---
++	    RAM hibernation area address, this is required for CRC
++	    calculation of final compressed hibernation image
++
++config SWSUSP_AREA_SIZE
++	hex "RAM hibernation area size"
++	default "0x4000000"
++	depends on HIBERNATION
++	---help---
++	    RAM hibernation area size, this is required for CRC
++	    calculation of final compressed hibernation image
++
++endmenu
++
++endif
++
+ endif
+diff --git a/arch/arm/mach-shmobile/Makefile b/arch/arm/mach-shmobile/Makefile
+index 43b4025..71cfcfa 100644
+--- a/arch/arm/mach-shmobile/Makefile
++++ b/arch/arm/mach-shmobile/Makefile
+@@ -55,6 +55,7 @@ smp-$(CONFIG_ARCH_EMEV2)	+= smp-emev2.o headsmp-scu.o platsmp-scu.o
+ 
+ # PM objects
+ obj-$(CONFIG_SUSPEND)		+= suspend.o
++obj-$(CONFIG_HIBERNATION)	+= hibernation.o
+ obj-$(CONFIG_CPU_IDLE)		+= cpuidle.o
+ obj-$(CONFIG_CPU_FREQ)		+= cpufreq.o
+ obj-$(CONFIG_ARCH_SH7372)	+= pm-sh7372.o sleep-sh7372.o pm-rmobile.o
+diff --git a/arch/arm/mach-shmobile/common.h b/arch/arm/mach-shmobile/common.h
+index 95a77a0..37c7f87 100644
+--- a/arch/arm/mach-shmobile/common.h
++++ b/arch/arm/mach-shmobile/common.h
+@@ -25,6 +25,7 @@ struct clk;
+ extern int shmobile_clk_init(void);
+ extern void shmobile_handle_irq_intc(struct pt_regs *);
+ extern struct platform_suspend_ops shmobile_suspend_ops;
++extern const struct platform_hibernation_ops shmobile_hibernation_ops;
+ struct cpuidle_driver;
+ extern void shmobile_cpuidle_set_driver(struct cpuidle_driver *drv);
+ extern void shmobile_smp_apmu_enter_cpuidle(void);
+@@ -37,6 +38,12 @@ static inline int shmobile_suspend_init(void) { return 0; }
+ static inline void shmobile_smp_apmu_suspend_init(void) { }
+ #endif
+ 
++#ifdef CONFIG_HIBERNATION
++int shmobile_hibernation_init(void);
++#else
++static inline int shmobile_hibernation_init(void) { return 0; }
++#endif
++
+ #ifdef CONFIG_CPU_IDLE
+ int shmobile_cpuidle_init(void);
+ #else
+@@ -59,6 +66,7 @@ extern unsigned int l2actlr_value;
+ static inline void __init shmobile_init_late(void)
+ {
+ 	shmobile_suspend_init();
++	shmobile_hibernation_init();
+ 	shmobile_cpuidle_init();
+ 	shmobile_cpufreq_init();
+ }
+diff --git a/arch/arm/mach-shmobile/crc32_word4.c b/arch/arm/mach-shmobile/crc32_word4.c
+new file mode 100644
+index 0000000..8aaefc6
+--- /dev/null
++++ b/arch/arm/mach-shmobile/crc32_word4.c
+@@ -0,0 +1,299 @@
++/*************************************************************************
++ * crc32_word4.c: rapid CRC32
++ * Coptright (C) FUJITSUTEN Limited, 2015 All Rights Reserved.
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2
++ * as published by the Free Software Foundation.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
++ *************************************************************************/
++#ifdef OWNTEST
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <asm/types.h>
++typedef unsigned int	u_int32_t;
++#else
++#endif
++
++#include "crc32_word4.h"
++
++#define CRC_INIT_VALUE  (-1)
++#define CRC_FIX(_crc32) (~(_crc32))
++
++/* #define HWDPLS_ENABLE */
++#define	__HWDTPLS_OUT()
++#define MEASURE(msg)
++
++/**** calc_crc32.c *****/
++
++/*
++ * CRC32は、ISO 3309 で規程され
++ * そのサンプルは
++ * RFC 2083 :PNG(Poratble Network Graphics
++ * で公になっています。本プログラムは、RFC2083 で掲示された
++ * CRC32を独自に最適化したプログラムです。
++ */
++const static u_int32_t CRC_Table[256] = {
++	0x00000000 , 0x77073096 , 0xee0e612c , 0x990951ba , 0x076dc419 , 0x706af48f , 0xe963a535 , 0x9e6495a3 ,
++	0x0edb8832 , 0x79dcb8a4 , 0xe0d5e91e , 0x97d2d988 , 0x09b64c2b , 0x7eb17cbd , 0xe7b82d07 , 0x90bf1d91 ,
++	0x1db71064 , 0x6ab020f2 , 0xf3b97148 , 0x84be41de , 0x1adad47d , 0x6ddde4eb , 0xf4d4b551 , 0x83d385c7 ,
++	0x136c9856 , 0x646ba8c0 , 0xfd62f97a , 0x8a65c9ec , 0x14015c4f , 0x63066cd9 , 0xfa0f3d63 , 0x8d080df5 ,
++	0x3b6e20c8 , 0x4c69105e , 0xd56041e4 , 0xa2677172 , 0x3c03e4d1 , 0x4b04d447 , 0xd20d85fd , 0xa50ab56b ,
++	0x35b5a8fa , 0x42b2986c , 0xdbbbc9d6 , 0xacbcf940 , 0x32d86ce3 , 0x45df5c75 , 0xdcd60dcf , 0xabd13d59 ,
++	0x26d930ac , 0x51de003a , 0xc8d75180 , 0xbfd06116 , 0x21b4f4b5 , 0x56b3c423 , 0xcfba9599 , 0xb8bda50f ,
++	0x2802b89e , 0x5f058808 , 0xc60cd9b2 , 0xb10be924 , 0x2f6f7c87 , 0x58684c11 , 0xc1611dab , 0xb6662d3d ,
++	0x76dc4190 , 0x01db7106 , 0x98d220bc , 0xefd5102a , 0x71b18589 , 0x06b6b51f , 0x9fbfe4a5 , 0xe8b8d433 ,
++	0x7807c9a2 , 0x0f00f934 , 0x9609a88e , 0xe10e9818 , 0x7f6a0dbb , 0x086d3d2d , 0x91646c97 , 0xe6635c01 ,
++	0x6b6b51f4 , 0x1c6c6162 , 0x856530d8 , 0xf262004e , 0x6c0695ed , 0x1b01a57b , 0x8208f4c1 , 0xf50fc457 ,
++	0x65b0d9c6 , 0x12b7e950 , 0x8bbeb8ea , 0xfcb9887c , 0x62dd1ddf , 0x15da2d49 , 0x8cd37cf3 , 0xfbd44c65 ,
++	0x4db26158 , 0x3ab551ce , 0xa3bc0074 , 0xd4bb30e2 , 0x4adfa541 , 0x3dd895d7 , 0xa4d1c46d , 0xd3d6f4fb ,
++	0x4369e96a , 0x346ed9fc , 0xad678846 , 0xda60b8d0 , 0x44042d73 , 0x33031de5 , 0xaa0a4c5f , 0xdd0d7cc9 ,
++	0x5005713c , 0x270241aa , 0xbe0b1010 , 0xc90c2086 , 0x5768b525 , 0x206f85b3 , 0xb966d409 , 0xce61e49f ,
++	0x5edef90e , 0x29d9c998 , 0xb0d09822 , 0xc7d7a8b4 , 0x59b33d17 , 0x2eb40d81 , 0xb7bd5c3b , 0xc0ba6cad ,
++	0xedb88320 , 0x9abfb3b6 , 0x03b6e20c , 0x74b1d29a , 0xead54739 , 0x9dd277af , 0x04db2615 , 0x73dc1683 ,
++	0xe3630b12 , 0x94643b84 , 0x0d6d6a3e , 0x7a6a5aa8 , 0xe40ecf0b , 0x9309ff9d , 0x0a00ae27 , 0x7d079eb1 ,
++	0xf00f9344 , 0x8708a3d2 , 0x1e01f268 , 0x6906c2fe , 0xf762575d , 0x806567cb , 0x196c3671 , 0x6e6b06e7 ,
++	0xfed41b76 , 0x89d32be0 , 0x10da7a5a , 0x67dd4acc , 0xf9b9df6f , 0x8ebeeff9 , 0x17b7be43 , 0x60b08ed5 ,
++	0xd6d6a3e8 , 0xa1d1937e , 0x38d8c2c4 , 0x4fdff252 , 0xd1bb67f1 , 0xa6bc5767 , 0x3fb506dd , 0x48b2364b ,
++	0xd80d2bda , 0xaf0a1b4c , 0x36034af6 , 0x41047a60 , 0xdf60efc3 , 0xa867df55 , 0x316e8eef , 0x4669be79 ,
++	0xcb61b38c , 0xbc66831a , 0x256fd2a0 , 0x5268e236 , 0xcc0c7795 , 0xbb0b4703 , 0x220216b9 , 0x5505262f ,
++	0xc5ba3bbe , 0xb2bd0b28 , 0x2bb45a92 , 0x5cb36a04 , 0xc2d7ffa7 , 0xb5d0cf31 , 0x2cd99e8b , 0x5bdeae1d ,
++	0x9b64c2b0 , 0xec63f226 , 0x756aa39c , 0x026d930a , 0x9c0906a9 , 0xeb0e363f , 0x72076785 , 0x05005713 ,
++	0x95bf4a82 , 0xe2b87a14 , 0x7bb12bae , 0x0cb61b38 , 0x92d28e9b , 0xe5d5be0d , 0x7cdcefb7 , 0x0bdbdf21 ,
++	0x86d3d2d4 , 0xf1d4e242 , 0x68ddb3f8 , 0x1fda836e , 0x81be16cd , 0xf6b9265b , 0x6fb077e1 , 0x18b74777 ,
++	0x88085ae6 , 0xff0f6a70 , 0x66063bca , 0x11010b5c , 0x8f659eff , 0xf862ae69 , 0x616bffd3 , 0x166ccf45 ,
++	0xa00ae278 , 0xd70dd2ee , 0x4e048354 , 0x3903b3c2 , 0xa7672661 , 0xd06016f7 , 0x4969474d , 0x3e6e77db ,
++	0xaed16a4a , 0xd9d65adc , 0x40df0b66 , 0x37d83bf0 , 0xa9bcae53 , 0xdebb9ec5 , 0x47b2cf7f , 0x30b5ffe9 ,
++	0xbdbdf21c , 0xcabac28a , 0x53b39330 , 0x24b4a3a6 , 0xbad03605 , 0xcdd70693 , 0x54de5729 , 0x23d967bf ,
++	0xb3667a2e , 0xc4614ab8 , 0x5d681b02 , 0x2a6f2b94 , 0xb40bbe37 , 0xc30c8ea1 , 0x5a05df1b , 0x2d02ef8d ,
++};
++
++/***
++ * CRC Table creater.
++ *
++void make_crc_table(void) {
++	u_int32_t c;
++	u_int32_t n, k;
++	for (n = 0; n < 256; n++)
++	{
++		c = (u_int32_t) n;
++		for (k = 0; k < 8; k++)
++		{
++			if (c & 1)
++				c = 0xedb88320L ^ (c >> 1);
++			else
++				c = c >> 1;
++		}
++		CRC_Table[n] = c;
++	}
++}
++***/
++#define NEXT_PTR	(4)
++
++static __inline__
++u_int32_t _update_crc(u_int32_t crc, unsigned char *buf, size_t len)
++{
++	u_int32_t c = crc;
++	size_t n;
++	for (n = 0; n < len; n++)
++		c = CRC_Table[(c ^ buf[n]) & 0xff] ^ (c >> 8);
++	return c;
++}
++/*********************************************************************
++ * update_crc4x4()()
++ * calc_crc32() をベースに、4 ワード毎に個別に CRC32 を計算する方法
++ *
++ *              +0        +1        +2        +3
++ *  +0x00    AAAAAAAA  BBBBBBBB  CCCCCCCC  DDDDDDDD
++ *  +0x04    EEEEEEEE  FFFFFFFF  00000000  11111111
++ *              :         :         :         :
++ *  CRC32    xxxxxxxx  xxxxxxxx  xxxxxxxx  xxxxxxxx
++ *
++ *********************************************************************/
++
++static __inline__
++void update_crc4x4(u_int32_t crc[4], unsigned char *buf)
++{
++	u_int32_t c1, c2, c3, c4;
++	u_int32_t *p = (void *)buf;
++
++	c1 = crc[0] ^ p[0];
++	c2 = crc[1] ^ p[1];
++	c3 = crc[2] ^ p[2];
++	c4 = crc[3] ^ p[3];
++
++	c1 = CRC_Table[c1 & 0xff] ^ (c1 >> 8);
++	c2 = CRC_Table[c2 & 0xff] ^ (c2 >> 8);
++	c3 = CRC_Table[c3 & 0xff] ^ (c3 >> 8);
++	c4 = CRC_Table[c4 & 0xff] ^ (c4 >> 8);
++
++	c1 = CRC_Table[c1 & 0xff] ^ (c1 >> 8);
++	c2 = CRC_Table[c2 & 0xff] ^ (c2 >> 8);
++	c3 = CRC_Table[c3 & 0xff] ^ (c3 >> 8);
++	c4 = CRC_Table[c4 & 0xff] ^ (c4 >> 8);
++
++	c1 = CRC_Table[c1 & 0xff] ^ (c1 >> 8);
++	c2 = CRC_Table[c2 & 0xff] ^ (c2 >> 8);
++	c3 = CRC_Table[c3 & 0xff] ^ (c3 >> 8);
++	c4 = CRC_Table[c4 & 0xff] ^ (c4 >> 8);
++
++	c1 = CRC_Table[c1 & 0xff] ^ (c1 >> 8);
++	c2 = CRC_Table[c2 & 0xff] ^ (c2 >> 8);
++	c3 = CRC_Table[c3 & 0xff] ^ (c3 >> 8);
++	c4 = CRC_Table[c4 & 0xff] ^ (c4 >> 8);
++
++	crc[0] = c1;
++	crc[1] = c2;
++	crc[2] = c3;
++	crc[3] = c4;
++}
++
++
++void calc_crc32x4(unsigned char *buf, size_t len, CRC32_WORD4_t *result)
++{
++	unsigned int crc_tmp[4] = {CRC_INIT_VALUE, CRC_INIT_VALUE, CRC_INIT_VALUE, CRC_INIT_VALUE};
++	u_int32_t i;
++	int res;
++	u_int32_t n4;
++	int xlen = len;
++#ifdef HWDPLS_ENABLE
++	unsigned long plstout  = 60;
++	unsigned long plsstart = 0;
++	if ((unsigned long)CONFIG_SYS_HZ > 100000)
++		plstout *= (unsigned long)CONFIG_SYS_HZ / 1000;
++	else
++		plstout =  DIV_ROUND_UP(plstout * (unsigned long)CONFIG_SYS_HZ, 1000);
++#endif
++
++	/**
++	 * 4バイト境界に合わない開始アドレスの場合
++	 * 境界までのCRCを crc_tmp[0] に求める。
++	 */
++	if ((unsigned long)buf & 3) {
++		crc_tmp[0]  = _update_crc(crc_tmp[0], buf, (unsigned long)buf & 3);
++		buf = (unsigned char *)((unsigned long)buf & ~3);
++		xlen -= (unsigned long)buf & 3;
++	}
++
++	n4 = xlen/(NEXT_PTR*4);
++	/**
++	 * 4バイト境界に合わない開始アドレスの場合
++	 * 境界までのCRCを crc_tmp[0] に求める。
++	 */
++#ifdef HWDPLS_ENABLE
++	reset_timer();
++	plsstart = get_timer(0);
++#endif
++	for (i = 0; i < n4; i++) {
++		update_crc4x4(crc_tmp, buf);
++		buf += NEXT_PTR * 4;
++#ifdef HWDPLS_ENABLE
++		/**
++		 * WDを考慮
++		 */
++		if (__builtin_expect((int)((i & 0x1f) == 0), 0)) {
++			if ((get_timer(plsstart)) > plstout) {
++				__HWDTPLS_OUT();
++				MEASURE("crc plsout")
++				plsstart += plstout;
++			}
++		}
++#endif /*HWPLS_ENABLE*/
++	}
++
++	res = xlen % (NEXT_PTR * 4);
++	if (res > 0)
++		crc_tmp[3]  = _update_crc(crc_tmp[3], buf, res);
++
++	result->crc_w[0] = CRC_FIX(crc_tmp[0]);
++	result->crc_w[1] = CRC_FIX(crc_tmp[1]);
++	result->crc_w[2] = CRC_FIX(crc_tmp[2]);
++	result->crc_w[3] = CRC_FIX(crc_tmp[3]);
++
++	MEASURE("calc_crc32x4 finish")
++}
++
++#if defined(OWNTEST)
++#define BUFSIZE (2 * 1024 * 1024)
++#include <sys/time.h>
++#include <malloc.h>
++
++int main()
++{
++	unsigned char *buf, *buf2;
++	struct timeval start, end;
++	unsigned long long diff;
++	int i;
++
++	CRC32_WORD4_t result =  { .crc_w = {0, 0, 0, 0 } };
++	CRC32_WORD4_t result2 = { .crc_w = {0, 0, 0, 0 } };
++
++	buf = malloc(BUFSIZE);
++	if (!buf) {
++		perror("malloc");
++		return 1;
++	}
++	printf("Generate %dMB random data..\n", BUFSIZE / 1024 / 1024);
++	srand(0);
++	for (i = 0; i < BUFSIZE / 4; i++)
++		((int *)buf)[i] = rand();
++
++	/* Memory dup */
++	buf2 = memalign(NEXT_PTR, BUFSIZE);
++	if (!buf2) {
++		perror("malloc");
++		return 1;
++	}
++	memcpy(buf2, buf, BUFSIZE);
++
++
++	gettimeofday(&start, NULL);
++	calc_crc32x4(buf, BUFSIZE, &result);
++	gettimeofday(&end, NULL);
++
++	diff = (end.tv_sec - start.tv_sec) * 1000000;
++	diff += end.tv_usec - start.tv_usec;
++
++	printf("time=%lluus\n", diff);
++	printf(" result.word[0] = %x\n", result.crc_w[0]);
++	printf(" result.word[1] = %x\n", result.crc_w[1]);
++	printf(" result.word[2] = %x\n", result.crc_w[2]);
++	printf(" result.word[3] = %x\n", result.crc_w[3]);
++
++	/* Broken test */
++#if 0	/* Destory test */
++	buf[rand() % BUFSIZE]  ^= 1 << (rand()%7);
++#endif
++	for (i = 0; i < BUFSIZE; i++) {
++		if (buf[i] != buf2[i])
++			printf("buf[%d] %02x : %02x\n", i, buf[i], buf2[i]);
++	}
++
++	gettimeofday(&start, NULL);
++	calc_crc32x4(buf, BUFSIZE, &result2);
++	gettimeofday(&end, NULL);
++
++	diff = (end.tv_sec - start.tv_sec) * 1000000;
++	diff += end.tv_usec - start.tv_usec;
++
++	printf("time=%lluus\n", diff);
++	printf(" result.word[0] = %x:%s\n", result2.crc_w[0] ,
++		result.crc_w[0] == result2.crc_w[0] ? "OK" : "NG");
++	printf(" result.word[1] = %x:%s\n", result2.crc_w[1] ,
++		result.crc_w[1] == result2.crc_w[1] ? "OK" : "NG");
++	printf(" result.word[2] = %x:%s\n", result2.crc_w[2] ,
++		result.crc_w[2] == result2.crc_w[2] ? "OK" : "NG");
++	printf(" result.word[3] = %x:%s\n", result2.crc_w[3] ,
++		result.crc_w[3] == result2.crc_w[3] ? "OK" : "NG");
++	return 0;
++}
++#endif /* TEST */
+diff --git a/arch/arm/mach-shmobile/crc32_word4.h b/arch/arm/mach-shmobile/crc32_word4.h
+new file mode 100644
+index 0000000..6c04878
+--- /dev/null
++++ b/arch/arm/mach-shmobile/crc32_word4.h
+@@ -0,0 +1,23 @@
++/*************************************************************************
++ * Coptright (C) FUJITSUTEN Limited, 2012 All Rights Reserved.
++ *
++ *************************************************************************/
++#ifndef __CRC32_WORD4_H__
++#define __CRC32_WORD4_H__
++
++typedef struct {
++	unsigned int crc_w[4];
++} CRC32_WORD4_t;
++
++void calc_crc32x4(unsigned char *buf, size_t len, CRC32_WORD4_t *result);
++
++typedef struct {
++	unsigned int size;
++	CRC32_WORD4_t chksum;
++	unsigned int dummy[3];
++} CRC32_WORD4_TICKET_t;
++
++#define IS_CRC_WORD4_OK(_res1, _res2) (!memcmp(_res1, _res2, sizeof(CRC32_WORD4_t)))
++#define IS_CRC_WORD4_ZERO(_w4) (((_w4)->crc_w[0] == 0) && ((_w4)->crc_w[1] == 0) && ((_w4)->crc_w[2] == 0) && ((_w4)->crc_w[3] == 0))
++#define IS_CRC_WORD4_ALL_F(_w4) (((_w4)->crc_w[0] == 0xffffffff) && ((_w4)->crc_w[1] == 0xffffffff) && ((_w4)->crc_w[2] == 0xffffffff) && ((_w4)->crc_w[3] == 0xffffffff))
++#endif
+diff --git a/arch/arm/mach-shmobile/headsmp.S b/arch/arm/mach-shmobile/headsmp.S
+index debf271..f99f8b2 100644
+--- a/arch/arm/mach-shmobile/headsmp.S
++++ b/arch/arm/mach-shmobile/headsmp.S
+@@ -16,8 +16,6 @@
+ #include <linux/threads.h>
+ #include <asm/memory.h>
+ 
+-	__CPUINIT
+-
+ #ifdef CONFIG_SMP
+ ENTRY(shmobile_invalidate_start)
+ 	bl	v7_invalidate_l1
+diff --git a/arch/arm/mach-shmobile/hibernation.c b/arch/arm/mach-shmobile/hibernation.c
+new file mode 100644
+index 0000000..94fa78b
+--- /dev/null
++++ b/arch/arm/mach-shmobile/hibernation.c
+@@ -0,0 +1,243 @@
++/*
++ * Suspend-to-RAM support code for SH-Mobile ARM
++ *
++ *  Copyright (C) 2011 Magnus Damm
++ *
++ * This file is subject to the terms and conditions of the GNU General Public
++ * License.  See the file "COPYING" in the main directory of this archive
++ * for more details.
++ */
++#include <linux/pm.h>
++#include <linux/suspend.h>
++#include <linux/module.h>
++#include <linux/err.h>
++#include <linux/cpu.h>
++#include <linux/smp.h>
++
++#include <linux/io.h>
++#include <asm/system_misc.h>
++#include <asm/page.h>
++#include <asm/smp_plat.h>
++
++#include "common.h"
++#include "rcar-gen2.h"
++
++#include <linux/clk.h>
++
++#include "crc32_word4.c"
++#include "pm-rcar.h"
++
++
++struct swsusp_header {
++	char reserved[PAGE_SIZE - 20 - sizeof(sector_t) - sizeof(int) -
++		      sizeof(u32) - sizeof(CRC32_WORD4_t) - sizeof(u32)];
++	CRC32_WORD4_t comp_crc32;
++	u32 img_size;	/* add.  see. kernel/power/swap.c */
++	u32	crc32;
++	sector_t image;
++	unsigned int flags;	/* Flags to pass to the "boot" kernel */
++	char	orig_sig[10];
++	char	sig[10];
++} __packed;
++static unsigned long swsusp_area = CONFIG_SWSUSP_AREA;
++static unsigned long swsusp_area_size = CONFIG_SWSUSP_AREA_SIZE;
++
++enum {
++	MSTP00, MSTP01, MSTP02, MSTP03, MSTP04, MSTP05,
++	MSTP07, MSTP08, MSTP09, MSTP10, MSTP11,
++	MSTP_NR,
++};
++
++static struct {
++	u32 s_offset;
++	u32 s_val;
++	u32 r_offset;
++	u32 r_val;
++} mstp_regs[] = {
++	[MSTP00] = { SMSTPCR0,  0,
++		     RMSTPCR0,  0},
++	[MSTP01] = { SMSTPCR1,  0,
++		     RMSTPCR1,  0},
++	[MSTP02] = { SMSTPCR2,  0,
++		     RMSTPCR2,  0},
++	[MSTP03] = { SMSTPCR3,  0,
++		     RMSTPCR3,  0},
++	[MSTP04] = { SMSTPCR4,  0,
++		     RMSTPCR4,  0},
++	[MSTP05] = { SMSTPCR5,  0,
++		     RMSTPCR5,  0},
++	[MSTP07] = { SMSTPCR7,  0,
++		     RMSTPCR7,  0},
++	[MSTP08] = { SMSTPCR8,  0,
++		     RMSTPCR8,  0},
++	[MSTP09] = { SMSTPCR9,  0,
++		     RMSTPCR9,  0},
++	[MSTP10] = { SMSTPCR10, 0,
++		     RMSTPCR10, 0},
++	[MSTP11] = { SMSTPCR11, 0,
++		     RMSTPCR11, 0},
++};
++
++static void save_mstp_regs(void)
++{
++	int i;
++	void *m = ioremap(CPG_BASE, CPG_LEN);
++	for (i = MSTP00; i < MSTP_NR; i++) {
++		mstp_regs[i].s_val = ioread32(m +mstp_regs[i].s_offset);
++		mstp_regs[i].r_val = ioread32(m +mstp_regs[i].r_offset);
++	}
++	iounmap(m);
++}
++
++static void restore_mstp_regs(void)
++{
++	int i;
++	void *m = ioremap(CPG_BASE, CPG_LEN);
++	for (i = MSTP00; i < MSTP_NR; i++) {
++		iowrite32(mstp_regs[i].s_val, m +mstp_regs[i].s_offset);
++		iowrite32(mstp_regs[i].r_val, m +mstp_regs[i].r_offset);
++	}
++	iounmap(m);
++}
++
++static int shmobile_hibernation_begin(void)
++{
++	save_mstp_regs();
++	return 0;
++}
++
++static void shmobile_hibernation_end(void)
++{
++}
++
++static int shmobile_hibernation_pre_snapshot(void)
++{
++	return 0;
++}
++
++
++static void shmobile_hibernation_finish(void)
++{
++}
++
++static int shmobile_hibernation_prepare(void)
++{
++	return 0;
++}
++
++static int shmobile_hibernation_enter(void)
++{
++	void *m, *l;
++	struct swsusp_header *h;
++	unsigned int calc_sz;
++	if (swsusp_area_size > 0) {
++		h = m = ioremap(swsusp_area, swsusp_area_size);
++		if (h) {
++			if ((h->img_size > PAGE_SIZE)
++			    && (h->img_size < (swsusp_area_size - PAGE_SIZE)))
++				calc_sz = h->img_size;
++			else
++				calc_sz = swsusp_area_size - PAGE_SIZE;
++			memset(&h->comp_crc32, 0, sizeof(h->comp_crc32));
++			calc_crc32x4(m + PAGE_SIZE, calc_sz, &h->comp_crc32);
++			mb();
++			iounmap(m);
++		}
++	}
++	/* Resetting FDP0 */
++	l = ioremap(0xfe940000, 0x4000);
++	writel(1, l + 0x1c);
++	mb();
++	iounmap(l);
++	/* Resetting FDP1 */
++	l = ioremap(0xfe944000, 0x4000);
++	writel(1, l + 0x1c);
++	mb();
++	iounmap(l);
++	/* Doing board reset */
++	l = ioremap(0xe6300200, 4);
++	writel(0xa1b20001, l);
++	mb();
++	iounmap(l);
++
++	return 0;
++}
++
++char *clks[] = {
++	"ehci", "hsusb", "dmal", "dmah", "sys-dmac1",
++	"sys-dmac0", "ssp", "ssp_dev", "ipmmu_gp",
++	"audmac0", "audmac1",
++};
++
++static int shmobile_hibernation_pre_restore(void)
++{
++	return 0;
++}
++
++
++static void shmobile_hibernation_restore_cleanup(void)
++{
++}
++
++extern int in_suspend;
++
++static void shmobile_hibernation_leave(void)
++{
++	int restore_highmem(void);
++	struct clk *clk;
++	unsigned int i;
++
++	if (!in_suspend) {
++#ifdef CONFIG_SMP
++		if (is_smp())
++			arch_smp_prepare_cpus(setup_max_cpus);
++#endif
++
++#ifdef CONFIG_HIGHMEM
++		restore_highmem();
++#endif
++		restore_mstp_regs();
++	}
++
++	for (i = 0; i < ARRAY_SIZE(clks); ++i) {
++		clk = clk_get(NULL, clks[i]);
++		if (!IS_ERR(clk)) {
++			clk_prepare_enable(clk);
++			clk_put(clk);
++		}
++	}
++}
++
++const struct platform_hibernation_ops shmobile_hibernation_ops = {
++	.leave = shmobile_hibernation_leave,
++	.begin = shmobile_hibernation_begin,
++	.end = shmobile_hibernation_end,
++	.pre_snapshot = shmobile_hibernation_pre_snapshot,
++	.finish = shmobile_hibernation_finish,
++	.prepare = shmobile_hibernation_prepare,
++	.enter = shmobile_hibernation_enter,
++	.pre_restore = shmobile_hibernation_pre_restore,
++	.restore_cleanup = shmobile_hibernation_restore_cleanup,
++};
++
++int __init shmobile_hibernation_init(void)
++{
++	hibernation_set_ops(&shmobile_hibernation_ops);
++	return 0;
++}
++static int setup_swsusp_area(char *s)
++{
++	long tmp = 0;
++	char *p;
++	if (!kstrtol(s, 0, &tmp) && tmp > 0)
++		swsusp_area = tmp;
++	p = strchr(s, ',');
++	if (!p)
++		goto out;
++	if (!kstrtol(p, 0, &tmp) && tmp > 0)
++		swsusp_area_size = tmp;
++out:
++	return 1;
++}
++__setup("swsusp_area=", setup_swsusp_area);
++
+diff --git a/arch/arm/mach-shmobile/platsmp-apmu.c b/arch/arm/mach-shmobile/platsmp-apmu.c
+index cff7a25..e382e26 100644
+--- a/arch/arm/mach-shmobile/platsmp-apmu.c
++++ b/arch/arm/mach-shmobile/platsmp-apmu.c
+@@ -33,7 +33,10 @@
+ 
+ /* only enable the cluster that includes the boot CPU by default */
+ static bool enable_multicluster = false;
++#if defined(CONFIG_HOTPLUG_CPU) || defined(CONFIG_SUSPEND) || \
++defined(CONFIG_CPU_IDLE)
+ static bool is_last_cpu;
++#endif
+ 
+ static __init int apmu_setup(char *opt)
+ {
+@@ -71,12 +74,15 @@ static int __maybe_unused apmu_power_on(void __iomem *p, int bit)
+ 	return 0;
+ }
+ 
++#if defined(CONFIG_HOTPLUG_CPU) || defined(CONFIG_SUSPEND) || \
++defined(CONFIG_CPU_IDLE)
+ static int apmu_power_off(void __iomem *p, int bit)
+ {
+ 	/* request Core Standby for next WFI */
+ 	writel_relaxed(3, p + CPUNCR_OFFS(bit));
+ 	return 0;
+ }
++#endif
+ 
+ static int __maybe_unused apmu_power_off_poll(void __iomem *p, int bit)
+ {
+@@ -92,12 +98,15 @@ static int __maybe_unused apmu_power_off_poll(void __iomem *p, int bit)
+ 	return 0;
+ }
+ 
++#if defined(CONFIG_HOTPLUG_CPU) || defined(CONFIG_SUSPEND) || \
++defined(CONFIG_CPU_IDLE) || defined(CONFIG_SMP)
+ static int apmu_wrap(int cpu, int (*fn)(void __iomem *p, int cpu))
+ {
+ 	void __iomem *p = apmu_cpus[cpu].iomem;
+ 
+ 	return p ? fn(p, apmu_cpus[cpu].bit) : -EINVAL;
+ }
++#endif
+ 
+ static void apmu_init_cpu(struct resource *res, int cpu, int bit)
+ {
+@@ -141,7 +150,7 @@ static void apmu_parse_cfg(void (*fn)(struct resource *res, int cpu, int bit),
+ 	}
+ }
+ 
+-void __init shmobile_smp_apmu_prepare_cpus(unsigned int max_cpus,
++void shmobile_smp_apmu_prepare_cpus(unsigned int max_cpus,
+ 					   struct rcar_apmu_config *apmu_config,
+ 					   int num)
+ {
+@@ -328,7 +337,7 @@ static int __cpuinit shmobile_smp_apmu_enter_suspend(suspend_state_t state)
+ 	return 0;
+ }
+ 
+-void __init shmobile_smp_apmu_suspend_init(void)
++void shmobile_smp_apmu_suspend_init(void)
+ {
+ 	cpucmcr_ca7  = ioremap_nocache(CPUCMCR_CA7, 0x4);
+ 	cpucmcr_ca15 = ioremap_nocache(CPUCMCR_CA15, 0x4);
+diff --git a/arch/arm/mach-shmobile/platsmp-rst.c b/arch/arm/mach-shmobile/platsmp-rst.c
+index 70a2b6c..7ba9eeb 100644
+--- a/arch/arm/mach-shmobile/platsmp-rst.c
++++ b/arch/arm/mach-shmobile/platsmp-rst.c
+@@ -11,8 +11,7 @@
+ #include <linux/io.h>
+ #include <asm/smp_plat.h>
+ #include <mach/platsmp-rst.h>
+-
+-#define RST		0xe6160000
++#include "rcar-gen2.h"
+ 
+ #define r8a779x_clst_id(cpu) (cpu_logical_map((cpu)) >> 8)
+ #define r8a779x_cpu_id(cpu) (cpu_logical_map((cpu)) & 0xff)
+diff --git a/arch/arm/mach-shmobile/pm-r8a7791.c b/arch/arm/mach-shmobile/pm-r8a7791.c
+index f0ed98c..a13da84 100644
+--- a/arch/arm/mach-shmobile/pm-r8a7791.c
++++ b/arch/arm/mach-shmobile/pm-r8a7791.c
+@@ -21,16 +21,9 @@
+ #include <asm/io.h>
+ #include "common.h"
+ #include "pm-rcar.h"
++#include "rcar-gen2.h"
+ #include "r8a7791.h"
+ 
+-#define RST		0xe6160000
+-#define CA15BAR		0x0020
+-#define RAM		0xe63c0000
+-
+-/* SYSC */
+-#define SYSCIER 0x0c
+-#define SYSCIMR 0x10
+-
+ struct r8a7791_pm_domain {
+ 	struct generic_pm_domain genpd;
+ 	struct rcar_sysc_ch ch;
+@@ -43,13 +36,14 @@ static inline struct rcar_sysc_ch *to_r8a7791_ch(struct generic_pm_domain *d)
+ 
+ #if defined(CONFIG_PM) || defined(CONFIG_SMP)
+ 
+-static void __init r8a7791_sysc_init(void)
++static void r8a7791_sysc_init(void)
+ {
+-	void __iomem *base = rcar_sysc_init(0xe6180000);
++	void __iomem *base = rcar_sysc_init(SYSC_BASE);
+ 
+ 	/* enable all interrupt sources, but do not use interrupt handler */
+ 	iowrite32(0x0131000e, base + SYSCIER);
+-	iowrite32(0, base + SYSCIMR);
++	/* keep reserved bits as they are in TRM */
++	iowrite32(0x012001ec, base + SYSCIMR);
+ }
+ 
+ #else /* CONFIG_PM || CONFIG_SMP */
+@@ -60,9 +54,6 @@ static inline void r8a7791_sysc_init(void) {}
+ 
+ #ifdef CONFIG_PM
+ 
+-#define CPG_BASE 0xe6150000
+-#define CPG_LEN 0x1000
+-
+ /* Software Reset */
+ #define SRCR0		0x00a0
+ #define SRCR1		0x00a8
+@@ -243,14 +234,10 @@ static struct notifier_block platform_nb = {
+ 
+ #endif /* CONFIG_PM */
+ 
+-void __init r8a7791_pm_init(void)
++void r8a7791_pm_init(void)
+ {
+ 	void __iomem *p;
+ 	u32 bar;
+-	static int once;
+-
+-	if (once++)
+-		return;
+ 
+ 	/* RAM for jump stub, because BAR requires 256KB aligned address */
+ 	p = ioremap_nocache(RAM, shmobile_boot_size);
+@@ -258,7 +245,7 @@ void __init r8a7791_pm_init(void)
+ 	iounmap(p);
+ 
+ 	/* setup reset vectors */
+-	p = ioremap_nocache(RST, 0x63);
++	p = ioremap_nocache(RST, RST_LEN);
+ 	bar = (RAM >> 8) & 0xfffffc00;
+ 	writel_relaxed(bar, p + CA15BAR);
+ 	writel_relaxed(bar | 0x10, p + CA15BAR);
+diff --git a/arch/arm/mach-shmobile/rcar-gen2.h b/arch/arm/mach-shmobile/rcar-gen2.h
+index ce53cb5..df7201a 100644
+--- a/arch/arm/mach-shmobile/rcar-gen2.h
++++ b/arch/arm/mach-shmobile/rcar-gen2.h
+@@ -1,6 +1,45 @@
+ #ifndef __ASM_RCAR_GEN2_H__
+ #define __ASM_RCAR_GEN2_H__
+ 
++#define CPG_BASE	0xe6150000
++#define CPG_LEN		0x1000
++#define RMSTPCR0	0x110
++#define RMSTPCR1	0x114
++#define RMSTPCR2	0x118
++#define RMSTPCR3	0x11c
++#define RMSTPCR4	0x120
++#define RMSTPCR5	0x124
++#define RMSTPCR7	0x12c
++#define RMSTPCR8	0x980
++#define RMSTPCR9	0x984
++#define RMSTPCR10	0x988
++#define RMSTPCR11	0x98c
++#define SMSTPCR0	0x130
++#define SMSTPCR1	0x134
++#define SMSTPCR2	0x138
++#define SMSTPCR3	0x13c
++#define SMSTPCR4	0x140
++#define SMSTPCR5	0x144
++#define SMSTPCR7	0x14c
++#define SMSTPCR8	0x990
++#define SMSTPCR9	0x994
++#define SMSTPCR10	0x998
++#define SMSTPCR11	0x99c
++
++#define SYSC_BASE	0xe6180000
++#define SYSCIER		0x0c
++#define SYSCIMR		0x10
++
++#define RST		0xe6160000
++#define RST_LEN		0x64
++
++#define CA15BAR		0x0020
++#define CA7BAR		0x0030
++#define RAM		0xe63c0000
++
++#define CNTCR 0
++#define CNTFID0 0x20
++
+ void rcar_gen2_timer_init(void);
+ #define MD(nr) BIT(nr)
+ u32 rcar_gen2_read_mode_pins(void);
+diff --git a/arch/arm/mach-shmobile/setup-r8a7791.c b/arch/arm/mach-shmobile/setup-r8a7791.c
+index 2aa431a..c48c6a9 100644
+--- a/arch/arm/mach-shmobile/setup-r8a7791.c
++++ b/arch/arm/mach-shmobile/setup-r8a7791.c
+@@ -29,6 +29,7 @@
+ #include <linux/sh_timer.h>
+ #include <linux/spi/sh_msiof.h>
+ #include <asm/mach/arch.h>
++#include <asm/smp_plat.h>
+ 
+ #include "common.h"
+ #include "dma-register.h"
+@@ -243,8 +244,6 @@ static const struct resource powervr_resources[] __initconst = {
+ 					powervr_resources,		\
+ 					ARRAY_SIZE(powervr_resources))
+ 
+-#define CPG_BASE	0xe6150000
+-#define CPG_LEN		0x1000
+ #define RGXCR		0x0B4
+ 
+ void __init r8a7791_register_pvrsrvkm(void)
+@@ -271,7 +270,12 @@ void __init r8a7791_register_ssp(void)
+ 
+ void __init r8a7791_add_dt_devices(void)
+ {
+-	r8a7791_pm_init();
++#ifdef CONFIG_SMP
++	/* In case of SMP config pm_init already called from smp_prepare_cpus.
++	 * It is still needed to call pm_init if 'nosmp' was given */
++	if (!setup_max_cpus)
++#endif
++		r8a7791_pm_init();
+ 	r8a7791_init_pm_domains();
+ 	r8a7791_register_cmt(00);
+ 	r8a7791_register_pvrsrvkm();
+diff --git a/arch/arm/mach-shmobile/setup-rcar-gen2.c b/arch/arm/mach-shmobile/setup-rcar-gen2.c
+index da16ebd..641ee1d 100644
+--- a/arch/arm/mach-shmobile/setup-rcar-gen2.c
++++ b/arch/arm/mach-shmobile/setup-rcar-gen2.c
+@@ -47,9 +47,6 @@ u32 rcar_gen2_read_mode_pins(void)
+ 	return mode;
+ }
+ 
+-#define CNTCR 0
+-#define CNTFID0 0x20
+-
+ void __init rcar_gen2_timer_init(void)
+ {
+ #if defined(CONFIG_ARM_ARCH_TIMER) || defined(CONFIG_COMMON_CLK)
+@@ -58,7 +55,7 @@ void __init rcar_gen2_timer_init(void)
+ #ifdef CONFIG_ARM_ARCH_TIMER
+ 	void __iomem *base;
+ 	int extal_mhz = 0;
+-	u32 freq;
++	u32 rcar_gen2_archtimer_freq;
+ 
+ 	/* At Linux boot time the r8a7790 arch timer comes up
+ 	 * with the counter disabled. Moreover, it may also report
+@@ -83,7 +80,7 @@ void __init rcar_gen2_timer_init(void)
+ 	}
+ 
+ 	/* The arch timer frequency equals EXTAL / 2 */
+-	freq = extal_mhz * (1000000 / 2);
++	rcar_gen2_archtimer_freq = extal_mhz * (1000000 / 2);
+ 
+ 	/* Remap "armgcnt address map" space */
+ 	base = ioremap(0xe6080000, PAGE_SIZE);
+@@ -96,10 +93,11 @@ void __init rcar_gen2_timer_init(void)
+ 	 */
+ 
+ 	if ((ioread32(base + CNTCR) & 1) == 0 ||
+-	    ioread32(base + CNTFID0) != freq) {
++	    ioread32(base + CNTFID0) != rcar_gen2_archtimer_freq) {
+ 		/* Update registers with correct frequency */
+-		iowrite32(freq, base + CNTFID0);
+-		asm volatile("mcr p15, 0, %0, c14, c0, 0" : : "r" (freq));
++		iowrite32(rcar_gen2_archtimer_freq, base + CNTFID0);
++		asm volatile("mcr p15, 0, %0, c14, c0, 0" : : "r"
++				(rcar_gen2_archtimer_freq));
+ 
+ 		/* make sure arch timer is started by setting bit 0 of CNTCR */
+ 		iowrite32(1, base + CNTCR);
+diff --git a/arch/arm/mach-shmobile/smp-r8a7791.c b/arch/arm/mach-shmobile/smp-r8a7791.c
+index 24cad9f..4583cb6 100644
+--- a/arch/arm/mach-shmobile/smp-r8a7791.c
++++ b/arch/arm/mach-shmobile/smp-r8a7791.c
+@@ -33,6 +33,11 @@
+ 
+ #define CA15RESCNT	0x0040
+ 
++static struct rcar_sysc_ch r8a7791_ca15_scu = {
++	.chan_offs = 0x180, /* PWRSR5 .. PWRER5 */
++	.isr_bit = 12, /* CA15-SCU */
++};
++
+ static struct rcar_apmu_config r8a7791_apmu_config[] = {
+ 	{
+ 		.iomem = DEFINE_RES_MEM(0xe6152000, 0x88),
+@@ -47,7 +52,7 @@ static struct rcar_rst_config r8a7791_rst_config[] = {
+ 	}
+ };
+ 
+-static void __init r8a7791_smp_prepare_cpus(unsigned int max_cpus)
++static void r8a7791_smp_prepare_cpus(unsigned int max_cpus)
+ {
+ 	void __iomem *p;
+ 	u32 val;
+@@ -67,6 +72,7 @@ static void __init r8a7791_smp_prepare_cpus(unsigned int max_cpus)
+ 	}
+ 
+ 	r8a7791_pm_init();
++	rcar_sysc_power_up(&r8a7791_ca15_scu);
+ 
+ 	/* keep secondary CPU cores in reset */
+ 	r8a779x_init_reset(r8a7791_rst_config);
+diff --git a/arch/arm/mm/proc-v7.S b/arch/arm/mm/proc-v7.S
+index 19da841..35c9048 100644
+--- a/arch/arm/mm/proc-v7.S
++++ b/arch/arm/mm/proc-v7.S
+@@ -92,48 +92,59 @@ ENDPROC(cpu_v7_dcache_clean_area)
+ 
+ /* Suspend/resume support: derived from arch/arm/mach-s5pv210/sleep.S */
+ .globl	cpu_v7_suspend_size
+-.equ	cpu_v7_suspend_size, 4 * 8
++.equ	cpu_v7_suspend_size, 4 * 9
+ #ifdef CONFIG_ARM_CPU_SUSPEND
+ ENTRY(cpu_v7_do_suspend)
+ 	stmfd	sp!, {r4 - r10, lr}
+ 	mrc	p15, 0, r4, c13, c0, 0	@ FCSE/PID
+ 	mrc	p15, 0, r5, c13, c0, 3	@ User r/o thread ID
+ 	stmia	r0!, {r4 - r5}
++#ifdef CONFIG_MMU
+ 	mrc	p15, 0, r6, c3, c0, 0	@ Domain ID
++#ifdef CONFIG_ARM_LPAE
++	mrrc	p15, 1, r5, r7, c2	@ TTB 1
++#else
+ 	mrc	p15, 0, r7, c2, c0, 1	@ TTB 1
++#endif
+ 	mrc	p15, 0, r11, c2, c0, 2	@ TTB control register
++#endif
+ 	mrc	p15, 0, r8, c1, c0, 0	@ Control register
+ 	mrc	p15, 0, r9, c1, c0, 1	@ Auxiliary control register
+ 	mrc	p15, 0, r10, c1, c0, 2	@ Co-processor access control
+-	stmia	r0, {r6 - r11}
++	stmia	r0, {r5 - r11}
+ 	ldmfd	sp!, {r4 - r10, pc}
+ ENDPROC(cpu_v7_do_suspend)
+ 
+ ENTRY(cpu_v7_do_resume)
+ 	mov	ip, #0
+-	mcr	p15, 0, ip, c8, c7, 0	@ invalidate TLBs
+ 	mcr	p15, 0, ip, c7, c5, 0	@ invalidate I cache
+ 	mcr	p15, 0, ip, c13, c0, 1	@ set reserved context ID
+ 	ldmia	r0!, {r4 - r5}
+ 	mcr	p15, 0, r4, c13, c0, 0	@ FCSE/PID
+ 	mcr	p15, 0, r5, c13, c0, 3	@ User r/o thread ID
+-	ldmia	r0, {r6 - r11}
++	ldmia	r0, {r5 - r11}
++#ifdef CONFIG_MMU
++	mcr	p15, 0, ip, c8, c7, 0	@ invalidate TLBs
+ 	mcr	p15, 0, r6, c3, c0, 0	@ Domain ID
+-#ifndef CONFIG_ARM_LPAE
++#ifdef CONFIG_ARM_LPAE
++	mcrr	p15, 0, r1, ip, c2	@ TTB 0
++	mcrr	p15, 1, r5, r7, c2	@ TTB 1
++#else
+ 	ALT_SMP(orr	r1, r1, #TTB_FLAGS_SMP)
+ 	ALT_UP(orr	r1, r1, #TTB_FLAGS_UP)
+-#endif
+ 	mcr	p15, 0, r1, c2, c0, 0	@ TTB 0
+ 	mcr	p15, 0, r7, c2, c0, 1	@ TTB 1
++#endif
+ 	mcr	p15, 0, r11, c2, c0, 2	@ TTB control register
+-	mrc	p15, 0, r4, c1, c0, 1	@ Read Auxiliary control register
+-	teq	r4, r9			@ Is it already set?
+-	mcrne	p15, 0, r9, c1, c0, 1	@ No, so write it
+-	mcr	p15, 0, r10, c1, c0, 2	@ Co-processor access control
+ 	ldr	r4, =PRRR		@ PRRR
+ 	ldr	r5, =NMRR		@ NMRR
+ 	mcr	p15, 0, r4, c10, c2, 0	@ write PRRR
+ 	mcr	p15, 0, r5, c10, c2, 1	@ write NMRR
++#endif	/* CONFIG_MMU */
++	mrc	p15, 0, r4, c1, c0, 1	@ Read Auxiliary control register
++	teq	r4, r9			@ Is it already set?
++	mcrne	p15, 0, r9, c1, c0, 1	@ No, so write it
++	mcr	p15, 0, r10, c1, c0, 2	@ Co-processor access control
+ 	isb
+ 	dsb
+ 	mov	r0, r8			@ control register
+-- 
+1.8.3.1
+

@@ -1,0 +1,375 @@
+From f8691a62199319d9e37cd451a9b8364aa640c4cb Mon Sep 17 00:00:00 2001
+From: Yuichi Kusakabe <yuichi.kusakabe@jp.fujitsu.com>
+Date: Thu, 18 May 2017 17:45:19 +0900
+Subject: [PATCH 11/15] Add rcar-pci hibernation code
+
+Signed-off-by: Yuichi Kusakabe <yuichi.kusakabe@jp.fujitsu.com>
+---
+ drivers/pci/host/pci-rcar-gen2.c | 281 ++++++++++++++++++++++++++++++++++++---
+ 1 file changed, 266 insertions(+), 15 deletions(-)
+
+diff --git a/drivers/pci/host/pci-rcar-gen2.c b/drivers/pci/host/pci-rcar-gen2.c
+index 57b6572..4cb9693 100644
+--- a/drivers/pci/host/pci-rcar-gen2.c
++++ b/drivers/pci/host/pci-rcar-gen2.c
+@@ -23,9 +23,12 @@
+ #include <linux/sizes.h>
+ #include <linux/slab.h>
+ #include <linux/usb/phy.h>
++#include <linux/clk.h>
+ 
+ /* AHB-PCI Bridge PCI communication registers */
+ #define RCAR_AHBPCI_PCICOM_OFFSET	0x800
++#define RCAR_PCICONF_OHCI		0x0
++#define RCAR_PCICONF_EHCI		0x100
+ 
+ #define RCAR_PCIAHB_WIN1_CTR_REG	(RCAR_AHBPCI_PCICOM_OFFSET + 0x00)
+ #define RCAR_PCIAHB_WIN2_CTR_REG	(RCAR_AHBPCI_PCICOM_OFFSET + 0x04)
+@@ -104,6 +107,14 @@ struct rcar_pci_priv {
+ 	int domain;
+ 	int irq;
+ 	unsigned long window_size;
++	void __iomem *ohci_memdata;
++	void __iomem *ehci_memdata;
++#ifndef	MCCILDK_CHANGE_DISABLE
++	u32 store_cfg[12];
++#else
++	u32 store_cfg[9];
++#endif
++	struct usb_phy *phy;
+ };
+ 
+ /* PCI configuration space operations */
+@@ -276,12 +287,6 @@ static int rcar_pci_setup(int nr, struct pci_sys_data *sys)
+ 	/* Configure AHB master and slave modes */
+ 	iowrite32(RCAR_AHB_BUS_MODE, reg + RCAR_AHB_BUS_CTR_REG);
+ 
+-	/* Configure PCI arbiter */
+-	val = ioread32(reg + RCAR_PCI_ARBITER_CTR_REG);
+-	val |= RCAR_PCI_ARBITER_PCIREQ0 | RCAR_PCI_ARBITER_PCIREQ1 |
+-	       RCAR_PCI_ARBITER_PCIBP_MODE;
+-	iowrite32(val, reg + RCAR_PCI_ARBITER_CTR_REG);
+-
+ 	/* PCI-AHB mapping: 0x40000000 base */
+ 	iowrite32(0x40000000 | RCAR_PCIAHB_PREFETCH16,
+ 		  reg + RCAR_PCIAHB_WIN1_CTR_REG);
+@@ -290,9 +295,25 @@ static int rcar_pci_setup(int nr, struct pci_sys_data *sys)
+ 	val = priv->mem_res.start | RCAR_AHBPCI_WIN_CTR_MEM;
+ 	iowrite32(val, reg + RCAR_AHBPCI_WIN2_CTR_REG);
+ 
++	/* Enable PCI interrupts */
++	iowrite32(RCAR_PCI_INT_A | RCAR_PCI_INT_B | RCAR_PCI_INT_PME,
++		  reg + RCAR_PCI_INT_ENABLE_REG);
++
++	/* Configure PCI arbiter */
++	val = ioread32(reg + RCAR_PCI_ARBITER_CTR_REG);
++	val |= RCAR_PCI_ARBITER_PCIREQ0 | RCAR_PCI_ARBITER_PCIREQ1 |
++	       RCAR_PCI_ARBITER_PCIBP_MODE;
++	iowrite32(val, reg + RCAR_PCI_ARBITER_CTR_REG);
++
+ 	/* Enable AHB-PCI bridge PCI configuration access */
+ 	iowrite32(RCAR_AHBPCI_WIN1_HOST | RCAR_AHBPCI_WIN_CTR_CFG,
+ 		  reg + RCAR_AHBPCI_WIN1_CTR_REG);
++	val = ioread32(reg + PCI_COMMAND);
++
++	val |= PCI_COMMAND_SERR | PCI_COMMAND_PARITY |
++	       PCI_COMMAND_MEMORY | PCI_COMMAND_MASTER;
++	iowrite32(val, reg + PCI_COMMAND);
++
+ 	/* Set PCI-AHB Window1 address */
+ 	iowrite32(0x40000000 | PCI_BASE_ADDRESS_MEM_PREFETCH,
+ 		  reg + PCI_BASE_ADDRESS_1);
+@@ -300,15 +321,6 @@ static int rcar_pci_setup(int nr, struct pci_sys_data *sys)
+ 	val = priv->cfg_res->start + RCAR_AHBPCI_PCICOM_OFFSET;
+ 	iowrite32(val, reg + PCI_BASE_ADDRESS_0);
+ 
+-	val = ioread32(reg + PCI_COMMAND);
+-	val |= PCI_COMMAND_SERR | PCI_COMMAND_PARITY |
+-	       PCI_COMMAND_MEMORY | PCI_COMMAND_MASTER;
+-	iowrite32(val, reg + PCI_COMMAND);
+-
+-	/* Enable PCI interrupts */
+-	iowrite32(RCAR_PCI_INT_A | RCAR_PCI_INT_B | RCAR_PCI_INT_PME,
+-		  reg + RCAR_PCI_INT_ENABLE_REG);
+-
+ 	if (priv->irq > 0)
+ 		rcar_pci_setup_errirq(priv);
+ 
+@@ -326,6 +338,8 @@ static struct pci_ops rcar_pci_ops = {
+ 	.write	= rcar_pci_write_config,
+ };
+ 
++#define RCAR_MAX_PCI_HOSTS	2
++static struct rcar_pci_priv *keep_priv[RCAR_MAX_PCI_HOSTS];
+ static int rcar_pci_probe(struct platform_device *pdev)
+ {
+ 	struct resource *cfg_res, *mem_res;
+@@ -350,6 +364,7 @@ static int rcar_pci_probe(struct platform_device *pdev)
+ 		return -ENOMEM;
+ 
+ 	priv->mem_res = *mem_res;
++	keep_priv[pdev->id] = priv;
+ 	/*
+ 	 * The controller does not support/use port I/O,
+ 	 * so setup a dummy port I/O region here.
+@@ -378,6 +393,7 @@ static int rcar_pci_probe(struct platform_device *pdev)
+ 		return PTR_ERR(phy);
+ 
+ 	usb_phy_init(phy);
++	priv->phy = phy;
+ 
+ 	hw_private[0] = priv;
+ 	memset(&hw, 0, sizeof(hw));
+@@ -390,14 +406,249 @@ static int rcar_pci_probe(struct platform_device *pdev)
+ 	hw.domain = priv->domain;
+ #endif
+ 	pci_common_init_dev(&pdev->dev, &hw);
++	priv->ohci_memdata = ioremap(cfg_res->start - 0x10000, 0x1000);
++	priv->ehci_memdata = ioremap(cfg_res->start - 0x10000 + 0x1000, 0x1000);
++	return 0;
++}
++
++static int rcar_pci_suspend(struct device *dev)
++{
++	struct clk *clk;
++	clk = clk_get(NULL, "ehci");
++	clk_disable_unprepare(clk);
++	clk_put(clk);
++	return 0;
++}
++static int rcar_pci_resume(struct device *dev)
++{
++	struct clk *clk;
++	clk = clk_get(NULL, "ehci");
++	clk_prepare_enable(clk);
++	clk_put(clk);
++	return 0;
++}
++static u32 rcar_pci_get_conf(struct rcar_pci_priv *priv, int id, int offset)
++{
++	u32 val, kpt;
++	void __iomem *data;
++	kpt = ioread32(priv->reg + RCAR_AHBPCI_WIN1_CTR_REG);
++	val = id ? RCAR_AHBPCI_WIN1_DEVICE | RCAR_AHBPCI_WIN_CTR_CFG :
++		     RCAR_AHBPCI_WIN1_HOST | RCAR_AHBPCI_WIN_CTR_CFG;
++
++	iowrite32(val, priv->reg + RCAR_AHBPCI_WIN1_CTR_REG);
++	data = priv->reg + (id >> 1) * 0x100;
++	val = ioread32(data + offset);
++	iowrite32(kpt, priv->reg + RCAR_AHBPCI_WIN1_CTR_REG);
++	return val;
++}
++
++static void rcar_pci_set_conf(struct rcar_pci_priv *priv,
++		int id, int offset, u32 d)
++{
++	u32 val, kpt;
++	void __iomem *data;
++	kpt = ioread32(priv->reg + RCAR_AHBPCI_WIN1_CTR_REG);
++	val = id ? RCAR_AHBPCI_WIN1_DEVICE | RCAR_AHBPCI_WIN_CTR_CFG :
++		     RCAR_AHBPCI_WIN1_HOST | RCAR_AHBPCI_WIN_CTR_CFG;
++
++	iowrite32(val, priv->reg + RCAR_AHBPCI_WIN1_CTR_REG);
++	data = priv->reg + (id >> 1) * 0x100;
++	iowrite32(d, data + offset);
++	iowrite32(kpt, priv->reg + RCAR_AHBPCI_WIN1_CTR_REG);
++}
++
++
++static int rcar_pci_freeze(struct device *dev)
++{
++	struct rcar_pci_priv *priv = keep_priv[to_platform_device(dev)->id];
++	struct clk *clk;
++	clk = clk_get(NULL, "ehci");
++	clk_disable_unprepare(clk);
++	clk_put(clk);
++
++#ifndef	MCCILDK_CHANGE_DISABLE
++	priv->store_cfg[0] = rcar_pci_get_conf(priv, 0, PCI_COMMAND);
++	priv->store_cfg[1] = rcar_pci_get_conf(priv, 1, PCI_COMMAND);
++	priv->store_cfg[2] = rcar_pci_get_conf(priv, 2, PCI_COMMAND);
++	priv->store_cfg[3] = rcar_pci_get_conf(priv, 0, PCI_CACHE_LINE_SIZE);
++	priv->store_cfg[4] = rcar_pci_get_conf(priv, 1, PCI_CACHE_LINE_SIZE);
++	priv->store_cfg[5] = rcar_pci_get_conf(priv, 2, PCI_CACHE_LINE_SIZE);
++	priv->store_cfg[6] = rcar_pci_get_conf(priv, 0, PCI_INTERRUPT_LINE);
++	priv->store_cfg[7] = rcar_pci_get_conf(priv, 1, PCI_INTERRUPT_LINE);
++	priv->store_cfg[8] = rcar_pci_get_conf(priv, 2, PCI_INTERRUPT_LINE);
++	priv->store_cfg[9] =  rcar_pci_get_conf(priv, 0, PCI_BASE_ADDRESS_0);
++	priv->store_cfg[10] = rcar_pci_get_conf(priv, 1, PCI_BASE_ADDRESS_0);
++	priv->store_cfg[11] = rcar_pci_get_conf(priv, 2, PCI_BASE_ADDRESS_0);
++#else
++	priv->store_cfg[0] = rcar_pci_get_conf(priv, 0, 0x04);
++	priv->store_cfg[1] = rcar_pci_get_conf(priv, 1, 0x04);
++	priv->store_cfg[2] = rcar_pci_get_conf(priv, 2, 0x04);
++	priv->store_cfg[3] = rcar_pci_get_conf(priv, 0, 0x0c);
++	priv->store_cfg[4] = rcar_pci_get_conf(priv, 1, 0x0c);
++	priv->store_cfg[5] = rcar_pci_get_conf(priv, 2, 0x0c);
++	priv->store_cfg[6] = rcar_pci_get_conf(priv, 0, 0x3c);
++	priv->store_cfg[7] = rcar_pci_get_conf(priv, 1, 0x3c);
++	priv->store_cfg[8] = rcar_pci_get_conf(priv, 2, 0x3c);
++#endif
++	pm_runtime_disable(priv->dev);
++	return 0;
++}
++
++static int rcar_pci_restore(struct device *dev)
++{
++	struct clk *clk;
++	void *m;
++	u32 val;
++	struct rcar_pci_priv *priv = keep_priv[to_platform_device(dev)->id];
++	void __iomem *reg = priv->reg;
++	int id = to_platform_device(dev)->id;
++
++	pm_runtime_enable(priv->dev);
++	pm_runtime_get_sync(priv->dev);
++
++	clk = clk_get(NULL, "ehci");
++	clk_prepare_enable(clk);
++	clk_put(clk);
++	clk = clk_get(NULL, "hsusb");
++	clk_prepare_enable(clk);
++	clk_put(clk);
++	usb_phy_set_suspend(priv->phy, 0);
++	m = ioremap(0xe61501c4, 4);
++	val = readl(m);
++	iounmap(m);
++	m = ioremap(0xe615014c, 4);
++	writel(val & ~(3 << 3), m);
++	iounmap(m);
++	val = ioread32(reg + RCAR_PCI_UNIT_REV_REG);
++	dev_info(priv->dev, "PCI: bus%u revision %x\n", id, val);
++
++	/* Disable Direct Power Down State and assert reset */
++	val = ioread32(reg + RCAR_USBCTR_REG) & ~RCAR_USBCTR_DIRPD;
++#ifndef	MCCILDK_CHANGE_DISABLE
++	val |= RCAR_USBCTR_USBH_RST | RCAR_USBCTR_PLL_RST;
++#else
++	val |= RCAR_USBCTR_USBH_RST;
++#endif
++	iowrite32(val, reg + RCAR_USBCTR_REG);
++	udelay(4);
++	/* De-assert reset */
++#ifndef	MCCILDK_CHANGE_DISABLE
++	val &= ~(RCAR_USBCTR_USBH_RST | RCAR_USBCTR_PLL_RST
++			| RCAR_USBCTR_PCICLK_MASK);
++	iowrite32(val, reg + RCAR_USBCTR_REG);
++	/* reset PCIAHB window size */
++	val &= ~RCAR_USBCTR_PCIAHB_WIN1_MASK;
++	val |= RCAR_USBCTR_PCIAHB_WIN1_1G;
++	iowrite32(val, reg + RCAR_USBCTR_REG);
++#else
++	val &=  RCAR_USBCTR_USBH_RST | RCAR_USBCTR_PLL_RST
++		| RCAR_USBCTR_PCICLK_MASK;
++	iowrite32(val, reg + RCAR_USBCTR_REG);
++	val &=  RCAR_USBCTR_USBH_RST | RCAR_USBCTR_PLL_RST
++		| RCAR_USBCTR_PCICLK_MASK;
++	iowrite32(val, reg + RCAR_USBCTR_REG);
++	/* reset PCIAHB window size */
++	val &= RCAR_USBCTR_PCIAHB_WIN1_MASK;
++	val |= RCAR_USBCTR_PCIAHB_WIN1_1G;
++	iowrite32(val, reg + RCAR_USBCTR_REG);
++#endif
++
++	/* Configure AHB master and slave modes */
++	iowrite32(RCAR_AHB_BUS_MODE, reg + RCAR_AHB_BUS_CTR_REG);
++
++	/* PCI-AHB mapping: 0x40000000 base */
++	iowrite32(0x40000000 | RCAR_PCIAHB_PREFETCH16,
++		  reg + RCAR_PCIAHB_WIN1_CTR_REG);
++
++	/* AHB-PCI mapping: OHCI/EHCI registers */
++	val = priv->mem_res.start | RCAR_AHBPCI_WIN_CTR_MEM;
++	iowrite32(val, reg + RCAR_AHBPCI_WIN2_CTR_REG);
++
++	/* Enable PCI interrupts */
++	iowrite32(RCAR_PCI_INT_A | RCAR_PCI_INT_B | RCAR_PCI_INT_PME,
++		  reg + RCAR_PCI_INT_ENABLE_REG);
++
++	/* Configure PCI arbiter */
++	val = ioread32(reg + RCAR_PCI_ARBITER_CTR_REG);
++	val |= RCAR_PCI_ARBITER_PCIREQ0 | RCAR_PCI_ARBITER_PCIREQ1 |
++	       RCAR_PCI_ARBITER_PCIBP_MODE;
++	iowrite32(val, reg + RCAR_PCI_ARBITER_CTR_REG);
++
++	/* Enable AHB-PCI bridge PCI configuration access */
++	iowrite32(RCAR_AHBPCI_WIN1_HOST | RCAR_AHBPCI_WIN_CTR_CFG,
++		  reg + RCAR_AHBPCI_WIN1_CTR_REG);
++
++	val = ioread32(reg + PCI_COMMAND);
++	val |= PCI_COMMAND_SERR | PCI_COMMAND_PARITY |
++	       PCI_COMMAND_MEMORY | PCI_COMMAND_MASTER;
++	iowrite32(val, reg + PCI_COMMAND);
++
++	/* Set PCI-AHB Window1 address */
++	iowrite32(0x40000000 | PCI_BASE_ADDRESS_MEM_PREFETCH,
++		  reg + PCI_BASE_ADDRESS_1);
++	/* Set AHB-PCI bridge PCI communication area address */
++	val = priv->cfg_res->start + RCAR_AHBPCI_PCICOM_OFFSET;
++	iowrite32(val, reg + PCI_BASE_ADDRESS_0);
++
++	if (priv->irq > 0)
++		rcar_pci_setup_errirq(priv);
++#ifndef	MCCILDK_CHANGE_DISABLE
++	rcar_pci_set_conf(priv, 0, PCI_COMMAND, priv->store_cfg[0]);
++	rcar_pci_set_conf(priv, 1, PCI_COMMAND, priv->store_cfg[1]);
++	rcar_pci_set_conf(priv, 2, PCI_COMMAND, priv->store_cfg[2]);
++	rcar_pci_set_conf(priv, 0, PCI_CACHE_LINE_SIZE, priv->store_cfg[3]);
++	rcar_pci_set_conf(priv, 1, PCI_CACHE_LINE_SIZE, priv->store_cfg[4]);
++	rcar_pci_set_conf(priv, 2, PCI_CACHE_LINE_SIZE, priv->store_cfg[5]);
++	rcar_pci_set_conf(priv, 0, PCI_INTERRUPT_LINE, priv->store_cfg[6]);
++	rcar_pci_set_conf(priv, 1, PCI_INTERRUPT_LINE, priv->store_cfg[7]);
++	rcar_pci_set_conf(priv, 2, PCI_INTERRUPT_LINE, priv->store_cfg[8]);
++	rcar_pci_set_conf(priv, 1, PCI_BASE_ADDRESS_0, priv->store_cfg[10]);
++	rcar_pci_set_conf(priv, 2, PCI_BASE_ADDRESS_0, priv->store_cfg[11]);
++#else
++	rcar_pci_set_conf(priv, 1, PCI_COMMAND, PCI_COMMAND_SERR
++			| PCI_COMMAND_PARITY | PCI_COMMAND_MEMORY
++			| PCI_COMMAND_MASTER);
++	rcar_pci_set_conf(priv, 1, PCI_BASE_ADDRESS_0
++			priv->cfg_res->start - 0x10000);
++	rcar_pci_set_conf(priv, 2, PCI_COMMAND, PCI_COMMAND_SERR
++			| PCI_COMMAND_PARITY | PCI_COMMAND_MEMORY
++			| PCI_COMMAND_MASTER);
++	rcar_pci_set_conf(priv, 2, PCI_BASE_ADDRESS_0,
++			priv->cfg_res->start - 0x10000 + 0x1000);
++	rcar_pci_set_conf(priv, 0, PCI_CACHE_LINE_SIZE, priv->store_cfg[3]);
++	rcar_pci_set_conf(priv, 1, PCI_CACHE_LINE_SIZE, priv->store_cfg[4]);
++	rcar_pci_set_conf(priv, 2, PCI_CACHE_LINE_SIZE, priv->store_cfg[5]);
++	rcar_pci_set_conf(priv, 0, PCI_INTERRUPT_LINE, 0x00020100);
++	rcar_pci_set_conf(priv, 1, PCI_INTERRUPT_LINE, 0x2a010100);
++	rcar_pci_set_conf(priv, 2, PCI_INTERRUPT_LINE, 0x22100200);
++	val = RCAR_AHBPCI_WIN1_DEVICE | RCAR_AHBPCI_WIN_CTR_CFG;
++	iowrite32(val, priv->reg + RCAR_AHBPCI_WIN1_CTR_REG);
++	val = ioread32(priv->reg + 0x04);
++	iowrite32(val | (1 << 1), priv->reg + 0x04);
++	val = ioread32(priv->reg + 0x104);
++	iowrite32(val | (1 << 1), priv->reg + 0x104);
++
++	val = RCAR_AHBPCI_WIN1_HOST | RCAR_AHBPCI_WIN_CTR_CFG;
++	iowrite32(val, priv->reg + RCAR_AHBPCI_WIN1_CTR_REG);
++#endif
+ 	return 0;
+ }
+ 
++static const struct dev_pm_ops rcar_pci_pm_ops = {
++	.suspend	= rcar_pci_suspend,
++	.resume		= rcar_pci_resume,
++	.freeze_noirq	= rcar_pci_freeze,
++	.restore_noirq	= rcar_pci_restore,
++	.thaw		= rcar_pci_resume,
++	.poweroff	= rcar_pci_suspend
++};
++
+ static struct platform_driver rcar_pci_driver = {
+ 	.driver = {
+ 		.name = "pci-rcar-gen2",
+ 		.owner = THIS_MODULE,
+ 		.suppress_bind_attrs = true,
++		.pm = &rcar_pci_pm_ops,
+ 	},
+ 	.probe = rcar_pci_probe,
+ };
+-- 
+1.8.3.1
+

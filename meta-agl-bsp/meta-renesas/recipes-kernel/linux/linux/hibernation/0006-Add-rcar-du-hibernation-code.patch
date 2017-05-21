@@ -1,0 +1,127 @@
+From 4a9a11deb2e83549d2e77cac129f879a0000ef7e Mon Sep 17 00:00:00 2001
+From: Yuichi Kusakabe <yuichi.kusakabe@jp.fujitsu.com>
+Date: Thu, 18 May 2017 17:33:54 +0900
+Subject: [PATCH 06/15] Add rcar-du hibernation code
+
+Signed-off-by: Yuichi Kusakabe <yuichi.kusakabe@jp.fujitsu.com>
+---
+ drivers/gpu/drm/rcar-du/rcar_du_drv.c | 68 ++++++++++++++++++++++++++++++++++-
+ 1 file changed, 67 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/rcar-du/rcar_du_drv.c b/drivers/gpu/drm/rcar-du/rcar_du_drv.c
+index 53f1f6a..fbb212c 100644
+--- a/drivers/gpu/drm/rcar-du/rcar_du_drv.c
++++ b/drivers/gpu/drm/rcar-du/rcar_du_drv.c
+@@ -442,6 +442,15 @@ static int rcar_du_pm_suspend(struct device *dev)
+ 
+ 	drm_kms_helper_poll_disable(rcdu->ddev);
+ 
++#ifdef CONFIG_MACH_FTEN
++	list_for_each_entry(encoder,
++			 &rcdu->ddev->mode_config.encoder_list, head) {
++		if ((encoder->encoder_type == DRM_MODE_ENCODER_TVDAC) &&
++			(get_rcar_slave_funcs(encoder)->dpms))
++			get_rcar_slave_funcs(encoder)->dpms(encoder,
++						 DRM_MODE_DPMS_SUSPEND);
++	}
++#else
+ #if defined(CONFIG_DRM_ADV7511) || defined(CONFIG_DRM_ADV7511_MODULE)
+ 	list_for_each_entry(encoder,
+ 			 &rcdu->ddev->mode_config.encoder_list, head) {
+@@ -451,6 +460,8 @@ static int rcar_du_pm_suspend(struct device *dev)
+ 						 DRM_MODE_DPMS_OFF);
+ 	}
+ #endif
++#endif
++
+ #ifdef CONFIG_DRM_RCAR_LVDS
+ 	for (i = 0; i < rcdu->info->num_lvds; ++i) {
+ 		if (rcdu->lvds[i])
+@@ -483,6 +494,15 @@ static int rcar_du_pm_resume(struct device *dev)
+ 	}
+ #endif
+ 
++#ifdef CONFIG_MACH_FTEN
++	list_for_each_entry(encoder,
++			 &rcdu->ddev->mode_config.encoder_list, head) {
++		if ((encoder->encoder_type == DRM_MODE_ENCODER_TVDAC) &&
++			(get_rcar_slave_funcs(encoder)->dpms))
++			get_rcar_slave_funcs(encoder)->dpms(encoder,
++						 DRM_MODE_DPMS_ON);
++	}
++#else
+ #if defined(CONFIG_DRM_ADV7511) || defined(CONFIG_DRM_ADV7511_MODULE)
+ 	list_for_each_entry(encoder,
+ 			 &rcdu->ddev->mode_config.encoder_list, head) {
+@@ -492,14 +512,53 @@ static int rcar_du_pm_resume(struct device *dev)
+ 						 DRM_MODE_DPMS_ON);
+ 	}
+ #endif
++#endif
+ 	drm_kms_helper_poll_enable(rcdu->ddev);
+ 
+ 	return 0;
+ }
+-#endif
++#ifdef CONFIG_MACH_FTEN
++static int rcar_du_pm_freeze(struct device *dev)
++{
++	int ret;
++
++	ret = rcar_du_pm_suspend(dev);
++	return ret;
++}
++
++static int rcar_du_pm_thaw(struct device *dev)
++{
++	int ret;
+ 
++	ret = rcar_du_pm_resume(dev);
++	return ret;
++}
++
++static int rcar_du_pm_restore(struct device *dev)
++{
++	int i, ret;
++	struct rcar_du_device *rcdu = dev_get_drvdata(dev);
++
++	ret = rcar_du_pm_resume(dev);
++	for (i = 0; i < rcdu->pdata->num_crtcs; ++i)
++		rcar_du_crtc_enable_vblank(&rcdu->crtcs[i],
++			rcdu->crtcs[i].vblank_enable);
++	return ret;
++}
++#endif
++#endif
+ static const struct dev_pm_ops rcar_du_pm_ops = {
++#if defined(CONFIG_MACH_FTEN) && defined(CONFIG_HIBERNATION) && \
++	defined(CONFIG_PM_SLEEP)
++	.suspend = rcar_du_pm_suspend,
++	.resume = rcar_du_pm_resume,
++	.freeze = rcar_du_pm_freeze,
++	.thaw = rcar_du_pm_thaw,
++	.poweroff = rcar_du_pm_suspend,
++	.restore = rcar_du_pm_restore,
++#else
+ 	SET_SYSTEM_SLEEP_PM_OPS(rcar_du_pm_suspend, rcar_du_pm_resume)
++#endif
+ };
+ 
+ /* -----------------------------------------------------------------------------
+@@ -620,6 +679,13 @@ static const struct rcar_du_device_info rcar_du_r8a7791_info = {
+ 			.possible_clones = 0,
+ 			.encoder_type = DRM_MODE_ENCODER_NONE,
+ 		},
++#if defined(CONFIG_MACH_FTEN)
++		[RCAR_DU_OUTPUT_COMPOSITE] = {
++			.possible_crtcs = BIT(1),
++			.possible_clones = 0,
++			.encoder_type = DRM_MODE_ENCODER_TVDAC,
++		},
++#endif
+ 	},
+ 	.num_lvds = 1,
+ 	.drgbs_bit = 1,
+-- 
+1.8.3.1
+

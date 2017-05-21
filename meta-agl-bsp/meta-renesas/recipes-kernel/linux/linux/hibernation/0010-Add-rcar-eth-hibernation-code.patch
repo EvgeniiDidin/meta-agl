@@ -1,0 +1,238 @@
+From 1d20d3bd16eac561e14513c9e6cac543fab5a3f0 Mon Sep 17 00:00:00 2001
+From: Yuichi Kusakabe <yuichi.kusakabe@jp.fujitsu.com>
+Date: Thu, 18 May 2017 17:42:33 +0900
+Subject: [PATCH 10/15] Add rcar-eth hibernation code
+
+Signed-off-by: Yuichi Kusakabe <yuichi.kusakabe@jp.fujitsu.com>
+---
+ drivers/net/ethernet/renesas/sh_eth.c | 57 +++++++++++++++++++++++++++++++++--
+ drivers/net/phy/phy_device.c          | 41 +++++++++++++++++++++++++
+ 2 files changed, 95 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/net/ethernet/renesas/sh_eth.c b/drivers/net/ethernet/renesas/sh_eth.c
+index 991fa1e..7e91b26 100644
+--- a/drivers/net/ethernet/renesas/sh_eth.c
++++ b/drivers/net/ethernet/renesas/sh_eth.c
+@@ -33,6 +33,7 @@
+ #include <linux/of.h>
+ #include <linux/of_device.h>
+ #include <linux/of_irq.h>
++#include <linux/of_gpio.h>
+ #include <linux/of_net.h>
+ #include <linux/phy.h>
+ #include <linux/cache.h>
+@@ -999,6 +1000,7 @@ static unsigned long sh_eth_get_edtrr_trns(struct sh_eth_private *mdp)
+ struct bb_info {
+ 	void (*set_gate)(void *addr);
+ 	struct mdiobb_ctrl ctrl;
++	struct sh_eth_private *mdp;
+ 	void *addr;
+ 	u32 mmd_msk;/* MMD */
+ 	u32 mdo_msk;
+@@ -1029,6 +1031,8 @@ static void sh_mmd_ctrl(struct mdiobb_ctrl *ctrl, int bit)
+ {
+ 	struct bb_info *bitbang = container_of(ctrl, struct bb_info, ctrl);
+ 
++	pm_runtime_get_sync(&bitbang->mdp->pdev->dev);
++
+ 	if (bitbang->set_gate)
+ 		bitbang->set_gate(bitbang->addr);
+ 
+@@ -1036,6 +1040,8 @@ static void sh_mmd_ctrl(struct mdiobb_ctrl *ctrl, int bit)
+ 		bb_set(bitbang->addr, bitbang->mmd_msk);
+ 	else
+ 		bb_clr(bitbang->addr, bitbang->mmd_msk);
++
++	pm_runtime_put_sync(&bitbang->mdp->pdev->dev);
+ }
+ 
+ /* Set bit data*/
+@@ -1043,6 +1049,8 @@ static void sh_set_mdio(struct mdiobb_ctrl *ctrl, int bit)
+ {
+ 	struct bb_info *bitbang = container_of(ctrl, struct bb_info, ctrl);
+ 
++	pm_runtime_get_sync(&bitbang->mdp->pdev->dev);
++
+ 	if (bitbang->set_gate)
+ 		bitbang->set_gate(bitbang->addr);
+ 
+@@ -1050,17 +1058,26 @@ static void sh_set_mdio(struct mdiobb_ctrl *ctrl, int bit)
+ 		bb_set(bitbang->addr, bitbang->mdo_msk);
+ 	else
+ 		bb_clr(bitbang->addr, bitbang->mdo_msk);
++
++	pm_runtime_put_sync(&bitbang->mdp->pdev->dev);
+ }
+ 
+ /* Get bit data*/
+ static int sh_get_mdio(struct mdiobb_ctrl *ctrl)
+ {
+ 	struct bb_info *bitbang = container_of(ctrl, struct bb_info, ctrl);
++	unsigned int ret;
++
++	pm_runtime_get_sync(&bitbang->mdp->pdev->dev);
+ 
+ 	if (bitbang->set_gate)
+ 		bitbang->set_gate(bitbang->addr);
+ 
+-	return bb_read(bitbang->addr, bitbang->mdi_msk);
++	ret = bb_read(bitbang->addr, bitbang->mdi_msk);
++
++	pm_runtime_put_sync(&bitbang->mdp->pdev->dev);
++
++	return ret;
+ }
+ 
+ /* MDC pin control */
+@@ -1068,6 +1085,8 @@ static void sh_mdc_ctrl(struct mdiobb_ctrl *ctrl, int bit)
+ {
+ 	struct bb_info *bitbang = container_of(ctrl, struct bb_info, ctrl);
+ 
++	pm_runtime_get_sync(&bitbang->mdp->pdev->dev);
++
+ 	if (bitbang->set_gate)
+ 		bitbang->set_gate(bitbang->addr);
+ 
+@@ -1075,6 +1094,8 @@ static void sh_mdc_ctrl(struct mdiobb_ctrl *ctrl, int bit)
+ 		bb_set(bitbang->addr, bitbang->mdc_msk);
+ 	else
+ 		bb_clr(bitbang->addr, bitbang->mdc_msk);
++
++	pm_runtime_put_sync(&bitbang->mdp->pdev->dev);
+ }
+ 
+ /* mdio bus control struct */
+@@ -2664,6 +2685,7 @@ static int sh_mdio_init(struct sh_eth_private *mdp,
+ 	bitbang->mdo_msk = PIR_MDO;
+ 	bitbang->mmd_msk = PIR_MMD;
+ 	bitbang->mdc_msk = PIR_MDC;
++	bitbang->mdp = mdp;
+ 	bitbang->ctrl.ops = &bb_ops;
+ 
+ 	/* MII controller setting */
+@@ -3002,9 +3024,38 @@ static int sh_eth_runtime_nop(struct device *dev)
+ 	return 0;
+ }
+ 
++static int sh_eth_suspend(struct device *dev)
++{
++	int ret = 0;
++	struct net_device *ndev = dev_get_drvdata(dev);
++
++	if (netif_running(ndev)) {
++		netif_device_detach(ndev);
++		ret = sh_eth_close(ndev);
++	}
++
++	return ret;
++}
++
++static int sh_eth_resume(struct device *dev)
++{
++	int ret = 0;
++	struct net_device *ndev = dev_get_drvdata(dev);
++
++	if (netif_running(ndev)) {
++		ret = sh_eth_open(ndev);
++		if (ret < 0)
++			goto err;
++		netif_device_attach(ndev);
++	}
++
++err:
++	return ret;
++}
++
+ static const struct dev_pm_ops sh_eth_dev_pm_ops = {
+-	.runtime_suspend = sh_eth_runtime_nop,
+-	.runtime_resume = sh_eth_runtime_nop,
++	SET_RUNTIME_PM_OPS(sh_eth_runtime_nop, sh_eth_runtime_nop, NULL)
++	SET_SYSTEM_SLEEP_PM_OPS(sh_eth_suspend, sh_eth_resume)
+ };
+ #define SH_ETH_PM_OPS (&sh_eth_dev_pm_ops)
+ #else
+diff --git a/drivers/net/phy/phy_device.c b/drivers/net/phy/phy_device.c
+index 3657b4a..3ceb4f9 100644
+--- a/drivers/net/phy/phy_device.c
++++ b/drivers/net/phy/phy_device.c
+@@ -510,6 +510,32 @@ int phy_init_hw(struct phy_device *phydev)
+ 	return phydev->drv->config_init(phydev);
+ }
+ 
++int phy_suspend(struct phy_device *phydev)
++{
++	struct phy_driver *phydrv = to_phy_driver(phydev->dev.driver);
++	struct ethtool_wolinfo wol = { .cmd = ETHTOOL_GWOL };
++
++	/* If the device has WOL enabled, we cannot suspend the PHY */
++	phy_ethtool_get_wol(phydev, &wol);
++	if (wol.wolopts)
++		return -EBUSY;
++
++	if (phydrv->suspend)
++		return phydrv->suspend(phydev);
++	return 0;
++}
++EXPORT_SYMBOL(phy_suspend);
++
++int phy_resume(struct phy_device *phydev)
++{
++	struct phy_driver *phydrv = to_phy_driver(phydev->dev.driver);
++
++	if (phydrv->resume)
++		return phydrv->resume(phydev);
++	return 0;
++}
++EXPORT_SYMBOL(phy_resume);
++
+ /**
+  * phy_attach_direct - attach a network device to a given PHY device pointer
+  * @dev: network device to attach
+@@ -528,6 +554,7 @@ static int phy_attach_direct(struct net_device *dev, struct phy_device *phydev,
+ 			     u32 flags, phy_interface_t interface)
+ {
+ 	struct device *d = &phydev->dev;
++	struct module *bus_module;
+ 	int err;
+ 
+ 	/* Assume that if there is no driver, that it doesn't
+@@ -553,6 +580,14 @@ static int phy_attach_direct(struct net_device *dev, struct phy_device *phydev,
+ 		return -EBUSY;
+ 	}
+ 
++	/* Increment the bus module reference count */
++	bus_module = phydev->bus->dev.driver ?
++		     phydev->bus->dev.driver->owner : NULL;
++	if (!try_module_get(bus_module)) {
++		dev_err(&dev->dev, "failed to get the bus module\n");
++		return -EIO;
++	}
++
+ 	phydev->attached_dev = dev;
+ 	dev->phydev = phydev;
+ 
+@@ -568,6 +603,8 @@ static int phy_attach_direct(struct net_device *dev, struct phy_device *phydev,
+ 	err = phy_init_hw(phydev);
+ 	if (err)
+ 		phy_detach(phydev);
++	else
++		phy_resume(phydev);
+ 
+ 	return err;
+ }
+@@ -612,8 +649,12 @@ EXPORT_SYMBOL(phy_attach);
+  */
+ void phy_detach(struct phy_device *phydev)
+ {
++	if (phydev->bus->dev.driver)
++		module_put(phydev->bus->dev.driver->owner);
++
+ 	phydev->attached_dev->phydev = NULL;
+ 	phydev->attached_dev = NULL;
++	phy_suspend(phydev);
+ 
+ 	/* If the device had no specific driver before (i.e. - it
+ 	 * was using the generic driver), we unbind the device
+-- 
+1.8.3.1
+

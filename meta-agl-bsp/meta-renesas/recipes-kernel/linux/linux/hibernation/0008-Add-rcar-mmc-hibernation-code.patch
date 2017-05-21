@@ -1,0 +1,414 @@
+From 9d1d9be70ed3cf6670ae12a1caed337833f7bba8 Mon Sep 17 00:00:00 2001
+From: Yuichi Kusakabe <yuichi.kusakabe@jp.fujitsu.com>
+Date: Thu, 18 May 2017 17:38:11 +0900
+Subject: [PATCH 08/15] Add rcar mmc hibernation code
+
+Signed-off-by: Yuichi Kusakabe <yuichi.kusakabe@jp.fujitsu.com>
+---
+ drivers/mmc/host/sh_mmcif.c       |  65 +++++++++++++++++++++-
+ drivers/mmc/host/sh_mobile_sdhi.c | 112 +++++++++++++++++++++++++++++++++++++-
+ drivers/mmc/host/tmio_mmc.h       |   1 +
+ drivers/mmc/host/tmio_mmc_pio.c   |  49 ++++++++++++-----
+ 4 files changed, 210 insertions(+), 17 deletions(-)
+
+diff --git a/drivers/mmc/host/sh_mmcif.c b/drivers/mmc/host/sh_mmcif.c
+index 7290e6e..4ecf62c 100644
+--- a/drivers/mmc/host/sh_mmcif.c
++++ b/drivers/mmc/host/sh_mmcif.c
+@@ -232,6 +232,7 @@ struct sh_mmcif_host {
+ 	struct platform_device *pd;
+ 	struct clk *hclk;
+ 	unsigned int clk;
++	int clkrate;
+ 	int bus_width;
+ 	unsigned char timing;
+ 	bool sd_error;
+@@ -257,6 +258,8 @@ struct sh_mmcif_host {
+ 	struct dma_chan		*chan_tx;
+ 	struct completion	dma_complete;
+ 	bool			dma_active;
++#define N_REGS		10
++	u32			regs[N_REGS];
+ };
+ 
+ static inline void sh_mmcif_bitset(struct sh_mmcif_host *host,
+@@ -1457,6 +1460,8 @@ static int sh_mmcif_probe(struct platform_device *pdev)
+ 		}
+ 	}
+ 
++	host->clkrate = clk_get_rate(host->hclk);
++
+ 	ret = sh_mmcif_clk_update(host);
+ 	if (ret < 0)
+ 		goto eclkupdate;
+@@ -1503,6 +1508,7 @@ static int sh_mmcif_probe(struct platform_device *pdev)
+ 	dev_info(&pdev->dev, "driver version %s\n", DRIVER_VERSION);
+ 	dev_dbg(&pdev->dev, "chip ver H'%04x\n",
+ 		sh_mmcif_readl(host->addr, MMCIF_CE_VERSION) & 0x0000ffff);
++	device_enable_async_suspend(&pdev->dev);
+ 	return ret;
+ 
+ emmcaddh:
+@@ -1574,15 +1580,68 @@ static int sh_mmcif_suspend(struct device *dev)
+ 	sh_mmcif_writel(host->addr, MMCIF_CE_INT_MASK, MASK_ALL);
+ 	pm_runtime_put(dev);
+ 
+-	return 0;
++	return mmc_suspend_host(host->mmc);
+ }
+ 
+ static int sh_mmcif_resume(struct device *dev)
+ {
+-	return 0;
++	struct sh_mmcif_host *host = dev_get_drvdata(dev);
++	return mmc_resume_host(host->mmc);
++}
++#endif
++
++#ifdef CONFIG_PM
++static int sh_mmcif_restore(struct device *dev)
++{
++	struct sh_mmcif_host *host = dev_get_drvdata(dev);
++	int ret;
++	ret = clk_set_rate(host->hclk, host->clkrate);
++	if (ret < 0)
++		goto eclkupdate;
++	ret = sh_mmcif_clk_update(host);
++	if (ret < 0)
++		goto eclkupdate;
++	ret = pm_runtime_resume(dev);
++	if (ret < 0)
++		goto eresume;
++	sh_mmcif_sync_reset(host);
++#ifdef CONFIG_MACH_FTEN
++	sh_mmcif_writel(host->addr, 0x00000080, 0x00000100);
++#endif
++	sh_mmcif_writel(host->addr, MMCIF_CE_INT_MASK, MASK_ALL);
++	clk_disable_unprepare(host->hclk);
++	dev_info(dev, "restore: chip ver H'%04x\n",
++		sh_mmcif_readl(host->addr, MMCIF_CE_VERSION) & 0x0000ffff);
++	sh_mmcif_writel(host->addr, MMCIF_CE_CMD_CTRL, host->regs[0]);
++	sh_mmcif_writel(host->addr, MMCIF_CE_BLOCK_SET, host->regs[1]);
++	sh_mmcif_writel(host->addr, MMCIF_CE_CLK_CTRL, host->regs[2]);
++	sh_mmcif_writel(host->addr, MMCIF_CE_BUF_ACC, host->regs[3]);
++	sh_mmcif_release_dma(host);
++	return mmc_resume_host(host->mmc);
++eclkupdate:
++	pr_info("Can't set clock\n");
++	return -EINVAL;
++eresume:
++	pr_info("Can't resume PM\n");
++	return -ENODEV;
+ }
++
++static int sh_mmcif_freeze(struct device *dev)
++{
++	struct sh_mmcif_host *host = dev_get_drvdata(dev);
++	int ret = mmc_suspend_host(host->mmc);
++	host->regs[0] = sh_mmcif_readl(host->addr, MMCIF_CE_CMD_CTRL);
++	host->regs[1] = sh_mmcif_readl(host->addr, MMCIF_CE_BLOCK_SET);
++	host->regs[2] = sh_mmcif_readl(host->addr, MMCIF_CE_CLK_CTRL);
++	host->regs[3] = sh_mmcif_readl(host->addr, MMCIF_CE_BUF_ACC);
++	return ret;
++}
++#else
++#define sh_mmcif_restore NULL
++#define sh_mmcif_freeze NULL
+ #endif
+ 
++
+ static const struct of_device_id mmcif_of_match[] = {
+ 	{ .compatible = "renesas,sh-mmcif" },
+ 	{ }
+@@ -1591,6 +1650,8 @@ MODULE_DEVICE_TABLE(of, mmcif_of_match);
+ 
+ static const struct dev_pm_ops sh_mmcif_dev_pm_ops = {
+ 	SET_SYSTEM_SLEEP_PM_OPS(sh_mmcif_suspend, sh_mmcif_resume)
++	.restore = sh_mmcif_restore,
++	.freeze = sh_mmcif_freeze,
+ };
+ 
+ static struct platform_driver sh_mmcif_driver = {
+diff --git a/drivers/mmc/host/sh_mobile_sdhi.c b/drivers/mmc/host/sh_mobile_sdhi.c
+index 1b59cdf..c7f3abf 100644
+--- a/drivers/mmc/host/sh_mobile_sdhi.c
++++ b/drivers/mmc/host/sh_mobile_sdhi.c
+@@ -156,6 +156,8 @@ struct sh_mobile_sdhi {
+ 	struct tmio_mmc_dma dma_priv;
+ 	unsigned int type;
+ 	struct sh_mobile_sdhi_vlt vlt;
++	int wifi_xrst;
++	int save_clk_rate;
+ };
+ 
+ static int sh_mobile_sdhi_clk_enable(struct platform_device *pdev, unsigned int *f)
+@@ -647,6 +649,7 @@ static int sh_mobile_sdhi_probe(struct platform_device *pdev)
+ 			if (ret < 0)
+ 				dev_err(&pdev->dev,
+ 					"cannot set clock rate: %d\n", ret);
++			priv->save_clk_rate = clk_rate;
+ 
+ 			clk_disable_unprepare(priv->clk);
+ 		}
+@@ -841,6 +844,7 @@ static int sh_mobile_sdhi_probe(struct platform_device *pdev)
+ 		}
+ 	}
+ 
++	device_enable_async_suspend(&pdev->dev);
+ 	dev_info(&pdev->dev, "%s base at 0x%08lx clock rate %u MHz\n",
+ 		 mmc_hostname(host->mmc), (unsigned long)
+ 		 (platform_get_resource(pdev, IORESOURCE_MEM, 0)->start),
+@@ -865,17 +869,123 @@ static int sh_mobile_sdhi_remove(struct platform_device *pdev)
+ 	struct mmc_host *mmc = platform_get_drvdata(pdev);
+ 	struct tmio_mmc_host *host = mmc_priv(mmc);
+ 	struct sh_mobile_sdhi_info *p = pdev->dev.platform_data;
++#ifdef CONFIG_MACH_FTEN_DT
++	int ret;
++	struct sh_mobile_sdhi *priv = container_of(host->pdata,
++						   struct sh_mobile_sdhi,
++						   mmc_data);
++#endif
+ 
+ 	tmio_mmc_host_remove(host);
+ 
+ 	if (p && p->cleanup)
+ 		p->cleanup(pdev);
+ 
++#ifdef CONFIG_MACH_FTEN_DT
++	ret = gpio_request(priv->wifi_xrst, "sh_mobile_sdhi");
++	if (ret != 0) {
++		dev_err(&pdev->dev,
++			"gpio_request(%d) failed(%d) remove\n",
++			priv->wifi_xrst, ret);
++		goto skip_wifi;
++	}
++	ret = gpio_direction_output(priv->wifi_xrst, 0);
++	if (ret != 0) {
++		dev_err(&pdev->dev,
++			"gpio_direction_output(%d) failed(%d) remove\n",
++			priv->wifi_xrst, ret);
++	}
++	gpio_free(priv->wifi_xrst);
++skip_wifi:
++#endif
++
++	return 0;
++}
++
++static int sh_mobile_sdhi_restore_noirq(struct device *dev)
++{
++	struct mmc_host *mmc = dev_get_drvdata(dev);
++	struct tmio_mmc_host *host = mmc_priv(mmc);
++
++	sd_ctrl_write32(host, CTL_IRQ_MASK, 0x8b7f031d);
++	sd_ctrl_write32(host, CTL_STATUS, 0);
++#if 0
++	sh_mobile_sdhi_enable_sdbuf_acc32(host, false);
++	/* FIXME - should we set stop clock reg here */
++	sd_ctrl_write16(host, CTL_RESET_SD, 0x0000);
++	/* implicit BUG_ON(!res) */
++	if (host->pdata->flags & TMIO_MMC_HAVE_HIGH_REG)
++		sd_ctrl_write16(host, CTL_RESET_SDIO, 0x0000);
++	msleep(2);
++	sd_ctrl_write16(host, CTL_RESET_SD, 0x0001);
++	if (host->pdata->flags & TMIO_MMC_HAVE_HIGH_REG)
++		sd_ctrl_write16(host, CTL_RESET_SDIO, 0x0001);
++	msleep(2);
++	sd_ctrl_write32(host, CTL_IRQ_MASK, 0x8b7f031d);
++	sd_ctrl_write16(host, CTL_SD_CARD_CLK_CTL, 0x0040);
++	sd_ctrl_write16(host, CTL_SD_MEM_CARD_OPT, 0x80E0);
++	sd_ctrl_write16(host, CTL_DMA_ENABLE, 0x1002);
++#endif
++	return 0;
++}
++
++static int sh_mobile_sdhi_restore(struct device *dev)
++{
++	struct mmc_host *mmc = dev_get_drvdata(dev);
++	struct tmio_mmc_host *host = mmc_priv(mmc);
++	struct sh_mobile_sdhi *priv = container_of(host->pdata,
++						   struct sh_mobile_sdhi,
++						   mmc_data);
++#if defined(CONFIG_MACH_FTEN_DT) || defined(CONFIG_PM_SLEEP)
++	int ret;
++#endif
++	int dma_size;
++	host->restore = true;
++
++#ifdef CONFIG_MACH_FTEN_DT
++	/* priv->wifi_xrst is 0 or more. */
++	if (priv->wifi_xrst >= 0) {
++		ret = gpio_request(priv->wifi_xrst, "sh_mobile_sdhi");
++		if (ret != 0) {
++			dev_err(dev, "gpio_request(%d) failed(%d) restore\n",
++				priv->wifi_xrst, ret);
++			goto skip_wifi;
++		}
++		ret = gpio_direction_output(priv->wifi_xrst, 1);
++		if (ret != 0) {
++			dev_err(dev, "gpio_direction_output(%d) failed(%d) restore\n",
++				priv->wifi_xrst, ret);
++		}
++		gpio_free(priv->wifi_xrst);
++	}
++skip_wifi:
++#endif
++
++	dma_size = sh_mobile_sdhi_get_xmit_size(priv->type,
++				priv->dma_priv.alignment_shift);
++
++	sd_ctrl_write16(host, SD_DMACR(priv->type), dma_size);
++
++#ifdef CONFIG_PM_SLEEP
++	ret = tmio_mmc_host_resume(dev);
++	host->restore = false;
++	return ret;
++#else
++	host->restore = false;
+ 	return 0;
++#endif
+ }
+ 
+ static const struct dev_pm_ops tmio_mmc_dev_pm_ops = {
+-	SET_SYSTEM_SLEEP_PM_OPS(tmio_mmc_host_suspend, tmio_mmc_host_resume)
++#ifdef CONFIG_PM_SLEEP
++	.suspend	= tmio_mmc_host_suspend,
++	.resume		= tmio_mmc_host_resume,
++	.freeze		= tmio_mmc_host_suspend,
++	.thaw		= tmio_mmc_host_resume,
++	.poweroff	= tmio_mmc_host_suspend,
++#endif
++	.restore	= sh_mobile_sdhi_restore,
++	.restore_noirq	= sh_mobile_sdhi_restore_noirq,
+ 	SET_RUNTIME_PM_OPS(tmio_mmc_host_runtime_suspend,
+ 			tmio_mmc_host_runtime_resume,
+ 			NULL)
+diff --git a/drivers/mmc/host/tmio_mmc.h b/drivers/mmc/host/tmio_mmc.h
+index c5b12ad..3efe03d 100644
+--- a/drivers/mmc/host/tmio_mmc.h
++++ b/drivers/mmc/host/tmio_mmc.h
+@@ -104,6 +104,7 @@ struct tmio_mmc_host {
+ 	bool			resuming;
+ 	bool			done_tuning;
+ 	struct completion	completion;
++	bool			restore;
+ };
+ 
+ int tmio_mmc_host_probe(struct tmio_mmc_host **host,
+diff --git a/drivers/mmc/host/tmio_mmc_pio.c b/drivers/mmc/host/tmio_mmc_pio.c
+index 09c0c08..514af15 100644
+--- a/drivers/mmc/host/tmio_mmc_pio.c
++++ b/drivers/mmc/host/tmio_mmc_pio.c
+@@ -167,8 +167,20 @@ static void tmio_mmc_set_clock(struct tmio_mmc_host *host, int new_clock)
+ 	if (host->set_clk_div)
+ 		host->set_clk_div(host->pdev, (clk>>22) & 1);
+ 
++#ifdef CONFIG_MACH_FTEN
++	clk |= sd_ctrl_read16(host, CTL_SD_CARD_CLK_CTL) & 0x0100;
++	if (host->pdata->flags & TMIO_MMC_SDCLK_AUTO_CONTROL &&
++	    new_clock > host->mmc->f_init)
++		clk |= SDCLKOFFEN;
++	dev_dbg(&host->pdev->dev,
++		"clock=%d, clk=%08x, new_clock=%d, f_init=%d\n",
++		clock, clk, new_clock, host->mmc->f_init);
++	sd_ctrl_write16(host, CTL_SD_CARD_CLK_CTL, clk & 0x3ff);
++#else
+ 	sd_ctrl_write16(host, CTL_SD_CARD_CLK_CTL, clk & 0x1ff);
+-	msleep(10);
++#endif
++	if (!host->restore)
++		msleep(2);
+ }
+ 
+ static void tmio_mmc_clk_stop(struct tmio_mmc_host *host)
+@@ -176,13 +188,15 @@ static void tmio_mmc_clk_stop(struct tmio_mmc_host *host)
+ 	/* implicit BUG_ON(!res) */
+ 	if (host->pdata->flags & TMIO_MMC_HAVE_HIGH_REG) {
+ 		sd_ctrl_write16(host, CTL_CLK_AND_WAIT_CTL, 0x0000);
+-		if (!(host->pdata->flags & TMIO_MMC_CLK_NO_SLEEP))
++		if (!(host->pdata->flags & TMIO_MMC_CLK_NO_SLEEP)
++			&& !host->restore)
+ 			msleep(10);
+ 	}
+ 
+ 	sd_ctrl_write16(host, CTL_SD_CARD_CLK_CTL, ~0x0100 &
+ 		sd_ctrl_read16(host, CTL_SD_CARD_CLK_CTL));
+-	if (!(host->pdata->flags & TMIO_MMC_CLK_NO_SLEEP))
++	if (!(host->pdata->flags & TMIO_MMC_CLK_NO_SLEEP)
++		&& !host->restore)
+ 		msleep(10);
+ }
+ 
+@@ -190,14 +204,16 @@ static void tmio_mmc_clk_start(struct tmio_mmc_host *host)
+ {
+ 	sd_ctrl_write16(host, CTL_SD_CARD_CLK_CTL, 0x0100 |
+ 		sd_ctrl_read16(host, CTL_SD_CARD_CLK_CTL));
+-	if (!(host->pdata->flags & TMIO_MMC_CLK_NO_SLEEP))
+-		msleep(10);
++	if (!(host->pdata->flags & TMIO_MMC_CLK_NO_SLEEP)
++		&& !host->restore)
++		msleep(2);
+ 
+ 	/* implicit BUG_ON(!res) */
+ 	if (host->pdata->flags & TMIO_MMC_HAVE_HIGH_REG) {
+ 		sd_ctrl_write16(host, CTL_CLK_AND_WAIT_CTL, 0x0100);
+-		if (!(host->pdata->flags & TMIO_MMC_CLK_NO_SLEEP))
+-			msleep(10);
++		if (!(host->pdata->flags & TMIO_MMC_CLK_NO_SLEEP)
++			&& !host->restore)
++			msleep(2);
+ 	}
+ }
+ 
+@@ -208,11 +224,11 @@ static void tmio_mmc_reset(struct tmio_mmc_host *host)
+ 	/* implicit BUG_ON(!res) */
+ 	if (host->pdata->flags & TMIO_MMC_HAVE_HIGH_REG)
+ 		sd_ctrl_write16(host, CTL_RESET_SDIO, 0x0000);
+-	msleep(10);
++	msleep(2);
+ 	sd_ctrl_write16(host, CTL_RESET_SD, 0x0001);
+ 	if (host->pdata->flags & TMIO_MMC_HAVE_HIGH_REG)
+ 		sd_ctrl_write16(host, CTL_RESET_SDIO, 0x0001);
+-	msleep(10);
++	msleep(2);
+ }
+ 
+ static void tmio_mmc_reset_work(struct work_struct *work)
+@@ -1134,16 +1150,21 @@ static void tmio_mmc_set_ios(struct mmc_host *mmc, struct mmc_ios *ios)
+ 	 * is kept positive, so no suspending actually takes place.
+ 	 */
+ 	if (ios->power_mode == MMC_POWER_ON && ios->clock) {
++		int reset_needed = 0;
+ 		if (host->power != TMIO_MMC_ON_RUN) {
+ 			tmio_mmc_clk_update(mmc);
+ 			pm_runtime_get_sync(dev);
+-			if (host->resuming) {
+-				tmio_mmc_reset(host);
+-				host->resuming = false;
+-			}
++			if (host->resuming)
++				reset_needed = 1;
+ 		}
++
+ 		if (host->power == TMIO_MMC_OFF_STOP)
++			reset_needed = 1;
++		if (reset_needed) {
+ 			tmio_mmc_reset(host);
++			if (host->resuming)
++				host->resuming = false;
++		}
+ 		tmio_mmc_set_clock(host, ios->clock);
+ 		if (host->power == TMIO_MMC_OFF_STOP)
+ 			/* power up SD card and the bus */
+@@ -1497,7 +1518,7 @@ int tmio_mmc_host_resume(struct device *dev)
+ 
+ 	/* The MMC core will perform the complete set up */
+ 	host->resuming = true;
+-	return mmc_resume_host(mmc);
++	return  mmc_resume_host(mmc);
+ }
+ EXPORT_SYMBOL(tmio_mmc_host_resume);
+ #endif
+-- 
+1.8.3.1
+

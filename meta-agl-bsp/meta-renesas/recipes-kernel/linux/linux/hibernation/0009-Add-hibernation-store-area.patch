@@ -1,0 +1,62 @@
+From 5509937666792520b755ed61a110c956478d089d Mon Sep 17 00:00:00 2001
+From: Yuichi Kusakabe <yuichi.kusakabe@jp.fujitsu.com>
+Date: Thu, 18 May 2017 17:41:19 +0900
+Subject: [PATCH 09/15] Add hibernation store area
+
+Signed-off-by: Yuichi Kusakabe <yuichi.kusakabe@jp.fujitsu.com>
+---
+ drivers/mtd/Makefile         | 3 ++-
+ drivers/mtd/devices/Makefile | 4 +++-
+ drivers/mtd/devices/phram.c  | 5 ++++-
+ 3 files changed, 9 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/mtd/Makefile b/drivers/mtd/Makefile
+index 99bb9a1..b48049c 100644
+--- a/drivers/mtd/Makefile
++++ b/drivers/mtd/Makefile
+@@ -30,7 +30,8 @@ obj-$(CONFIG_MTD_SWAP)		+= mtdswap.o
+ nftl-objs		:= nftlcore.o nftlmount.o
+ inftl-objs		:= inftlcore.o inftlmount.o
+ 
++obj-$(CONFIG_MTD_SPI_NOR)	+= spi-nor/
++
+ obj-y		+= chips/ lpddr/ maps/ devices/ nand/ onenand/ tests/
+ 
+-obj-$(CONFIG_MTD_SPI_NOR)	+= spi-nor/
+ obj-$(CONFIG_MTD_UBI)		+= ubi/
+diff --git a/drivers/mtd/devices/Makefile b/drivers/mtd/devices/Makefile
+index d83bd73..969f0e8 100644
+--- a/drivers/mtd/devices/Makefile
++++ b/drivers/mtd/devices/Makefile
+@@ -3,8 +3,10 @@
+ #
+ 
+ obj-$(CONFIG_MTD_DOCG3)		+= docg3.o
+-obj-$(CONFIG_MTD_SLRAM)		+= slram.o
++# obj-$(CONFIG_MTD_SLRAM)		+= slram.o
++# obj-$(CONFIG_MTD_PHRAM)		+= phram.o
+ obj-$(CONFIG_MTD_PHRAM)		+= phram.o
++obj-$(CONFIG_MTD_SLRAM)		+= slram.o
+ obj-$(CONFIG_MTD_PMC551)	+= pmc551.o
+ obj-$(CONFIG_MTD_MS02NV)	+= ms02-nv.o
+ obj-$(CONFIG_MTD_MTDRAM)	+= mtdram.o
+diff --git a/drivers/mtd/devices/phram.c b/drivers/mtd/devices/phram.c
+index 67823de..f05947f 100644
+--- a/drivers/mtd/devices/phram.c
++++ b/drivers/mtd/devices/phram.c
+@@ -293,8 +293,11 @@ static void __exit cleanup_phram(void)
+ {
+ 	unregister_devices();
+ }
+-
++#ifdef __MODULE__
+ module_init(init_phram);
++#else
++late_initcall(init_phram);
++#endif
+ module_exit(cleanup_phram);
+ 
+ MODULE_LICENSE("GPL");
+-- 
+1.8.3.1
+
