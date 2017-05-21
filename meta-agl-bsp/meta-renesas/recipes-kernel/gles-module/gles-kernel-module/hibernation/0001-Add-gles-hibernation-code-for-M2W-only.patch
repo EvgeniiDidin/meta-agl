@@ -1,0 +1,38 @@
+From 600612d670639fc74135a4f15a79d411931b39a8 Mon Sep 17 00:00:00 2001
+From: Yuichi Kusakabe <yuichi.kusakabe@jp.fujitsu.com>
+Date: Sun, 21 May 2017 12:14:03 +0900
+Subject: [PATCH] Add gles hibernation code for M2W only
+
+Signed-off-by: Yuichi Kusakabe <yuichi.kusakabe@jp.fujitsu.com>
+---
+ services4/srvkm/env/linux/module.c | 13 +++++++++++--
+ 1 file changed, 11 insertions(+), 2 deletions(-)
+
+diff --git a/services4/srvkm/env/linux/module.c b/services4/srvkm/env/linux/module.c
+index f3f22b0..85ac24f 100644
+--- a/services4/srvkm/env/linux/module.c
++++ b/services4/srvkm/env/linux/module.c
+@@ -284,9 +284,18 @@ static struct platform_device_id powervr_id_table[] __devinitdata = {
+ };
+ #endif
+ 
++int pvrsrv_restore_noirq(struct device *dev)
++{
++#if defined(CONFIG_ARM_LPAE) && defined(SUPPORT_RCAR_IPMMU)
++	extern int r8a779x_ipmmu_initialize(void);
++	r8a779x_ipmmu_initialize();
++#endif
++	return 0;
++}
++
+ static struct dev_pm_ops powervr_dev_pm_ops = {
+-	.suspend	= PVRSRVDriverSuspend,
+-	.resume		= PVRSRVDriverResume,
++	SET_SYSTEM_SLEEP_PM_OPS(PVRSRVDriverSuspend, PVRSRVDriverResume)
++	.restore_noirq = pvrsrv_restore_noirq,
+ };
+ 
+ static LDM_DRV powervr_driver = {
+-- 
+1.8.3.1
+
