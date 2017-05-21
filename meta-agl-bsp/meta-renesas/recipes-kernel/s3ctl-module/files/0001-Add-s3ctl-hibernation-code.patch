@@ -1,0 +1,101 @@
+From 03253eae0da9a84e343a8f21c65ac07196369420 Mon Sep 17 00:00:00 2001
+From: Yuichi Kusakabe <yuichi.kusakabe@jp.fujitsu.com>
+Date: Sun, 21 May 2017 23:08:52 +0900
+Subject: [PATCH] Add s3ctl hibernation code
+
+Signed-off-by: Yuichi Kusakabe <yuichi.kusakabe@jp.fujitsu.com>
+---
+ drv/s3ctl_drv.c | 50 ++++++++++++++++++++++++++++++++++++++------------
+ 1 file changed, 38 insertions(+), 12 deletions(-)
+
+diff --git a/drv/s3ctl_drv.c b/drv/s3ctl_drv.c
+index a7b4bee..6640a49 100755
+--- a/drv/s3ctl_drv.c
++++ b/drv/s3ctl_drv.c
+@@ -66,6 +66,7 @@
+ #include <linux/ioctl.h>
+ #include <linux/slab.h>
+ #include <linux/dma-mapping.h>
++#include <linux/suspend.h>
+ 
+ #include "s3ctl_private.h"
+ 
+@@ -332,19 +333,10 @@ static struct miscdevice misc = {
+ 	.fops		= &fops,
+ };
+ 
+-
+-static int s3ctrl_init(void)
++static int s3ctl_initialize(void)
+ {
+-	int ret;
+-	unsigned int product;
+-	unsigned int es;
+-
+-	ret = map_register();
+-	if (ret != 0) {
+-		printk(KERN_ERR "S3D map_register() NG\n");
+-		return -1;
+-	}
+-
++	int product;
++	int es;
+ 	product = S3_PRR_PRODUCTMASK & ioread32((void *)top_prr);
+ 	es = S3_PRR_ESMASK & ioread32((void *)top_prr);
+ 	if (product == S3_PRR_H2) {
+@@ -366,11 +358,44 @@ static int s3ctrl_init(void)
+ 			set_xymodeconf(S3_XYMODE_VAL_NEW);
+ 	} else
+ 		set_xymodeconf(S3_XYMODE_VAL_NEW);
++	return 0;
++}
++
++static int s3ctl_cpu_pm_notify(struct notifier_block *self,
++				unsigned long action, void *hcpu)
++{
++	if (action == PM_HIBERNATION_PREPARE)
++		;
++	else if (action == PM_POST_HIBERNATION) {
++		pr_info("%s: hibernation finished: %ld\n", __func__, action);
++		s3ctl_initialize();
++	}
++	return NOTIFY_DONE;
++}
++
++static struct notifier_block s3ctl_pm_notifier_block  = {
++	.notifier_call = s3ctl_cpu_pm_notify,
++};
++
++static int s3ctrl_init(void)
++{
++	int ret;
++	unsigned int product;
++	unsigned int es;
++
++	ret = map_register();
++	if (ret != 0) {
++		printk(KERN_ERR "S3D map_register() NG\n");
++		return -1;
++	}
++	s3ctl_initialize();
+ 
+ 	misc_register(&misc);
+ 
+ 	spin_lock_init(&lock);
+ 
++	register_pm_notifier(&s3ctl_pm_notifier_block);
++
+ 	return 0;
+ }
+ 
+@@ -379,6 +404,7 @@ static void s3ctrl_exit(void)
+ 	misc_deregister(&misc);
+ 
+ 	unmap_register();
++	unregister_pm_notifier(&s3ctl_pm_notifier_block);
+ }
+ 
+ module_init(s3ctrl_init);
+-- 
+1.8.3.1
+
