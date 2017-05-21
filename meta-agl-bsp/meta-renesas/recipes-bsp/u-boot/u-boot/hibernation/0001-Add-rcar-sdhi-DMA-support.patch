@@ -1,0 +1,650 @@
+From 0aae8f3fefc67bc07b7e4e42f885ef661f0921ab Mon Sep 17 00:00:00 2001
+From: Yuichi Kusakabe <yuichi.kusakabe@jp.fujitsu.com>
+Date: Fri, 19 May 2017 14:25:38 +0900
+Subject: [PATCH 1/4] Add rcar-sdhi DMA support
+
+Signed-off-by: Yuichi Kusakabe <yuichi.kusakabe@jp.fujitsu.com>
+---
+ drivers/dma/Makefile  |   1 +
+ drivers/dma/sh_dma.c  | 306 ++++++++++++++++++++++++++++++++++++++++++++++++++
+ drivers/mmc/sh_sdhi.c | 158 +++++++++++++++++++++++++-
+ drivers/mmc/sh_sdhi.h |   5 +
+ include/sh_dma.h      |  58 ++++++++++
+ 5 files changed, 524 insertions(+), 4 deletions(-)
+ create mode 100644 drivers/dma/sh_dma.c
+ create mode 100644 include/sh_dma.h
+
+diff --git a/drivers/dma/Makefile b/drivers/dma/Makefile
+index 5d864b5..1129fc3 100644
+--- a/drivers/dma/Makefile
++++ b/drivers/dma/Makefile
+@@ -29,6 +29,7 @@ COBJS-$(CONFIG_FSLDMAFEC) += MCD_tasksInit.o MCD_dmaApi.o MCD_tasks.o
+ COBJS-$(CONFIG_APBH_DMA) += apbh_dma.o
+ COBJS-$(CONFIG_FSL_DMA) += fsl_dma.o
+ COBJS-$(CONFIG_OMAP3_DMA) += omap3_dma.o
++COBJS-$(CONFIG_SH_DMA) += sh_dma.o
+ 
+ COBJS	:= $(COBJS-y)
+ SRCS	:= $(COBJS:.o=.c)
+diff --git a/drivers/dma/sh_dma.c b/drivers/dma/sh_dma.c
+new file mode 100644
+index 0000000..0af2480
+--- /dev/null
++++ b/drivers/dma/sh_dma.c
+@@ -0,0 +1,306 @@
++/*
++ * SH SYS-DMA driver
++ *
++ * Copyright (C) 2014  Cogent Embedded, Inc.
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License as
++ * published by the Free Software Foundation; either version 2 of
++ * the License, or (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ */
++
++#include <common.h>
++#include <malloc.h>
++#include <asm/io.h>
++#include <linux/list.h>
++#include <sh_dma.h>
++
++struct sh_dma {
++	u32 base;
++	u32 mask;
++	u32 nch;
++	struct list_head list;
++};
++
++struct sh_dma_chan {
++	struct sh_dma *dma;
++	u32 base;
++	u32 num;
++	u32 ts;
++	u32 bs;
++	u32 rounds;
++};
++
++#define SH_DMA_MAX_TC			0x1000000
++#define SH_DMA_MAX_CHAN			32
++#define SH_DMA_CHAN_OFFSET		0x8000
++#define SH_DMA_CHAN_SIZE		0x80
++
++/* Global registers */
++#define SH_DMAISTA			0x20
++#define SH_DMASEC			0x30
++#define SH_DMAOR			0x60
++#define SH_DMACHCL			0x80
++#define SH_DMADPSEC			0xA0
++
++/* DMA operation register bits */
++#define SH_DMAOR_DME			(0x1 << 0)
++
++/* Channel registers */
++#define SH_DMASAR			0x00
++#define SH_DMADAR			0x04
++#define SH_DMATCR			0x08
++#define SH_DMACHCR			0x0C
++#define SH_DMATSR			0x28
++#define SH_DMATCRB			0x18
++#define SH_DMATSRB			0x38
++#define SH_DMACHCRB			0x1C
++#define SH_DMARS			0x40
++#define SH_DMABUFCR			0x48
++#define SH_DMADPBASE			0x50
++#define SH_DMADPCR			0x54
++#define SH_DMAFIXSAR			0x10
++#define SH_DMAFIXDAR			0x14
++#define SH_DMAFIXDPBASE			0x60
++
++/* Channel control register bits */
++#define SH_DMACHCR_SM(v)		(((v) & 0x3) << 12)
++#define SH_DMACHCR_SM_MASK		(0x3 << 12)
++#define SH_DMACHCR_DM(v)		(((v) & 0x3) << 14)
++#define SH_DMACHCR_DM_MASK		(0x3 << 14)
++#define SH_DMACHCR_TS_1			(0x0 << 3 | 0x0 << 20)
++#define SH_DMACHCR_TS_2			(0x1 << 3 | 0x0 << 20)
++#define SH_DMACHCR_TS_4			(0x2 << 3 | 0x0 << 20)
++#define SH_DMACHCR_TS_8			(0x3 << 3 | 0x1 << 20)
++#define SH_DMACHCR_TS_16		(0x3 << 3 | 0x0 << 20)
++#define SH_DMACHCR_TS_32		(0x0 << 3 | 0x1 << 20)
++#define SH_DMACHCR_TS_64		(0x1 << 3 | 0x1 << 20)
++#define SH_DMACHCR_TS_MASK		(0x3 << 3 | 0x3 << 20)
++#define SH_DMACHCR_RS_AUTO		(0x4 << 8)
++#define SH_DMACHCR_RS_SEL		(0x8 << 8)
++#define SH_DMACHCR_RS_MASK		(0xf << 8)
++#define SH_DMACHCR_CAE			(0x1 << 31)
++#define SH_DMACHCR_TE			(0x1 << 1)
++#define SH_DMACHCR_DE			(0x1 << 0)
++
++#define sh_dma_writel(d, r, v)		writel((v), (d)->base + (r))
++#define sh_dma_readl(d, r)		readl((d)->base + (r))
++#define sh_dma_writew(d, r, v)		writew((v), (d)->base + (r))
++#define sh_dma_readw(d, r)		readw((d)->base + (r))
++
++static LIST_HEAD(sh_dma_list);
++
++struct sh_dma *sh_dma_add(u32 base, u32 nch)
++{
++	struct list_head *entry;
++	struct sh_dma *dma;
++	u32 mask;
++
++	if (nch > SH_DMA_MAX_CHAN)
++		return NULL;
++
++	mask = (1 << nch) - 1;
++	list_for_each(entry, &sh_dma_list) {
++		dma = list_entry(entry, struct sh_dma, list);
++		if (dma->base == base) {
++			if (nch > dma->nch) {
++				mask &= ~((1 << dma->nch) - 1);
++				sh_dma_writel(dma, SH_DMACHCL, mask);
++				dma->nch = nch;
++			}
++			return dma;
++		}
++	}
++
++	dma = malloc(sizeof(*dma));
++	if (!dma)
++		return NULL;
++
++	dma->base = base;
++	dma->mask = 0;
++	dma->nch = nch;
++	sh_dma_writel(dma, SH_DMACHCL, mask);
++	sh_dma_writew(dma, SH_DMAOR, SH_DMAOR_DME);
++	list_add(&dma->list, &sh_dma_list);
++	return dma;
++}
++
++void sh_dma_chan_src(struct sh_dma_chan *chan, u32 src)
++{
++	sh_dma_writel(chan, SH_DMASAR, src);
++}
++
++void sh_dma_chan_dst(struct sh_dma_chan *chan, u32 dst)
++{
++	sh_dma_writel(chan, SH_DMADAR, dst);
++}
++
++void sh_dma_chan_cfg(struct sh_dma_chan *chan, u8 midrid, u8 sm, u8 dm)
++{
++	u32 val;
++
++	sh_dma_writew(chan, SH_DMARS, midrid);
++	val = sh_dma_readl(chan, SH_DMACHCR);
++	val &= ~(SH_DMACHCR_RS_MASK |
++		 SH_DMACHCR_SM_MASK | SH_DMACHCR_DM_MASK);
++	val |= midrid ? SH_DMACHCR_RS_SEL : SH_DMACHCR_RS_AUTO;
++	val |= SH_DMACHCR_SM(sm) | SH_DMACHCR_DM(dm);
++	sh_dma_writel(chan, SH_DMACHCR, val);
++}
++
++void sh_dma_chan_start(struct sh_dma_chan *chan, u32 ts, u8 bs)
++{
++	u32 val;
++
++	if (!ts)
++		return;
++
++	val = (ts + (1 << bs) - 1) >> bs;
++	val = val < SH_DMA_MAX_TC ? val : 0x0;
++	sh_dma_writel(chan, SH_DMATCR, val);
++
++	chan->ts = ts;
++	chan->bs = bs;
++	chan->rounds = val;
++
++	val = sh_dma_readl(chan, SH_DMACHCR);
++
++	val &= ~(SH_DMACHCR_TE | SH_DMACHCR_TS_MASK);
++	val |= SH_DMACHCR_DE;
++	switch (bs) {
++	default:
++	case 0:
++		val |= SH_DMACHCR_TS_1;
++		break;
++	case 1:
++		val |= SH_DMACHCR_TS_2;
++		break;
++	case 2:
++		val |= SH_DMACHCR_TS_4;
++		break;
++	case 3:
++		val |= SH_DMACHCR_TS_8;
++		break;
++	case 4:
++		val |= SH_DMACHCR_TS_16;
++		break;
++	case 5:
++		val |= SH_DMACHCR_TS_32;
++		break;
++	case 6:
++		val |= SH_DMACHCR_TS_64;
++		break;
++	}
++
++	sh_dma_writel(chan, SH_DMACHCR, val);
++}
++
++void sh_dma_chan_stop(struct sh_dma_chan *chan)
++{
++	u32 val;
++
++	chan->ts = 0;
++	chan->bs = 0;
++	chan->rounds = 0;
++
++	val = sh_dma_readl(chan, SH_DMACHCR);
++	val &= ~(SH_DMACHCR_CAE | SH_DMACHCR_TE | SH_DMACHCR_DE);
++	sh_dma_writel(chan, SH_DMACHCR, val);
++	do {
++		val = sh_dma_readl(chan, SH_DMACHCR);
++	} while (val & SH_DMACHCR_DE);
++}
++
++int sh_dma_chan_wait(struct sh_dma_chan *chan)
++{
++	u32 val;
++	u32 timeout = 10000000;
++	int retval = 0;
++
++	do {
++		val = sh_dma_readl(chan, SH_DMACHCR);
++		val &= SH_DMACHCR_CAE | SH_DMACHCR_TE | SH_DMACHCR_DE;
++		if (val == (SH_DMACHCR_TE | SH_DMACHCR_DE))
++			break;
++
++		if (!timeout)
++			return -ETIMEDOUT;
++
++		timeout--;
++		udelay(1);
++	} while (1);
++
++	if (!(val & SH_DMACHCR_DE))
++		return chan->ts ? -EINTR : 0;
++
++	if (val & SH_DMACHCR_CAE) {
++		retval = -EFAULT;
++		goto out;
++	}
++
++	val = chan->rounds < SH_DMA_MAX_TC ? chan->rounds : SH_DMA_MAX_TC;
++	val = chan->rounds - val;
++	if (val) {
++		puts("abnormal end\n");
++		sh_dma_chan_start(chan, val << chan->bs, 0);
++		return -EAGAIN;
++	}
++
++out:
++	sh_dma_chan_stop(chan);
++	return retval;
++}
++
++void sh_dma_chan_clr(struct sh_dma_chan *chan)
++{
++	chan->ts = 0;
++	chan->bs = 0;
++	chan->rounds = 0;
++
++	sh_dma_writel(chan->dma, SH_DMACHCL, 1 << chan->num);
++}
++
++struct sh_dma_chan *sh_dma_chan_init(struct sh_dma *dma, int ch)
++{
++	struct sh_dma_chan *chan;
++	u32 mask;
++
++	if (ch < 0) {
++		if (!~dma->mask)
++			return NULL;
++
++		ch = ffz(dma->mask);
++	}
++
++	if (!dma || ch > dma->nch)
++		return NULL;
++
++	mask = 1 << ch;
++	if (dma->mask & mask)
++		return NULL;
++
++	chan = malloc(sizeof(*chan));
++	if (!chan)
++		return NULL;
++
++	dma->mask |= mask;
++	chan->dma = dma;
++	chan->base = dma->base + SH_DMA_CHAN_OFFSET + ch * SH_DMA_CHAN_SIZE;
++	chan->num = ch;
++	sh_dma_chan_clr(chan);
++
++	return chan;
++}
++
++void sh_dma_chan_release(struct sh_dma_chan *chan)
++{
++	struct sh_dma *dma = chan->dma;
++
++	dma->mask &= ~(1 << chan->num);
++	free(chan);
++}
+diff --git a/drivers/mmc/sh_sdhi.c b/drivers/mmc/sh_sdhi.c
+index ddad43a..80dc7a8 100644
+--- a/drivers/mmc/sh_sdhi.c
++++ b/drivers/mmc/sh_sdhi.c
+@@ -17,7 +17,6 @@
+ #include <command.h>
+ #include <mmc.h>
+ #include <malloc.h>
+-#include <mmc.h>
+ #include <asm/errno.h>
+ #include <asm/io.h>
+ 
+@@ -33,6 +32,111 @@
+ 
+ #define DRIVER_NAME "sh-sdhi"
+ 
++#ifdef CONFIG_SH_DMA
++
++#ifdef CONFIG_SYS_DCACHE_OFF
++static inline void sh_sdhi_invalidate_dcache(u32 addr, int len) { }
++#else  /* CONFIG_SYS_DCACHE_OFF */
++#define DCACHE_LINE_MASK       (ARCH_DMA_MINALIGN - 1)
++
++static void sh_sdhi_invalidate_dcache(u32 addr, int len)
++{
++	u32 start, end;
++
++	start = addr & ~DCACHE_LINE_MASK;
++	if (start != addr) {
++		end = start + ARCH_DMA_MINALIGN;
++		flush_dcache_range(start, end);
++
++		len -= end - addr;
++		start = end;
++	}
++
++	if (len >= ARCH_DMA_MINALIGN) {
++		end = (start + len) & ~DCACHE_LINE_MASK;
++		invalidate_dcache_range(start, end);
++
++		len &= DCACHE_LINE_MASK;
++		start = end;
++	}
++
++	if (len > 0) {
++		end = start + ARCH_DMA_MINALIGN;
++		flush_dcache_range(start, end);
++	}
++}
++#endif /* CONFIG_SYS_DCACHE_OFF */
++
++static void sh_sdhi_dma_init(struct sdhi_host *host)
++{
++	struct sh_dma *dma;
++
++	dma = sh_dma_add(CONFIG_SH_SYS_DMAL_BASE, CONFIG_SH_SYS_DMAL_NCH);
++	if (!dma)
++		return;
++
++	host->dma_rx = sh_dma_chan_init(dma, 1);
++	if (!host->dma_rx)
++		return;
++
++	sh_dma_chan_cfg(host->dma_rx, SH_DMA_SDHI0_RX,
++			SH_DMA_AM_FIX, SH_DMA_AM_INC);
++	sh_dma_chan_src(host->dma_rx,
++			host->addr + (SDHI_BUF0 << host->bus_shift) +
++			0x2000);
++}
++
++static void sh_sdhi_dma_release(struct sdhi_host *host)
++{
++	if (host->dma_rx) {
++		sh_dma_chan_release(host->dma_rx);
++		host->dma_rx = NULL;
++	}
++}
++
++static void sh_sdhi_start_dma_rx(struct sdhi_host *host,
++					struct mmc_data *data)
++{
++	int ret;
++	u32 blocksize = data->blocksize;
++	sh_sdhi_dma_init(host);
++	sdhi_writew(host, SDHI_SD_DMACR, 0xa0);
++	sdhi_writew(host, SDHI_CC_EXT_MODE, (1 << 1));
++
++	sh_sdhi_invalidate_dcache((u32)data->dest, blocksize);
++
++	sh_dma_chan_dst(host->dma_rx, (u32)data->dest);
++
++	/* sh_sdhi_bitset(BUF_ACC_DMAREN, &host->regs->ce_buf_acc); */
++
++	/* MMCIF is capable to transfer only 4 bytes at a time,
++	 * provide size order as a param */
++	blocksize = sdhi_readw(host, SDHI_SIZE);
++	sh_dma_chan_start(host->dma_rx, blocksize, 1);
++
++	do {
++		ret = sh_dma_chan_wait(host->dma_rx);
++	} while (ret == -EAGAIN);
++	sdhi_writew(host, SDHI_CC_EXT_MODE, 0x0);
++	sh_dma_chan_clr(host->dma_rx);
++	sh_sdhi_dma_release(host);
++}
++
++static void sdhi_dma_transfer(struct sdhi_host *host,
++			struct mmc_data *data)
++{
++	sh_sdhi_start_dma_rx(host, data);
++}
++
++
++#else  /* CONFIG_SH_DMA */
++static inline void sh_sdhi_dma_init(struct sdhi_host *host) { }
++static inline void sh_sdhi_dma_release(struct sdhi_host *host) { }
++static inline void sh_sdhi_start_dma_rx(struct sdhi_host *host,
++						struct mmc_data *data) { }
++
++#endif /* CONFIG_SH_DMA */
++
+ static void *mmc_priv(struct mmc *mmc)
+ {
+ 	return (void *)mmc->priv;
+@@ -253,7 +357,9 @@ static int sdhi_single_read(struct sdhi_host *host, struct mmc_data *data)
+ {
+ 	int ch = host->ch;
+ 	long time;
++#ifndef CONFIG_SH_DMA
+ 	unsigned short blocksize, i;
++#endif
+ 	unsigned short *p = (unsigned short *)data->dest;
+ 
+ 	if ((unsigned long)p & 0x00000001) {
+@@ -272,10 +378,14 @@ static int sdhi_single_read(struct sdhi_host *host, struct mmc_data *data)
+ 		return sdhi_error_manage(host);
+ 
+ 	g_wait_int[ch] = 0;
++#ifdef CONFIG_SH_DMA
++	sdhi_dma_transfer(host, data);
++#else
+ 	blocksize = sdhi_readw(host, SDHI_SIZE);
+ 	for (i = 0; i < blocksize / 2; i++)
+ 		*p++ = sdhi_readw(host, SDHI_BUF0);
+ 
++#endif
+ 	time = sdhi_wait_interrupt_flag(host);
+ 	if (time == 0 || g_sd_error[ch] != 0)
+ 		return sdhi_error_manage(host);
+@@ -537,7 +647,6 @@ static int sdhi_start_cmd(struct sdhi_host *host,
+ 		;
+ 
+ 	sdhi_writew(host, SDHI_CMD, (unsigned short)(opc & CMD_MASK));
+-
+ 	g_wait_int[host->ch] = 0;
+ 	sdhi_writew(host, SDHI_INFO1_MASK,
+ 			~INFO1M_RESP_END & sdhi_readw(host, SDHI_INFO1_MASK));
+@@ -546,7 +655,6 @@ static int sdhi_start_cmd(struct sdhi_host *host,
+ 			  INFO2M_END_ERROR | INFO2M_TIMEOUT   |
+ 			  INFO2M_RESP_TIMEOUT | INFO2M_ILA)   &
+ 			  sdhi_readw(host, SDHI_INFO2_MASK));
+-
+ 	time = sdhi_wait_interrupt_flag(host);
+ 	if (time == 0)
+ 		return sdhi_error_manage(host);
+@@ -578,7 +686,6 @@ static int sdhi_start_cmd(struct sdhi_host *host,
+ 	}
+ 	if (host->data)
+ 		ret = sdhi_data_trans(host, data, opc);
+-
+ 	pr_debug("ret = %d, resp = %08x, %08x, %08x, %08x\n",
+ 		 ret, cmd->response[0], cmd->response[1],
+ 		 cmd->response[2], cmd->response[3]);
+@@ -697,3 +804,46 @@ int sdhi_mmc_init(unsigned long addr, int ch)
+ 	return ret;
+ }
+ 
++
++int sdhi_warmup_sdio(struct mmc *mmc)
++{
++	struct mmc_cmd cmd;
++	int err;
++	int32_t ocr;
++
++	udelay(10);
++
++	mmc->bus_width = 1;
++	mmc->clock = mmc->f_min;
++	sdhi_set_ios(mmc);
++	udelay(10);
++
++	cmd.cmdidx = MMC_CMD_GO_IDLE_STATE;
++	cmd.resp_type = MMC_RSP_NONE;
++	cmd.cmdarg = 0;
++	err = sdhi_request(mmc, &cmd, NULL);
++	if (err)
++		goto err_out;
++	cmd.cmdidx = 0x5;
++	cmd.resp_type = MMC_RSP_R4;
++	cmd.cmdarg = 0;
++	err = sdhi_request(mmc, &cmd, NULL);
++	if (err)
++		goto err_out;
++	ocr = cmd.response[0];
++	ocr |= (1 << 24);
++	cmd.cmdidx = 0x05;
++	cmd.resp_type = MMC_RSP_R4;
++	cmd.cmdarg = ocr;
++	err = sdhi_request(mmc, &cmd, NULL);
++	if (err)
++		goto err_out;
++	printf("SDIO OCR:%08x\n", cmd.response[0]);
++	return 0;
++err_out:
++	printf("cmd: CMD%02d err = %d, resp = %08x, %08x, %08x, %08x\n",
++		 err, cmd.cmdidx, cmd.response[0], cmd.response[1],
++		 cmd.response[2], cmd.response[3]);
++	return err;
++}
++
+diff --git a/drivers/mmc/sh_sdhi.h b/drivers/mmc/sh_sdhi.h
+index 4deded2..7b5d421 100644
+--- a/drivers/mmc/sh_sdhi.h
++++ b/drivers/mmc/sh_sdhi.h
+@@ -15,6 +15,8 @@
+ #ifndef _SH_SDHI_H_
+ #define _SH_SDHI_H_
+ 
++#include <sh_dma.h>
++
+ #define SDHI_CMD			(0x0000 >> 1)
+ #define SDHI_PORTSEL			(0x0004 >> 1)
+ #define SDHI_ARG0			(0x0008 >> 1)
+@@ -181,6 +183,9 @@ struct sdhi_host {
+ 	unsigned int	power_mode;
+ 	int		ch;
+ 	int		bus_shift;
++#ifdef CONFIG_SH_DMA
++	struct sh_dma_chan	*dma_rx;
++#endif
+ };
+ 
+ static unsigned short g_wait_int[CONFIG_MMC_SH_SDHI_NR_CHANNEL];
+diff --git a/include/sh_dma.h b/include/sh_dma.h
+new file mode 100644
+index 0000000..3f35c3a
+--- /dev/null
++++ b/include/sh_dma.h
+@@ -0,0 +1,58 @@
++#ifndef __SH_DMA_H__
++#define __SH_DMA_H__
++
++#include <asm/types.h>
++#include <errno.h>
++
++#define SH_DMA_MMCIF0_RX	0xD2
++#define SH_DMA_SDHI0_RX	0xCE
++
++/* Address mode */
++#define SH_DMA_AM_FIX		0
++#define SH_DMA_AM_INC		1
++#define SH_DMA_AM_DEC		2
++
++struct sh_dma;
++struct sh_dma_chan;
++
++#ifdef CONFIG_SH_DMA
++struct sh_dma *sh_dma_add(u32 base, u32 nch);
++struct sh_dma_chan *sh_dma_chan_init(struct sh_dma *dma, int ch);
++void sh_dma_chan_release(struct sh_dma_chan *chan);
++
++void sh_dma_chan_src(struct sh_dma_chan *chan, u32 src);
++void sh_dma_chan_dst(struct sh_dma_chan *chan, u32 dst);
++void sh_dma_chan_cfg(struct sh_dma_chan *chan, u8 midrid, u8 sm, u8 dm);
++void sh_dma_chan_start(struct sh_dma_chan *chan, u32 ts, u8 bs);
++void sh_dma_chan_stop(struct sh_dma_chan *chan);
++int sh_dma_chan_wait(struct sh_dma_chan *chan);
++void sh_dma_chan_clr(struct sh_dma_chan *chan);
++#else
++static inline struct sh_dma *sh_dma_add(u32 base, u32 nch)
++{
++	return NULL;
++}
++
++static inline struct sh_dma_chan *sh_dma_chan_init(struct sh_dma *dma,
++						       int ch)
++{
++	return NULL;
++}
++
++static inline void sh_dma_chan_release(struct sh_dma_chan *chan) { }
++static inline void sh_dma_chan_src(struct sh_dma_chan *chan, u32 src) { }
++static inline void sh_dma_chan_dst(struct sh_dma_chan *chan, u32 dst) { }
++static inline void sh_dma_chan_cfg(struct sh_dma_chan *chan,
++				     u8 midrid, u8 sm, u8 dm) { }
++static inline void sh_dma_chan_start(struct sh_dma_chan *chan,
++				     u32 ts, u8 bs) { }
++static inline void sh_dma_chan_stop(struct sh_dma_chan *chan) { }
++static inline int sh_dma_chan_wait(struct sh_dma_chan *chan)
++{
++	return -ENOSYS;
++}
++
++static inline void sh_dma_chan_clr(struct sh_dma_chan *chan) { }
++#endif
++
++#endif /* __SH_DMA_H__ */
+-- 
+1.8.3.1
+

@@ -1,0 +1,1352 @@
+From 80d5c1269bd16fedce41611e45f25d156425b0c9 Mon Sep 17 00:00:00 2001
+From: Yuichi Kusakabe <yuichi.kusakabe@jp.fujitsu.com>
+Date: Fri, 19 May 2017 16:16:18 +0900
+Subject: [PATCH 4/4] Add porter board Hibernation code
+
+Signed-off-by: Yuichi Kusakabe <yuichi.kusakabe@jp.fujitsu.com>
+---
+ arch/arm/cpu/armv7/Makefile                 |   4 +
+ arch/arm/cpu/armv7/arch_timer.c             |  58 ++++++
+ arch/arm/cpu/armv7/cache_v7.c               |  14 +-
+ arch/arm/cpu/armv7/rmobile/Makefile         |   4 +
+ arch/arm/cpu/armv7/rmobile/arm_arch_timer.c |  61 ++++++
+ arch/arm/cpu/armv7/rmobile/crc32_word4.c    | 299 ++++++++++++++++++++++++++++
+ arch/arm/cpu/armv7/rmobile/crc32_word4.h    |  23 +++
+ arch/arm/cpu/armv7/rmobile/sh_timer.c       | 209 +++++++++++++++++++
+ arch/arm/include/asm/arch-rmobile/rmobile.h |   2 +
+ arch/arm/include/asm/armv7.h                |  16 +-
+ arch/arm/include/asm/system.h               | 136 ++++++++++++-
+ arch/arm/lib/Makefile                       |   2 +
+ arch/arm/lib/board.c                        |   2 +-
+ arch/arm/lib/cache-cp15.c                   | 123 +++++++++++-
+ arch/arm/lib/call_with_stack.S              |  20 ++
+ board/renesas/porter/porter.c               |  10 +
+ include/configs/porter.h                    |  19 +-
+ 17 files changed, 977 insertions(+), 25 deletions(-)
+ create mode 100644 arch/arm/cpu/armv7/arch_timer.c
+ create mode 100644 arch/arm/cpu/armv7/rmobile/arm_arch_timer.c
+ create mode 100644 arch/arm/cpu/armv7/rmobile/crc32_word4.c
+ create mode 100644 arch/arm/cpu/armv7/rmobile/crc32_word4.h
+ create mode 100644 arch/arm/cpu/armv7/rmobile/sh_timer.c
+ create mode 100644 arch/arm/lib/call_with_stack.S
+
+diff --git a/arch/arm/cpu/armv7/Makefile b/arch/arm/cpu/armv7/Makefile
+index 4fdbee4..f68ce5c 100644
+--- a/arch/arm/cpu/armv7/Makefile
++++ b/arch/arm/cpu/armv7/Makefile
+@@ -32,6 +32,10 @@ COBJS	+= cache_v7.o
+ COBJS	+= cpu.o
+ COBJS	+= syslib.o
+ 
++ifneq ($(CONFIG_SYS_ARCH_TIMER),)
++COBJS	+= arch_timer.o
++endif
++
+ ifneq ($(CONFIG_AM33XX)$(CONFIG_OMAP44XX)$(CONFIG_OMAP54XX)$(CONFIG_TEGRA20),)
+ SOBJS	+= lowlevel_init.o
+ endif
+diff --git a/arch/arm/cpu/armv7/arch_timer.c b/arch/arm/cpu/armv7/arch_timer.c
+new file mode 100644
+index 0000000..747b6e9
+--- /dev/null
++++ b/arch/arm/cpu/armv7/arch_timer.c
+@@ -0,0 +1,58 @@
++/*
++ * (C) Copyright 2012-2014
++ *     Texas Instruments Incorporated, <www.ti.com>
++ *
++ * SPDX-License-Identifier:     GPL-2.0+
++ */
++
++#include <common.h>
++#include <asm/io.h>
++#include <div64.h>
++
++DECLARE_GLOBAL_DATA_PTR;
++
++int timer_init(void)
++{
++	gd->tbl = 0;
++	gd->tbu = 0;
++
++	gd->timer_rate_hz = CONFIG_SYS_HZ_CLOCK / CONFIG_SYS_HZ;
++
++	return 0;
++}
++
++unsigned long long get_ticks(void)
++{
++	ulong nowl, nowu;
++
++	asm volatile("mrrc p15, 0, %0, %1, c14" : "=r" (nowl), "=r" (nowu));
++
++	gd->tbl = nowl;
++	gd->tbu = nowu;
++
++	return (((unsigned long long)gd->tbu) << 32) | gd->tbl;
++}
++
++
++ulong get_timer(ulong base)
++{
++	return lldiv(get_ticks(), gd->timer_rate_hz) - base;
++}
++
++void __udelay(unsigned long usec)
++{
++	unsigned long long endtime;
++
++	endtime = lldiv((unsigned long long)usec * gd->timer_rate_hz,
++			1000UL);
++
++	endtime += get_ticks();
++
++	while (get_ticks() < endtime)
++		;
++}
++
++ulong get_tbclk(void)
++{
++	return gd->timer_rate_hz;
++}
+diff --git a/arch/arm/cpu/armv7/cache_v7.c b/arch/arm/cpu/armv7/cache_v7.c
+index 5f6d039..5a0bdb8 100644
+--- a/arch/arm/cpu/armv7/cache_v7.c
++++ b/arch/arm/cpu/armv7/cache_v7.c
+@@ -82,7 +82,7 @@ static void v7_inval_dcache_level_setway(u32 level, u32 num_sets,
+ 		}
+ 	}
+ 	/* DSB to make sure the operation is complete */
+-	CP15DSB;
++	DSB();
+ }
+ 
+ static void v7_clean_inval_dcache_level_setway(u32 level, u32 num_sets,
+@@ -109,7 +109,7 @@ static void v7_clean_inval_dcache_level_setway(u32 level, u32 num_sets,
+ 		}
+ 	}
+ 	/* DSB to make sure the operation is complete */
+-	CP15DSB;
++	DSB();
+ }
+ 
+ static void v7_maint_dcache_level_setway(u32 level, u32 operation)
+@@ -230,7 +230,7 @@ static void v7_dcache_maint_range(u32 start, u32 stop, u32 range_op)
+ 	}
+ 
+ 	/* DSB to make sure the operation is complete */
+-	CP15DSB;
++	DSB();
+ }
+ 
+ /* Invalidate TLB */
+@@ -243,9 +243,9 @@ static void v7_inval_tlb(void)
+ 	/* Invalidate entire instruction TLB */
+ 	asm volatile ("mcr p15, 0, %0, c8, c5, 0" : : "r" (0));
+ 	/* Full system DSB - make sure that the invalidation is complete */
+-	CP15DSB;
++	DSB();
+ 	/* Full system ISB - make sure the instruction stream sees it */
+-	CP15ISB;
++	ISB();
+ }
+ 
+ void invalidate_dcache_all(void)
+@@ -356,10 +356,10 @@ void invalidate_icache_all(void)
+ 	asm volatile ("mcr p15, 0, %0, c7, c5, 6" : : "r" (0));
+ 
+ 	/* Full system DSB - make sure that the invalidation is complete */
+-	CP15DSB;
++	DSB();
+ 
+ 	/* ISB - make sure the instruction stream sees it */
+-	CP15ISB;
++	ISB();
+ }
+ #else
+ void invalidate_icache_all(void)
+diff --git a/arch/arm/cpu/armv7/rmobile/Makefile b/arch/arm/cpu/armv7/rmobile/Makefile
+index b8c04c6..0a3623a 100644
+--- a/arch/arm/cpu/armv7/rmobile/Makefile
++++ b/arch/arm/cpu/armv7/rmobile/Makefile
+@@ -46,6 +46,10 @@ COBJS-$(CONFIG_R8A7740) += pfc-r8a7740.o
+ COBJS-$(CONFIG_SH73A0) += cpu_info-sh73a0.o
+ COBJS-$(CONFIG_SH73A0) += pfc-sh73a0.o
+ COBJS_LN-$(CONFIG_TMU_TIMER) += sh_timer.o
++COBJS-$(CONFIG_SYS_ARCH_TIMER) += arm_arch_timer.o
++ifeq ($(CONFIG_CMD_SWSUSP),y)
++COBJS-y += crc32_word4.o
++endif
+ 
+ COBJS	:= $(COBJS-y)
+ SRCS    := $(SOBJS:.o=.S) $(COBJS:.o=.c)
+diff --git a/arch/arm/cpu/armv7/rmobile/arm_arch_timer.c b/arch/arm/cpu/armv7/rmobile/arm_arch_timer.c
+new file mode 100644
+index 0000000..a499e71
+--- /dev/null
++++ b/arch/arm/cpu/armv7/rmobile/arm_arch_timer.c
+@@ -0,0 +1,61 @@
++/*
++ * Copyright (C) 2014 Cogent Embedded Inc.
++ *
++ * Licensed under the GPL-2 or later.
++ */
++
++#include <common.h>
++#include <asm/io.h>
++
++#define MODEMR 0xe6160060
++#define MD(x)	(1 << (x))
++#define	CNTCR	0xe6080000
++#define CNTFID0 0xe6080020
++
++void arm_arch_timer_init(void)
++{
++	u32 mode = readl(MODEMR);
++	u32 freq;
++
++	switch (mode & (MD(14) | MD(13))) {
++	case MD(13):
++		freq = 20;
++		break;
++	case MD(14):
++		freq = 26;
++		break;
++	case MD(13) | MD(14):
++		freq = 30;
++		break;
++	default:
++		freq = 15;
++		break;
++	}
++
++	freq *= (1000000 / 2);
++
++#ifdef CONFIG_VE_ENABLED
++	/* CNTVOFF has to be initialized either from non-secure Hypervisor
++	 * mode or secure Monitor mode with SCR.NS==1. If TrustZone is enabled
++	 * then it should be handled by the secure code
++	 */
++	asm volatile(
++		"	cps 0x16\n"
++		"	mrc p15, 0, r1, c1, c1, 0\n"
++		"	orr r0, r1, #1\n"
++		"	mcr p15, 0, r0, c1, c1, 0\n"
++		"	isb\n"
++		"	mov r0, #0\n"
++		"	mcrr	p15, 4, r0, r0, c14\n"
++		"	isb\n"
++		"	mcr p15, 0, r1, c1, c1, 0\n"
++		"	isb\n"
++		"	cps 0x13\n"
++			: : : "r0", "r1");
++#endif
++
++	/* Start Generic ARM timer */
++	writel(freq, CNTFID0);
++	asm volatile("mcr p15, 0, %0, c14, c0, 0" : : "r" (freq));
++	writel(1, CNTCR);
++}
+diff --git a/arch/arm/cpu/armv7/rmobile/crc32_word4.c b/arch/arm/cpu/armv7/rmobile/crc32_word4.c
+new file mode 100644
+index 0000000..b813899
+--- /dev/null
++++ b/arch/arm/cpu/armv7/rmobile/crc32_word4.c
+@@ -0,0 +1,299 @@
++/*************************************************************************
++ * crc32_word4.c: rapid CRC32
++ * Coptright (C) FUJITSUTEN Limited, 2015 All Rights Reserved.
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2
++ * as published by the Free Software Foundation.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
++ *************************************************************************/
++#ifdef OWNTEST
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <asm/types.h>
++typedef unsigned int	u_int32_t;
++#else
++#include <common.h>
++#endif
++
++#include "crc32_word4.h"
++
++#define CRC_INIT_VALUE  (-1)
++#define CRC_FIX(_crc32) (~(_crc32))
++
++#define	__HWDTPLS_OUT()
++#define MEASURE(msg)
++
++/**** calc_crc32.c *****/
++
++/*
++ * CRC32は、ISO 3309 で規程され
++ * そのサンプルは
++ * RFC 2083 :PNG(Poratble Network Graphics
++ * で公になっています。本プログラムは、RFC2083 で掲示された
++ * CRC32を独自に最適化したプログラムです。
++ */
++const static u_int32_t CRC_Table[256] = {
++	0x00000000 , 0x77073096 , 0xee0e612c , 0x990951ba , 0x076dc419 , 0x706af48f , 0xe963a535 , 0x9e6495a3 ,
++	0x0edb8832 , 0x79dcb8a4 , 0xe0d5e91e , 0x97d2d988 , 0x09b64c2b , 0x7eb17cbd , 0xe7b82d07 , 0x90bf1d91 ,
++	0x1db71064 , 0x6ab020f2 , 0xf3b97148 , 0x84be41de , 0x1adad47d , 0x6ddde4eb , 0xf4d4b551 , 0x83d385c7 ,
++	0x136c9856 , 0x646ba8c0 , 0xfd62f97a , 0x8a65c9ec , 0x14015c4f , 0x63066cd9 , 0xfa0f3d63 , 0x8d080df5 ,
++	0x3b6e20c8 , 0x4c69105e , 0xd56041e4 , 0xa2677172 , 0x3c03e4d1 , 0x4b04d447 , 0xd20d85fd , 0xa50ab56b ,
++	0x35b5a8fa , 0x42b2986c , 0xdbbbc9d6 , 0xacbcf940 , 0x32d86ce3 , 0x45df5c75 , 0xdcd60dcf , 0xabd13d59 ,
++	0x26d930ac , 0x51de003a , 0xc8d75180 , 0xbfd06116 , 0x21b4f4b5 , 0x56b3c423 , 0xcfba9599 , 0xb8bda50f ,
++	0x2802b89e , 0x5f058808 , 0xc60cd9b2 , 0xb10be924 , 0x2f6f7c87 , 0x58684c11 , 0xc1611dab , 0xb6662d3d ,
++	0x76dc4190 , 0x01db7106 , 0x98d220bc , 0xefd5102a , 0x71b18589 , 0x06b6b51f , 0x9fbfe4a5 , 0xe8b8d433 ,
++	0x7807c9a2 , 0x0f00f934 , 0x9609a88e , 0xe10e9818 , 0x7f6a0dbb , 0x086d3d2d , 0x91646c97 , 0xe6635c01 ,
++	0x6b6b51f4 , 0x1c6c6162 , 0x856530d8 , 0xf262004e , 0x6c0695ed , 0x1b01a57b , 0x8208f4c1 , 0xf50fc457 ,
++	0x65b0d9c6 , 0x12b7e950 , 0x8bbeb8ea , 0xfcb9887c , 0x62dd1ddf , 0x15da2d49 , 0x8cd37cf3 , 0xfbd44c65 ,
++	0x4db26158 , 0x3ab551ce , 0xa3bc0074 , 0xd4bb30e2 , 0x4adfa541 , 0x3dd895d7 , 0xa4d1c46d , 0xd3d6f4fb ,
++	0x4369e96a , 0x346ed9fc , 0xad678846 , 0xda60b8d0 , 0x44042d73 , 0x33031de5 , 0xaa0a4c5f , 0xdd0d7cc9 ,
++	0x5005713c , 0x270241aa , 0xbe0b1010 , 0xc90c2086 , 0x5768b525 , 0x206f85b3 , 0xb966d409 , 0xce61e49f ,
++	0x5edef90e , 0x29d9c998 , 0xb0d09822 , 0xc7d7a8b4 , 0x59b33d17 , 0x2eb40d81 , 0xb7bd5c3b , 0xc0ba6cad ,
++	0xedb88320 , 0x9abfb3b6 , 0x03b6e20c , 0x74b1d29a , 0xead54739 , 0x9dd277af , 0x04db2615 , 0x73dc1683 ,
++	0xe3630b12 , 0x94643b84 , 0x0d6d6a3e , 0x7a6a5aa8 , 0xe40ecf0b , 0x9309ff9d , 0x0a00ae27 , 0x7d079eb1 ,
++	0xf00f9344 , 0x8708a3d2 , 0x1e01f268 , 0x6906c2fe , 0xf762575d , 0x806567cb , 0x196c3671 , 0x6e6b06e7 ,
++	0xfed41b76 , 0x89d32be0 , 0x10da7a5a , 0x67dd4acc , 0xf9b9df6f , 0x8ebeeff9 , 0x17b7be43 , 0x60b08ed5 ,
++	0xd6d6a3e8 , 0xa1d1937e , 0x38d8c2c4 , 0x4fdff252 , 0xd1bb67f1 , 0xa6bc5767 , 0x3fb506dd , 0x48b2364b ,
++	0xd80d2bda , 0xaf0a1b4c , 0x36034af6 , 0x41047a60 , 0xdf60efc3 , 0xa867df55 , 0x316e8eef , 0x4669be79 ,
++	0xcb61b38c , 0xbc66831a , 0x256fd2a0 , 0x5268e236 , 0xcc0c7795 , 0xbb0b4703 , 0x220216b9 , 0x5505262f ,
++	0xc5ba3bbe , 0xb2bd0b28 , 0x2bb45a92 , 0x5cb36a04 , 0xc2d7ffa7 , 0xb5d0cf31 , 0x2cd99e8b , 0x5bdeae1d ,
++	0x9b64c2b0 , 0xec63f226 , 0x756aa39c , 0x026d930a , 0x9c0906a9 , 0xeb0e363f , 0x72076785 , 0x05005713 ,
++	0x95bf4a82 , 0xe2b87a14 , 0x7bb12bae , 0x0cb61b38 , 0x92d28e9b , 0xe5d5be0d , 0x7cdcefb7 , 0x0bdbdf21 ,
++	0x86d3d2d4 , 0xf1d4e242 , 0x68ddb3f8 , 0x1fda836e , 0x81be16cd , 0xf6b9265b , 0x6fb077e1 , 0x18b74777 ,
++	0x88085ae6 , 0xff0f6a70 , 0x66063bca , 0x11010b5c , 0x8f659eff , 0xf862ae69 , 0x616bffd3 , 0x166ccf45 ,
++	0xa00ae278 , 0xd70dd2ee , 0x4e048354 , 0x3903b3c2 , 0xa7672661 , 0xd06016f7 , 0x4969474d , 0x3e6e77db ,
++	0xaed16a4a , 0xd9d65adc , 0x40df0b66 , 0x37d83bf0 , 0xa9bcae53 , 0xdebb9ec5 , 0x47b2cf7f , 0x30b5ffe9 ,
++	0xbdbdf21c , 0xcabac28a , 0x53b39330 , 0x24b4a3a6 , 0xbad03605 , 0xcdd70693 , 0x54de5729 , 0x23d967bf ,
++	0xb3667a2e , 0xc4614ab8 , 0x5d681b02 , 0x2a6f2b94 , 0xb40bbe37 , 0xc30c8ea1 , 0x5a05df1b , 0x2d02ef8d ,
++};
++
++/***
++ * CRC Table creater.
++ *
++void make_crc_table(void) {
++	u_int32_t c;
++	u_int32_t n, k;
++	for (n = 0; n < 256; n++)
++	{
++		c = (u_int32_t) n;
++		for (k = 0; k < 8; k++)
++		{
++			if (c & 1)
++				c = 0xedb88320L ^ (c >> 1);
++			else
++				c = c >> 1;
++		}
++		CRC_Table[n] = c;
++	}
++}
++***/
++#define NEXT_PTR	(4)
++
++static __inline__
++u_int32_t _update_crc(u_int32_t crc, unsigned char *buf, size_t len)
++{
++	u_int32_t c = crc;
++	size_t n;
++	for (n = 0; n < len; n++)
++		c = CRC_Table[(c ^ buf[n]) & 0xff] ^ (c >> 8);
++	return c;
++}
++/*********************************************************************
++ * update_crc4x4()()
++ * calc_crc32() をベースに、4 ワード毎に個別に CRC32 を計算する方法
++ *
++ *              +0        +1        +2        +3
++ *  +0x00    AAAAAAAA  BBBBBBBB  CCCCCCCC  DDDDDDDD
++ *  +0x04    EEEEEEEE  FFFFFFFF  00000000  11111111
++ *              :         :         :         :
++ *  CRC32    xxxxxxxx  xxxxxxxx  xxxxxxxx  xxxxxxxx
++ *
++ *********************************************************************/
++
++static __inline__
++void update_crc4x4(u_int32_t crc[4], unsigned char *buf)
++{
++	u_int32_t c1, c2, c3, c4;
++	u_int32_t *p = (void *)buf;
++
++	c1 = crc[0] ^ p[0];
++	c2 = crc[1] ^ p[1];
++	c3 = crc[2] ^ p[2];
++	c4 = crc[3] ^ p[3];
++
++	c1 = CRC_Table[c1 & 0xff] ^ (c1 >> 8);
++	c2 = CRC_Table[c2 & 0xff] ^ (c2 >> 8);
++	c3 = CRC_Table[c3 & 0xff] ^ (c3 >> 8);
++	c4 = CRC_Table[c4 & 0xff] ^ (c4 >> 8);
++
++	c1 = CRC_Table[c1 & 0xff] ^ (c1 >> 8);
++	c2 = CRC_Table[c2 & 0xff] ^ (c2 >> 8);
++	c3 = CRC_Table[c3 & 0xff] ^ (c3 >> 8);
++	c4 = CRC_Table[c4 & 0xff] ^ (c4 >> 8);
++
++	c1 = CRC_Table[c1 & 0xff] ^ (c1 >> 8);
++	c2 = CRC_Table[c2 & 0xff] ^ (c2 >> 8);
++	c3 = CRC_Table[c3 & 0xff] ^ (c3 >> 8);
++	c4 = CRC_Table[c4 & 0xff] ^ (c4 >> 8);
++
++	c1 = CRC_Table[c1 & 0xff] ^ (c1 >> 8);
++	c2 = CRC_Table[c2 & 0xff] ^ (c2 >> 8);
++	c3 = CRC_Table[c3 & 0xff] ^ (c3 >> 8);
++	c4 = CRC_Table[c4 & 0xff] ^ (c4 >> 8);
++
++	crc[0] = c1;
++	crc[1] = c2;
++	crc[2] = c3;
++	crc[3] = c4;
++}
++
++
++void calc_crc32x4(unsigned char *buf, size_t len, CRC32_WORD4_t *result)
++{
++	unsigned int crc_tmp[4] = {CRC_INIT_VALUE, CRC_INIT_VALUE, CRC_INIT_VALUE, CRC_INIT_VALUE};
++	u_int32_t i;
++	int res;
++	u_int32_t n4;
++	int xlen = len;
++#ifdef HWDPLS_ENABLE
++	unsigned long plstout  = 60;
++	unsigned long plsstart = 0;
++	if ((unsigned long)CONFIG_SYS_HZ > 100000)
++		plstout *= (unsigned long)CONFIG_SYS_HZ / 1000;
++	else
++		plstout =  DIV_ROUND_UP(plstout * (unsigned long)CONFIG_SYS_HZ, 1000);
++#endif
++
++	/**
++	 * 4バイト境界に合わない開始アドレスの場合
++	 * 境界までのCRCを crc_tmp[0] に求める。
++	 */
++	if ((unsigned long)buf & 3) {
++		crc_tmp[0]  = _update_crc(crc_tmp[0], buf, (unsigned long)buf & 3);
++		buf = (unsigned char *)((unsigned long)buf & ~3);
++		xlen -= (unsigned long)buf & 3;
++	}
++
++	n4 = xlen/(NEXT_PTR*4);
++	/**
++	 * 4バイト境界に合わない開始アドレスの場合
++	 * 境界までのCRCを crc_tmp[0] に求める。
++	 */
++#ifdef HWDPLS_ENABLE
++	reset_timer();
++	plsstart = get_timer(0);
++#endif
++	for (i = 0; i < n4 ; i++) {
++		update_crc4x4(crc_tmp, buf);
++		buf += NEXT_PTR * 4;
++#ifdef HWDPLS_ENABLE
++		/**
++		 * WDを考慮
++		 */
++		if (__builtin_expect((int)((i & 0x1f) == 0), 0)) {
++			if ((get_timer(plsstart)) > plstout) {
++				__HWDTPLS_OUT();
++				MEASURE("crc plsout")
++				plsstart += plstout;
++			}
++		}
++#endif /*HWPLS_ENABLE*/
++	}
++
++	res = xlen % (NEXT_PTR * 4);
++	if (res > 0)
++		crc_tmp[3]  = _update_crc(crc_tmp[3], buf, res);
++
++	result->crc_w[0] = CRC_FIX(crc_tmp[0]);
++	result->crc_w[1] = CRC_FIX(crc_tmp[1]);
++	result->crc_w[2] = CRC_FIX(crc_tmp[2]);
++	result->crc_w[3] = CRC_FIX(crc_tmp[3]);
++
++	MEASURE("calc_crc32x4 finish")
++}
++
++#if defined(OWNTEST)
++#define BUFSIZE (2 * 1024 * 1024)
++#include <sys/time.h>
++#include <malloc.h>
++
++int main()
++{
++	unsigned char *buf, *buf2;
++	struct timeval start, end;
++	unsigned long long diff;
++	int i;
++
++	CRC32_WORD4_t result =  { .crc_w = {0, 0, 0, 0 } };
++	CRC32_WORD4_t result2 = { .crc_w = {0, 0, 0, 0 } };
++
++	buf = malloc(BUFSIZE);
++	if (!buf) {
++		perror("malloc");
++		return 1;
++	}
++	printf("Generate %dMB random data..\n", BUFSIZE / 1024 / 1024);
++	srand(0);
++	for (i = 0; i < BUFSIZE / 4; i++)
++		((int *)buf)[i] = rand();
++
++	/* Memory dup */
++	buf2 = memalign(NEXT_PTR, BUFSIZE);
++	if (!buf2) {
++		perror("malloc");
++		return 1;
++	}
++	memcpy(buf2, buf, BUFSIZE);
++
++
++	gettimeofday(&start, NULL);
++	calc_crc32x4(buf, BUFSIZE, &result);
++	gettimeofday(&end, NULL);
++
++	diff = (end.tv_sec - start.tv_sec) * 1000000;
++	diff += end.tv_usec - start.tv_usec;
++
++	printf("time=%lluus\n", diff);
++	printf(" result.word[0] = %x\n", result.crc_w[0]);
++	printf(" result.word[1] = %x\n", result.crc_w[1]);
++	printf(" result.word[2] = %x\n", result.crc_w[2]);
++	printf(" result.word[3] = %x\n", result.crc_w[3]);
++
++	/* Broken test */
++#if 0	/* Destory test */
++	buf[rand() % BUFSIZE]  ^= 1 << (rand()%7);
++#endif
++	for (i = 0; i < BUFSIZE ; i++) {
++		if (buf[i] != buf2[i])
++			printf("buf[%d] %02x : %02x\n", i, buf[i], buf2[i]);
++	}
++
++	gettimeofday(&start, NULL);
++	calc_crc32x4(buf, BUFSIZE, &result2);
++	gettimeofday(&end, NULL);
++
++	diff = (end.tv_sec - start.tv_sec) * 1000000;
++	diff += end.tv_usec - start.tv_usec;
++
++	printf("time=%lluus\n", diff);
++	printf(" result.word[0] = %x:%s\n", result2.crc_w[0] ,
++		result.crc_w[0] == result2.crc_w[0] ? "OK" : "NG");
++	printf(" result.word[1] = %x:%s\n", result2.crc_w[1] ,
++		result.crc_w[1] == result2.crc_w[1] ? "OK" : "NG");
++	printf(" result.word[2] = %x:%s\n", result2.crc_w[2] ,
++		result.crc_w[2] == result2.crc_w[2] ? "OK" : "NG");
++	printf(" result.word[3] = %x:%s\n", result2.crc_w[3] ,
++		result.crc_w[3] == result2.crc_w[3] ? "OK" : "NG");
++	return 0;
++}
++#endif /* TEST */
+diff --git a/arch/arm/cpu/armv7/rmobile/crc32_word4.h b/arch/arm/cpu/armv7/rmobile/crc32_word4.h
+new file mode 100644
+index 0000000..2b64218
+--- /dev/null
++++ b/arch/arm/cpu/armv7/rmobile/crc32_word4.h
+@@ -0,0 +1,23 @@
++/*************************************************************************
++ * Coptright (C) FUJITSUTEN Limited, 2012 All Rights Reserved.
++ *
++ *************************************************************************/
++#ifndef __CRC32_WORD4_H__
++#define __CRC32_WORD4_H__
++
++typedef struct {
++	unsigned int crc_w[4];
++} CRC32_WORD4_t;
++
++void calc_crc32x4(unsigned char *buf, size_t len, CRC32_WORD4_t *result);
++
++typedef struct {
++	unsigned int size;
++	CRC32_WORD4_t chksum;
++	unsigned int dummy[3];
++} CRC32_WORD4_TICKET_t;
++
++#define IS_CRC_WORD4_OK(_res1, _res2) (!memcmp((_res1), (_res2), sizeof(CRC32_WORD4_t)))
++#define IS_CRC_WORD4_ZERO(_w4) (((_w4)->crc_w[0] == 0) && ((_w4)->crc_w[1] == 0) && ((_w4)->crc_w[2] == 0) && ((_w4)->crc_w[3] == 0))
++#define IS_CRC_WORD4_ALL_F(_w4) (((_w4)->crc_w[0] == 0xffffffff) && ((_w4)->crc_w[1] == 0xffffffff) && ((_w4)->crc_w[2] == 0xffffffff) && ((_w4)->crc_w[3] == 0xffffffff))
++#endif
+diff --git a/arch/arm/cpu/armv7/rmobile/sh_timer.c b/arch/arm/cpu/armv7/rmobile/sh_timer.c
+new file mode 100644
+index 0000000..1c64950
+--- /dev/null
++++ b/arch/arm/cpu/armv7/rmobile/sh_timer.c
+@@ -0,0 +1,209 @@
++/*
++ * Copyright (C) 2013-2014  Renesas Electronics Corporation
++ *
++ * (C) Copyright 2009
++ * Jean-Christophe PLAGNIOL-VILLARD <plagnioj@jcrosoft.com>
++ *
++ * (C) Copyright 2007-2012
++ * Nobobuhiro Iwamatsu <iwamatsu@nigauri.org>
++ *
++ * (C) Copyright 2003
++ * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
++ *
++ * See file CREDITS for list of people who contributed to this
++ * project.
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License as
++ * published by the Free Software Foundation; either version 2 of
++ * the License, or (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
++ * MA 02111-1307 USA
++ */
++
++#include <common.h>
++#include <div64.h>
++#include <asm/processor.h>
++#include <asm/io.h>
++#include <sh_tmu.h>
++
++#if defined(CONFIG_R8A7790) || defined(CONFIG_R8A7791) || \
++	defined(CONFIG_R8A7793) || defined(CONFIG_R8A7794)
++
++DECLARE_GLOBAL_DATA_PTR;
++
++#endif
++
++static struct tmu_regs *tmu = (struct tmu_regs *)TMU_BASE;
++
++static u16 bit;
++static unsigned long last_tcnt;
++static unsigned long long overflow_ticks;
++
++#if defined(CONFIG_R8A7790) || defined(CONFIG_R8A7791) || \
++	defined(CONFIG_R8A7793) || defined(CONFIG_R8A7794)
++
++unsigned long get_tbclk(void)
++{
++	if (gd->flags & GD_FLG_RELOC)
++		return get_tmu0_clk_rate() >> ((bit + 1) * 2);
++	else {
++		u16 bit;
++
++		bit = (ffs(CONFIG_SYS_TMU_CLK_DIV) >> 1) - 1;
++		return get_tmu0_clk_rate() >> ((bit + 1) * 2);
++	}
++}
++
++#else
++
++unsigned long get_tbclk(void)
++{
++	return get_tmu0_clk_rate() >> ((bit + 1) * 2);
++}
++
++#endif
++
++static inline unsigned long long tick_to_time(unsigned long long tick)
++{
++	tick *= CONFIG_SYS_HZ;
++	do_div(tick, get_tbclk());
++
++	return tick;
++}
++
++static inline unsigned long long usec_to_tick(unsigned long long usec)
++{
++	usec *= get_tbclk();
++	do_div(usec, 1000000);
++
++	return usec;
++}
++
++static void tmu_timer_start(unsigned int timer)
++{
++	if (timer > 2)
++		return;
++	writeb(readb(&tmu->tstr) | (1 << timer), &tmu->tstr);
++}
++
++static void tmu_timer_stop(unsigned int timer)
++{
++	if (timer > 2)
++		return;
++	writeb(readb(&tmu->tstr) & ~(1 << timer), &tmu->tstr);
++}
++
++#if defined(CONFIG_R8A7790) || defined(CONFIG_R8A7791) || \
++	defined(CONFIG_R8A7793) || defined(CONFIG_R8A7794)
++
++int sh_timer_init(void)
++{
++	bit = (ffs(CONFIG_SYS_TMU_CLK_DIV) >> 1) - 1;
++	writew((readw(&tmu->tcr0) & ~0x7) | bit, &tmu->tcr0);
++
++	tmu_timer_stop(0);
++	tmu_timer_start(0);
++
++	last_tcnt = 0;
++	overflow_ticks = 0;
++
++	return 0;
++}
++
++int timer_init(void)
++{
++	tmu_timer_stop(0);
++	tmu_timer_start(0);
++
++	return 0;
++}
++
++#else
++
++int timer_init(void)
++{
++	bit = (ffs(CONFIG_SYS_TMU_CLK_DIV) >> 1) - 1;
++	writew((readw(&tmu->tcr0) & ~0x7) | bit, &tmu->tcr0);
++
++	tmu_timer_stop(0);
++	tmu_timer_start(0);
++
++	last_tcnt = 0;
++	overflow_ticks = 0;
++
++	return 0;
++}
++
++#endif
++
++#if defined(CONFIG_R8A7790) || defined(CONFIG_R8A7791) || \
++	defined(CONFIG_R8A7793) || defined(CONFIG_R8A7794)
++
++unsigned long long get_ticks(void)
++{
++	unsigned long tcnt = 0 - readl(&tmu->tcnt0);
++
++	if (gd->flags & GD_FLG_RELOC) {
++		if (last_tcnt > tcnt) /* overflow */
++			overflow_ticks++;
++		last_tcnt = tcnt;
++
++		return (overflow_ticks << 32) | tcnt;
++	}
++	else
++		return tcnt;
++}
++
++#else
++
++unsigned long long get_ticks(void)
++{
++	unsigned long tcnt = 0 - readl(&tmu->tcnt0);
++
++	if (last_tcnt > tcnt) /* overflow */
++		overflow_ticks++;
++	last_tcnt = tcnt;
++
++	return (overflow_ticks << 32) | tcnt;
++}
++
++#endif
++
++void __udelay(unsigned long usec)
++{
++	unsigned long long tmp;
++	ulong tmo;
++
++	tmo = usec_to_tick(usec);
++	tmp = get_ticks() + tmo;	/* get current timestamp */
++
++	while (get_ticks() < tmp)	/* loop till event */
++		 /*NOP*/;
++}
++
++unsigned long get_timer(unsigned long base)
++{
++	/* return msec */
++	return tick_to_time(get_ticks()) - base;
++}
++
++void set_timer(unsigned long t)
++{
++	writel((0 - t), &tmu->tcnt0);
++}
++
++void reset_timer(void)
++{
++	tmu_timer_stop(0);
++	set_timer(0);
++	tmu_timer_start(0);
++}
+diff --git a/arch/arm/include/asm/arch-rmobile/rmobile.h b/arch/arm/include/asm/arch-rmobile/rmobile.h
+index 33a302e..12276e0 100644
+--- a/arch/arm/include/asm/arch-rmobile/rmobile.h
++++ b/arch/arm/include/asm/arch-rmobile/rmobile.h
+@@ -26,6 +26,8 @@ u32 rmobile_get_cpu_type(void);
+ u32 rmobile_get_cpu_rev_integer(void);
+ u32 rmobile_get_cpu_rev_fraction(void);
+ 
++void arm_arch_timer_init(void);
++
+ #endif /* __ASSEMBLY__ */
+ 
+ #endif /* __KERNEL__ */
+diff --git a/arch/arm/include/asm/armv7.h b/arch/arm/include/asm/armv7.h
+index ad9a875..aad5bf7 100644
+--- a/arch/arm/include/asm/armv7.h
++++ b/arch/arm/include/asm/armv7.h
+@@ -62,9 +62,19 @@
+  * However, we use the CP15 based instructtions because we use
+  * -march=armv5 in U-Boot
+  */
+-#define CP15ISB	asm volatile ("mcr     p15, 0, %0, c7, c5, 4" : : "r" (0))
+-#define CP15DSB	asm volatile ("mcr     p15, 0, %0, c7, c10, 4" : : "r" (0))
+-#define CP15DMB	asm volatile ("mcr     p15, 0, %0, c7, c10, 5" : : "r" (0))
++#define CP15ISB() asm volatile ("mcr     p15, 0, %0, c7, c5, 4" : : "r" (0))
++#define CP15DSB() asm volatile ("mcr     p15, 0, %0, c7, c10, 4" : : "r" (0))
++#define CP15DMB() asm volatile ("mcr     p15, 0, %0, c7, c10, 5" : : "r" (0))
++
++#ifdef __ARM_ARCH_7A__
++#define	ISB()	asm volatile ("isb" : : : "memory")
++#define	DSB()	asm volatile ("dsb" : : : "memory")
++#define	DMB()	asm volatile ("dmb" : : : "memory")
++#else
++#define ISB()	CP15ISB
++#define DSB()	CP15DSB
++#define DMB()	CP15DMB
++#endif
+ 
+ void v7_outer_cache_enable(void);
+ void v7_outer_cache_disable(void);
+diff --git a/arch/arm/include/asm/system.h b/arch/arm/include/asm/system.h
+index cd0de6b..3906646 100644
+--- a/arch/arm/include/asm/system.h
++++ b/arch/arm/include/asm/system.h
+@@ -45,6 +45,12 @@
+ #define CR_AFE	(1 << 29)	/* Access flag enable			*/
+ #define CR_TE	(1 << 30)	/* Thumb exception enable		*/
+ 
++#if defined(CONFIG_ARMV7_LPAE) && !defined(PGTABLE_SIZE)
++#define PGTABLE_SIZE		(4096 * 5)
++#elif !defined(PGTABLE_SIZE)
++#define PGTABLE_SIZE		(4096 * 4)
++#endif
++
+ /*
+  * This is used to ensure the compiler did actually allocate the register we
+  * asked it for some inline assembly sequences.  Apparently we can't trust
+@@ -61,17 +67,50 @@
+ 
+ #define nop() __asm__ __volatile__("mov\tr0,r0\t@ nop\n\t");
+ 
++static inline unsigned long get_cpsr(void)
++{
++	unsigned long cpsr;
++
++	asm volatile("mrs %0, cpsr" : "=r"(cpsr): );
++	return cpsr;
++}
++
++static inline int is_hyp(void)
++{
++#ifdef CONFIG_ARMV7_LPAE
++	/* HYP mode requires LPAE ... */
++	return ((get_cpsr() & 0x1f) == 0x1a);
++#else
++	/* ... so without LPAE support we can optimize all hyp code away */
++	return 0;
++#endif
++}
++
+ static inline unsigned int get_cr(void)
+ {
+ 	unsigned int val;
+-	asm("mrc p15, 0, %0, c1, c0, 0	@ get CR" : "=r" (val) : : "cc");
++
++	if (is_hyp())
++		asm volatile("mrc p15, 4, %0, c1, c0, 0	@ get CR" : "=r" (val)
++								  :
++								  : "cc");
++	else
++		asm volatile("mrc p15, 0, %0, c1, c0, 0	@ get CR" : "=r" (val)
++								  :
++								  : "cc");
+ 	return val;
+ }
+ 
+ static inline void set_cr(unsigned int val)
+ {
+-	asm volatile("mcr p15, 0, %0, c1, c0, 0	@ set CR"
+-	  : : "r" (val) : "cc");
++	if (is_hyp())
++		asm volatile("mcr p15, 4, %0, c1, c0, 0	@ set CR" :
++								  : "r" (val)
++								  : "cc");
++	else
++		asm volatile("mcr p15, 0, %0, c1, c0, 0	@ set CR" :
++								  : "r" (val)
++								  : "cc");
+ 	isb();
+ }
+ 
+@@ -105,19 +144,108 @@ static inline void set_actlr(unsigned int val)
+ 	isb();
+ }
+ 
++#ifdef CONFIG_ARMV7_LPAE
++/* Long-Descriptor Translation Table Level 1/2 Bits */
++#define TTB_SECT_XN_MASK	(1ULL << 54)
++#define TTB_SECT_NG_MASK	(1 << 11)
++#define TTB_SECT_AF		(1 << 10)
++#define TTB_SECT_SH_MASK	(3 << 8)
++#define TTB_SECT_NS_MASK	(1 << 5)
++#define TTB_SECT_AP		(1 << 6)
++/* Note: TTB AP bits are set elsewhere */
++#define TTB_SECT_MAIR(x)	((x & 0x7) << 2) /* Index into MAIR */
++#define TTB_SECT		(1 << 0)
++#define TTB_PAGETABLE		(3 << 0)
++
++/* TTBCR flags */
++#define TTBCR_EAE		(1 << 31)
++#define TTBCR_T0SZ(x)		((x) << 0)
++#define TTBCR_T1SZ(x)		((x) << 16)
++#define TTBCR_USING_TTBR0	(TTBCR_T0SZ(0) | TTBCR_T1SZ(0))
++#define TTBCR_IRGN0_NC		(0 << 8)
++#define TTBCR_IRGN0_WBWA	(1 << 8)
++#define TTBCR_IRGN0_WT		(2 << 8)
++#define TTBCR_IRGN0_WBNWA	(3 << 8)
++#define TTBCR_IRGN0_MASK	(3 << 8)
++#define TTBCR_ORGN0_NC		(0 << 10)
++#define TTBCR_ORGN0_WBWA	(1 << 10)
++#define TTBCR_ORGN0_WT		(2 << 10)
++#define TTBCR_ORGN0_WBNWA	(3 << 10)
++#define TTBCR_ORGN0_MASK	(3 << 10)
++#define TTBCR_SHARED_NON	(0 << 12)
++#define TTBCR_SHARED_OUTER	(2 << 12)
++#define TTBCR_SHARED_INNER	(3 << 12)
++#define TTBCR_EPD0		(0 << 7)
++
++/*
++ * Memory types
++ */
++#define MEMORY_ATTRIBUTES	((0x00 << (0 * 8)) | (0x88 << (1 * 8)) | \
++				 (0xcc << (2 * 8)) | (0xff << (3 * 8)))
++
++/* options available for data cache on each page */
++enum dcache_option {
++	DCACHE_OFF = TTB_SECT | TTB_SECT_MAIR(0),
++	DCACHE_WRITETHROUGH = TTB_SECT | TTB_SECT_MAIR(1),
++	DCACHE_WRITEBACK = TTB_SECT | TTB_SECT_MAIR(2),
++	DCACHE_WRITEALLOC = TTB_SECT | TTB_SECT_MAIR(3),
++};
++#elif defined(CONFIG_ARMV7)
++/* Short-Descriptor Translation Table Level 1 Bits */
++#define TTB_SECT_NS_MASK	(1 << 19)
++#define TTB_SECT_NG_MASK	(1 << 17)
++#define TTB_SECT_S_MASK		(1 << 16)
++/* Note: TTB AP bits are set elsewhere */
++#define TTB_SECT_AP		(3 << 10)
++#define TTB_SECT_TEX(x)		((x & 0x7) << 12)
++#define TTB_SECT_DOMAIN(x)	((x & 0xf) << 5)
++#define TTB_SECT_XN_MASK	(1 << 4)
++#define TTB_SECT_C_MASK		(1 << 3)
++#define TTB_SECT_B_MASK		(1 << 2)
++#define TTB_SECT			(2 << 0)
++
++/* options available for data cache on each page */
++enum dcache_option {
++	DCACHE_OFF = TTB_SECT_DOMAIN(0) | TTB_SECT_XN_MASK | TTB_SECT,
++	DCACHE_WRITETHROUGH = DCACHE_OFF | TTB_SECT_C_MASK,
++	DCACHE_WRITEBACK = DCACHE_WRITETHROUGH | TTB_SECT_B_MASK,
++	DCACHE_WRITEALLOC = DCACHE_WRITEBACK | TTB_SECT_TEX(1),
++};
++#else
++#define TTB_SECT_AP		(3 << 10)
+ /* options available for data cache on each page */
+ enum dcache_option {
+ 	DCACHE_OFF = 0x12,
+ 	DCACHE_WRITETHROUGH = 0x1a,
+ 	DCACHE_WRITEBACK = 0x1e,
++	DCACHE_WRITEALLOC = 0x16,
+ };
++#endif
+ 
+ /* Size of an MMU section */
+ enum {
+-	MMU_SECTION_SHIFT	= 20,
++#ifdef CONFIG_ARMV7_LPAE
++	MMU_SECTION_SHIFT	= 21, /* 2MB */
++#else
++	MMU_SECTION_SHIFT	= 20, /* 1MB */
++#endif
+ 	MMU_SECTION_SIZE	= 1 << MMU_SECTION_SHIFT,
+ };
+ 
++#ifdef CONFIG_ARMV7
++/* TTBR0 bits */
++#define TTBR0_BASE_ADDR_MASK	0xFFFFC000
++#define TTBR0_RGN_NC			(0 << 3)
++#define TTBR0_RGN_WBWA			(1 << 3)
++#define TTBR0_RGN_WT			(2 << 3)
++#define TTBR0_RGN_WB			(3 << 3)
++/* TTBR0[6] is IRGN[0] and TTBR[0] is IRGN[1] */
++#define TTBR0_IRGN_NC			(0 << 0 | 0 << 6)
++#define TTBR0_IRGN_WBWA			(0 << 0 | 1 << 6)
++#define TTBR0_IRGN_WT			(1 << 0 | 0 << 6)
++#define TTBR0_IRGN_WB			(1 << 0 | 1 << 6)
++#endif
++
+ /**
+  * Change the cache settings for a region.
+  *
+diff --git a/arch/arm/lib/Makefile b/arch/arm/lib/Makefile
+index 57111af..d8634be 100644
+--- a/arch/arm/lib/Makefile
++++ b/arch/arm/lib/Makefile
+@@ -54,6 +54,8 @@ COBJS-y	+= reset.o
+ COBJS-y	+= cache.o
+ COBJS-y	+= cache-cp15.o
+ 
++COBJS-y += call_with_stack.o
++
+ SRCS	:= $(GLSOBJS:.o=.S) $(GLCOBJS:.o=.c) \
+ 	   $(SOBJS-y:.o=.S) $(COBJS-y:.o=.c)
+ OBJS	:= $(addprefix $(obj),$(SOBJS-y) $(COBJS-y))
+diff --git a/arch/arm/lib/board.c b/arch/arm/lib/board.c
+index 9f861cc..3c2bf55 100644
+--- a/arch/arm/lib/board.c
++++ b/arch/arm/lib/board.c
+@@ -355,7 +355,7 @@ void board_init_f(ulong bootflag)
+ 
+ #if !(defined(CONFIG_SYS_ICACHE_OFF) && defined(CONFIG_SYS_DCACHE_OFF))
+ 	/* reserve TLB table */
+-	gd->tlb_size = 4096 * 4;
++	gd->tlb_size = PGTABLE_SIZE;
+ 	addr -= gd->tlb_size;
+ 
+ 	/* round down to next 64 kB limit */
+diff --git a/arch/arm/lib/cache-cp15.c b/arch/arm/lib/cache-cp15.c
+index 75cf7b1..aefa2ae 100644
+--- a/arch/arm/lib/cache-cp15.c
++++ b/arch/arm/lib/cache-cp15.c
+@@ -44,13 +44,50 @@ static void cp_delay (void)
+ 	asm volatile("" : : : "memory");
+ }
+ 
++#ifdef CONFIG_ARMV7_LPAE
++struct special_addr {
++	u32 page;
++	u32 size;
++	u64 addr;
++};
++
++/* This hack is for 2GB board with second GB attached
++ * to LPAE-only address at 0x200000000ULL */
++#define SDRAM2_ADDR	0x200000000ULL
++#define SDRAM2_SIZE	0x40000000 /* 1G */
++static struct special_addr offsets[] = {
++	{ 0x80000000 >> MMU_SECTION_SHIFT, SDRAM2_SIZE >> MMU_SECTION_SHIFT, SDRAM2_ADDR, },
++};
++#endif
++
+ void set_section_dcache(int section, enum dcache_option option)
+ {
++#ifdef CONFIG_ARMV7_LPAE
++	int i;
++	u64 *page_table = (u64 *)gd->tlb_addr;
++	/* Need to set the access flag to not fault */
++	u64 value = TTB_SECT_AP | TTB_SECT_AF;
++#else
+ 	u32 *page_table = (u32 *)gd->tlb_addr;
+-	u32 value;
++	u32 value = TTB_SECT_AP;
++#endif
++
++	/* Add the page offset */
++#ifdef CONFIG_ARMV7_LPAE
++	for (i = 0; i < ARRAY_SIZE(offsets); i++)
++		if (section >= offsets[i].page &&
++			section < offsets[i].page + offsets[i].size)
++			value |= offsets[i].addr + ((section - offsets[i].page) << MMU_SECTION_SHIFT);
++		else
++	value |= ((u32)section << MMU_SECTION_SHIFT);
++#else
++	value |= ((u32)section << MMU_SECTION_SHIFT);
++#endif
+ 
+-	value = (section << MMU_SECTION_SHIFT) | (3 << 10);
++	/* Add caching bits */
+ 	value |= option;
++
++	/* Set PTE */
+ 	page_table[section] = value;
+ }
+ 
+@@ -66,11 +103,11 @@ void mmu_set_region_dcache_behaviour(u32 start, int size,
+ 				     enum dcache_option option)
+ {
+ 	u32 *page_table = (u32 *)gd->tlb_addr;
+-	u32 upto, end;
++	unsigned long upto, end;
+ 
+ 	end = ALIGN(start + size, MMU_SECTION_SIZE) >> MMU_SECTION_SHIFT;
+ 	start = start >> MMU_SECTION_SHIFT;
+-	debug("%s: start=%x, size=%x, option=%d\n", __func__, start, size,
++	debug("%s: start=%pa, size=%zu, option=%d\n", __func__, &start, size,
+ 	      option);
+ 	for (upto = start; upto < end; upto++)
+ 		set_section_dcache(upto, option);
+@@ -83,11 +120,14 @@ static inline void dram_bank_mmu_setup(int bank)
+ 	int	i;
+ 
+ 	debug("%s: bank: %d\n", __func__, bank);
+-	for (i = bd->bi_dram[bank].start >> 20;
+-	     i < (bd->bi_dram[bank].start + bd->bi_dram[bank].size) >> 20;
++	for (i = bd->bi_dram[bank].start >> MMU_SECTION_SHIFT;
++	     i < (bd->bi_dram[bank].start >> MMU_SECTION_SHIFT) +
++		 (bd->bi_dram[bank].size >> MMU_SECTION_SHIFT);
+ 	     i++) {
+ #if defined(CONFIG_SYS_ARM_CACHE_WRITETHROUGH)
+ 		set_section_dcache(i, DCACHE_WRITETHROUGH);
++#elif defined(CONFIG_SYS_ARM_CACHE_WRITEALLOC)
++		set_section_dcache(i, DCACHE_WRITEALLOC);
+ #else
+ 		set_section_dcache(i, DCACHE_WRITEBACK);
+ #endif
+@@ -102,19 +142,88 @@ static inline void mmu_setup(void)
+ 
+ 	arm_init_before_mmu();
+ 	/* Set up an identity-mapping for all 4GB, rw for everyone */
+-	for (i = 0; i < 4096; i++)
++	for (i = 0; i < ((4096ULL * 1024 * 1024) >> MMU_SECTION_SHIFT); i++)
+ 		set_section_dcache(i, DCACHE_OFF);
+ 
+ 	for (i = 0; i < CONFIG_NR_DRAM_BANKS; i++) {
+ 		dram_bank_mmu_setup(i);
+ 	}
++	/* Enabling d-cache for remapped region of memory
++	 *
++	 */
++	for (i = (0x80000000 >> MMU_SECTION_SHIFT);
++			i < 0xc0000000 >> MMU_SECTION_SHIFT; i++)
++#if defined(CONFIG_SYS_ARM_CACHE_WRITETHROUGH)
++		set_section_dcache(i, DCACHE_WRITETHROUGH);
++#elif defined(CONFIG_SYS_ARM_CACHE_WRITEALLOC)
++		set_section_dcache(i, DCACHE_WRITEALLOC);
++#else
++		set_section_dcache(i, DCACHE_WRITEBACK);
++#endif
++
++#ifdef CONFIG_ARMV7_LPAE
++	/* Set up 4 PTE entries pointing to our 4 1GB page tables */
++	for (i = 0; i < 4; i++) {
++		u64 *page_table = (u64 *)(gd->tlb_addr + (4096 * 4));
++		u64 tpt = gd->tlb_addr + (4096 * i);
++		page_table[i] = tpt | TTB_PAGETABLE;
++	}
+ 
++	reg = TTBCR_EAE;
++#if defined(CONFIG_SYS_ARM_CACHE_WRITETHROUGH)
++	reg |= TTBCR_ORGN0_WT | TTBCR_IRGN0_WT;
++#elif defined(CONFIG_SYS_ARM_CACHE_WRITEALLOC)
++	reg |= TTBCR_ORGN0_WBWA | TTBCR_IRGN0_WBWA;
++#else
++	reg |= TTBCR_ORGN0_WBNWA | TTBCR_IRGN0_WBNWA;
++#endif
++
++	if (is_hyp()) {
++		/* Set HCTR to enable LPAE */
++		asm volatile("mcr p15, 4, %0, c2, c0, 2"
++			: : "r" (reg) : "memory");
++		/* Set HTTBR0 */
++		asm volatile("mcrr p15, 4, %0, %1, c2"
++			:
++			: "r"(gd->tlb_addr + (4096 * 4)), "r"(0)
++			: "memory");
++		/* Set HMAIR */
++		asm volatile("mcr p15, 4, %0, c10, c2, 0"
++			: : "r" (MEMORY_ATTRIBUTES) : "memory");
++	} else {
++		/* Set TTBCR to enable LPAE */
++		asm volatile("mcr p15, 0, %0, c2, c0, 2"
++			: : "r" (reg) : "memory");
++		/* Set 64-bit TTBR0 */
++		asm volatile("mcrr p15, 0, %0, %1, c2"
++			:
++			: "r"(gd->tlb_addr + (4096 * 4)), "r"(0)
++			: "memory");
++		/* Set MAIR */
++		asm volatile("mcr p15, 0, %0, c10, c2, 0"
++			: : "r" (MEMORY_ATTRIBUTES) : "memory");
++	}
++#elif defined(CONFIG_ARMV7)
++	/* Set TTBR0 */
++	reg = gd->tlb_addr & TTBR0_BASE_ADDR_MASK;
++#if defined(CONFIG_SYS_ARM_CACHE_WRITETHROUGH)
++	reg |= TTBR0_RGN_WT | TTBR0_IRGN_WT;
++#elif defined(CONFIG_SYS_ARM_CACHE_WRITEALLOC)
++	reg |= TTBR0_RGN_WBWA | TTBR0_IRGN_WBWA;
++#else
++	reg |= TTBR0_RGN_WB | TTBR0_IRGN_WB;
++#endif
++	asm volatile("mcr p15, 0, %0, c2, c0, 0"
++		     : : "r" (reg) : "memory");
++#else
+ 	/* Copy the page table address to cp15 */
+ 	asm volatile("mcr p15, 0, %0, c2, c0, 0"
+ 		     : : "r" (gd->tlb_addr) : "memory");
++#endif
+ 	/* Set the access control to all-supervisor */
+ 	asm volatile("mcr p15, 0, %0, c3, c0, 0"
+ 		     : : "r" (~0));
++
+ 	/* and enable the mmu */
+ 	reg = get_cr();	/* get control reg. */
+ 	cp_delay();
+diff --git a/arch/arm/lib/call_with_stack.S b/arch/arm/lib/call_with_stack.S
+new file mode 100644
+index 0000000..651d869
+--- /dev/null
++++ b/arch/arm/lib/call_with_stack.S
+@@ -0,0 +1,20 @@
++.globl call_with_stack
++.syntax unified /* use unified assembler syntax */
++#ifdef __thumb__
++.thumb        /* assemble in Thumb-2  (.thumb" can also be used) */
++#endif
++call_with_stack:
++	str	sp, [r2, #-4]!
++	str	lr, [r2, #-4]!
++
++	mov	sp, r2
++	mov	r2, r0
++	mov	r0, r1
++
++	adr	lr, 1f
++	mov	pc, r2
++
++1:	ldr	lr, [sp]
++	ldr	sp, [sp, #4]
++	mov	pc, lr
++
+diff --git a/board/renesas/porter/porter.c b/board/renesas/porter/porter.c
+index 71836e2..6c4fd1a 100644
+--- a/board/renesas/porter/porter.c
++++ b/board/renesas/porter/porter.c
+@@ -42,6 +42,10 @@ void s_init(void)
+ 	struct r8a7791_swdt *swdt = (struct r8a7791_swdt *)SWDT_BASE;
+ 	u32 val;
+ 
++#ifdef CONFIG_SYS_ARCH_TIMER
++	arm_arch_timer_init();
++#endif
++
+ 	/* Watchdog init */
+ 	writel(0xA5A5A500, &rwdt->rwtcsra);
+ 	writel(0xA5A5A500, &swdt->swtcsra);
+@@ -71,10 +75,12 @@ int board_early_init_f(void)
+ {
+ 	u32 val;
+ 
++#ifdef CONFIG_TMU_TIMER
+ 	/* TMU0 */
+ 	val = readl(MSTPSR1);
+ 	val &= ~TMU0_MSTP125;
+ 	writel(val, SMSTPCR1);
++#endif
+ 
+ 	val = readl(MSTPSR7);
+ 	val &= ~SCIF0_MSTP721;
+@@ -114,7 +120,9 @@ int board_init(void)
+ 	/* Init PFC controller */
+ 	r8a7791_pinmux_init();
+ 
++#ifdef CONFIG_TMU_TIMER
+ 	sh_timer_init();
++#endif
+ 
+ 	/* ETHER Enable */
+ 	gpio_request(GPIO_FN_ETH_CRS_DV, NULL);
+@@ -288,10 +296,12 @@ void arch_preboot_os()
+ 	u32 val;
+ 	int i;
+ 
++#ifdef CONFIG_TMU_TIMER
+ 	/* stop TMU0 */
+ 	val = readb(TMU_BASE + TSTR0);
+ 	val &= ~TSTR0_STR0;
+ 	writeb(val, TMU_BASE + TSTR0);
++#endif
+ 
+ 	/* stop all module clock*/
+ 	for (i = MSTP00; i < MSTP_NR; i++) {
+diff --git a/include/configs/porter.h b/include/configs/porter.h
+index 7ab0643..5567c7c 100644
+--- a/include/configs/porter.h
++++ b/include/configs/porter.h
+@@ -53,6 +53,9 @@
+ #define CONFIG_CMD_EXT4_WRITE
+ #define CONFIG_CMD_SF
+ #define CONFIG_CMD_SPI
++#define CONFIG_CMD_SWSUSP
++#define CONFIG_CMD_SWSUSPMEM
++#define CONFIG_LZO
+ 
+ #define CONFIG_CMDLINE_TAG
+ #define CONFIG_SETUP_MEMORY_TAGS
+@@ -75,7 +78,6 @@
+ #define CONFIG_BOARD_EARLY_INIT_F
+ #define CONFIG_USE_ARCH_MEMSET
+ #define CONFIG_USE_ARCH_MEMCPY
+-#define CONFIG_TMU_TIMER
+ 
+ /* STACK */
+ #if defined(CONFIG_EXTRAM_BOOT)
+@@ -89,8 +91,8 @@
+ 
+ /* MEMORY */
+ #define PORTER_SDRAM_BASE	0x40000000
+-#define PORTER_SDRAM_SIZE	0x40000000
+-#define PORTER_UBOOT_SDRAM_SIZE	0x20000000
++#define PORTER_SDRAM_SIZE	0x48000000
++#define PORTER_UBOOT_SDRAM_SIZE	0x40000000
+ 
+ #define CONFIG_SYS_LONGHELP
+ #define CONFIG_SYS_PROMPT		"=> "
+@@ -203,4 +205,15 @@
+ #define CONFIG_USB_HOST_ETHER	/* Enable USB Ethernet adapters */
+ #define CONFIG_USB_ETHER_ASIX	/* Asix, or whatever driver(s) you want */
+ 
++#define CONFIG_ARMV7_LPAE               /* 64-bit MMU descriptors */
++#define CONFIG_SYS_ARM_CACHE_WRITEALLOC /* Make memory operations faster */
++
++#define CONFIG_SYS_ARCH_TIMER           /* Init arch timer */
++#define CONFIG_VE_ENABLED               /* Virtualization Extensions are enabled*/
++#define CONFIG_SYS_HZ_CLOCK             CONFIG_SYS_CLK_FREQ
++
++#define CONFIG_SH_DMA
++#define CONFIG_SH_SYS_DMAL_BASE         0xE6700000
++#define CONFIG_SH_SYS_DMAL_NCH          15
++
+ #endif	/* __PORTER_H */
+-- 
+1.8.3.1
+

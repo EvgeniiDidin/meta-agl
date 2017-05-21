@@ -1,0 +1,909 @@
+From 45b3abc592bd685726a6b55693ab95e4cb6065fc Mon Sep 17 00:00:00 2001
+From: Yuichi Kusakabe <yuichi.kusakabe@jp.fujitsu.com>
+Date: Fri, 19 May 2017 14:27:46 +0900
+Subject: [PATCH 2/4] Add Hibernation swsusp command support
+
+Signed-off-by: Yuichi Kusakabe <yuichi.kusakabe@jp.fujitsu.com>
+---
+ common/cmd_swsusp.c | 889 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 889 insertions(+)
+ create mode 100644 common/cmd_swsusp.c
+
+diff --git a/common/cmd_swsusp.c b/common/cmd_swsusp.c
+new file mode 100644
+index 0000000..ba05aa4
+--- /dev/null
++++ b/common/cmd_swsusp.c
+@@ -0,0 +1,889 @@
++/*
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
++ */
++
++#include <common.h>
++#include <command.h>
++#include <part.h>
++#include <malloc.h>
++
++#include <linux/lzo.h>
++#include "../arch/arm/cpu/armv7/rmobile/crc32_word4.h"
++#include <swsuspmem.h>
++
++/* Note for Renesas--based boards:
++ * We have the following memory split here:
++ * 0x40000000 - u_boot_lowest - used to store pfns at physical addresses
++ * u_boot_lowest - 0x8000000 - pfns are relocated, and then later put
++ * on physical addresses (swsusp_finish)
++ * 0x8000000 - 0xc0000000 - used to store pfns with physical address
++ * of 0x200000000 (long address), we have to change offset for them.
++ * Any pfn with address > 0x8000000 but less than 0x200000000
++ * is an error.
++ * For boards which do not have memory above first GB, that will
++ * still work, as they won't have anything above 0x80000000
++ * in their image, so for standard 2GB setup ou should put
++ * your secong GB in 0x80000000-0xC0000000 range, you can
++ * use MMU for that or if your RAM is continous, it will
++ * naturally be there. */
++
++DECLARE_GLOBAL_DATA_PTR;
++
++/* #define PAGEMAP_DEBUG */
++
++#ifdef PAGEMAP_DEBUG
++#define SWSUSP_DEBUG_INFO
++#endif
++
++#define SWSUSP_KEEP_IMAGE
++
++#ifndef likely
++# define likely(x)	__builtin_expect(!!(x), 1)
++# define unlikely(x)	__builtin_expect(!!(x), 0)
++#endif
++
++#define HIBERNATE_SIG "S1SUSPEND"
++#define PAGE_SIZE 4096
++
++/* Define depending on CONFIG_LBDAF in kernel */
++typedef u64 sector_t;
++
++
++struct swsusp_header {
++	char reserved[PAGE_SIZE - 20 - sizeof(sector_t) -
++		sizeof(int) - sizeof(u32) -
++		sizeof(CRC32_WORD4_t) - sizeof(u32)];
++	CRC32_WORD4_t comp_crc32;
++	u32 img_size; /* append */
++	u32	crc32;
++	sector_t	image;
++	unsigned int flags;
++	char	orig_sig[10];
++	char	sig[10];
++} __packed;
++
++#define __NEW_UTS_LEN 64
++
++struct new_utsname {
++	char sysname[__NEW_UTS_LEN + 1];
++	char nodename[__NEW_UTS_LEN + 1];
++	char release[__NEW_UTS_LEN + 1];
++	char version[__NEW_UTS_LEN + 1];
++	char machine[__NEW_UTS_LEN + 1];
++	char domainname[__NEW_UTS_LEN + 1];
++};
++
++struct swsusp_archdata {
++	u32	nosave_backup_phys;
++	u32	nosave_begin_phys;
++	u32	nosave_end_phys;
++	void	(*cpu_resume_restore_nosave)(u32, u32, u32);
++};
++
++struct swsusp_info {
++	struct new_utsname	uts;
++	u32			version_code;
++	unsigned long		num_physpages;
++	int			cpus;
++	unsigned long		image_pages;
++	unsigned long		pages;
++	unsigned long		size;
++	char			archdata[1024];
++};
++
++struct swap_map_page {
++	u64 entries[PAGE_SIZE / sizeof(u64) - 1];
++	u64 next_swap;
++};
++
++struct swsusp_finish_context {
++	void *remap_orig_page;
++	void *remap_temp_page;
++	struct swsusp_archdata archdata;
++};
++
++/* Do not specially exclude any bottom area */
++#define USED_ADDRESS_TOP	(CONFIG_SYS_SDRAM_BASE)
++#define USED_ADDRESS_END	(CONFIG_SYS_SDRAM_BASE)
++
++#define PG_UB2ZERO(pg) (pg - CONFIG_SYS_SDRAM_BASE / PAGE_SIZE)
++static u32 const exclude_min_page =
++	(USED_ADDRESS_TOP) / PAGE_SIZE;
++static u32 const exclude_max_page =
++	(USED_ADDRESS_END - 1) / PAGE_SIZE;
++static u32 const exclude_min_page_ub =
++	PG_UB2ZERO((USED_ADDRESS_TOP) / PAGE_SIZE);
++static u32 const exclude_max_page_ub =
++	PG_UB2ZERO((USED_ADDRESS_END-1) / PAGE_SIZE);
++#define SF_NOCOMPRESS_MODE 2
++
++#define LZO_HEADER      sizeof(size_t)
++
++/* Number of pages/bytes we'll compress at one time. */
++#define LZO_UNC_PAGES	32
++#define LZO_UNC_SIZE	(LZO_UNC_PAGES * PAGE_SIZE)
++
++/* Number of pages/bytes we need for compressed data (worst case). */
++#define LZO_CMP_PAGES	DIV_ROUND_UP(lzo1x_worst_compress(LZO_UNC_SIZE) + \
++				LZO_HEADER, PAGE_SIZE)
++#define LZO_CMP_SIZE	(LZO_CMP_PAGES * PAGE_SIZE)
++
++static block_dev_desc_t *swap_dev;
++static disk_partition_t swap_info;
++
++static struct swap_map_page *meta_map;
++static u64 meta_map_next;
++static u64 meta_map_curr;
++static u64 meta_map_start;
++static int meta_idx;
++
++#ifdef PAGEMAP_DEBUG
++static int debugout;
++static int _last_read_pages;
++#define PAGEMAP_INFO(_msg, ...)  do { if (debugout == 1) \
++		printf(_msg, ## __VA_ARGS__); } while (0)
++#endif
++
++#define HIGHMEM_PHYS_ADDR	0x200000000ULL
++#define HIGHMEM_VA		0x80000000UL
++#define HIGHMEM_PFN		(HIGHMEM_PHYS_ADDR / PAGE_SIZE)
++#define LOW_TOP			0x80000000
++#define LOW_TOP_PFN		(LOW_TOP / PAGE_SIZE)
++#define LOW_BOTTOM		CONFIG_SYS_SDRAM_BASE
++#define LOW_BOTTOM_PFN		(LOW_BOTTOM / PAGE_SIZE)
++#define TOP_ADDRESS		0x240000000ULL
++
++static int get_meta(void);
++
++static inline int pfn_is_low(u32 pfn)
++{
++	return ((pfn >= LOW_BOTTOM_PFN) && (pfn < LOW_TOP_PFN));
++}
++
++static inline int pfn_is_high(u32 pfn)
++{
++	return (pfn >= HIGHMEM_PFN);
++}
++
++#define pfn_is_valid(p)		(pfn_is_low(p) || pfn_is_high(p))
++
++static inline int pfn_is_excluded(u32 pfn)
++{
++	/* Allow bottom 2 pages for exception vectors */
++	if (pfn < (LOW_BOTTOM_PFN + 2))
++		return 0;
++	else if (exclude_min_page >= exclude_max_page)
++		return 0;
++	else
++		return (pfn >= exclude_min_page) && (pfn <= exclude_max_page);
++}
++
++/* PFN to zero-counted page */
++static inline u32 pg_ub2zero(u32 pg)
++{
++	return pg - LOW_BOTTOM_PFN;
++}
++
++/* zero-counted page to PFN */
++static inline u32 pg_zero2ub(u32 pg)
++{
++	return pg + LOW_BOTTOM_PFN;
++}
++
++/* PFN to physical address (64-bit (40-bit)) */
++static inline u64 pg2phys(u32 page)
++{
++	return (u64) page * PAGE_SIZE;
++}
++
++/* PFN to virtual address */
++static inline void *pg2addr(u32 page)
++{
++	void *addr;
++	if (page >= HIGHMEM_PFN)
++		addr = (void *) (u32)(pg2phys(page - HIGHMEM_PFN) + HIGHMEM_VA);
++	else
++		addr = (void *) (u32)pg2phys(page);
++
++	return addr;
++}
++
++#ifdef CONFIG_SH_DMA
++static inline void *malloc_aligned(u32 size, u32 align)
++{
++	return (void *)(((u32)malloc(size + align) + align - 1) & ~(align - 1));
++}
++
++#endif
++
++static int page_read(u32 page, void *addr)
++{
++	__u32 cnt;
++	int blk_per_page;
++
++	blk_per_page = PAGE_SIZE / swap_dev->blksz;
++	cnt = swap_dev->block_read(swap_dev->dev,
++				swap_info.start + (page * blk_per_page),
++				blk_per_page, addr);
++	return cnt != blk_per_page;
++}
++
++#ifndef SWSUSP_KEEP_IMAGE
++static int page_write(u32 page, void *addr)
++{
++	__u32 cnt;
++	int blk_per_page;
++
++	blk_per_page = PAGE_SIZE / swap_dev->blksz;
++	cnt = swap_dev->block_write(swap_dev->dev,
++				swap_info.start + (page * blk_per_page),
++				blk_per_page, addr);
++	return cnt != blk_per_page;
++}
++#endif
++
++#define FAST_COPY
++void __attribute__((section(".rodata")))
++	__attribute__((optimize("O6", "unroll-loops")))
++swsusp_finish(void *userdata)
++{
++	struct swsusp_finish_context *context = userdata;
++	u32 **remap_orig;
++	u32 **remap_temp;
++	int idx = 0;
++	const int lastidx = PAGE_SIZE / sizeof(u32) - 1;
++
++	remap_orig = context->remap_orig_page;
++	remap_temp = context->remap_temp_page;
++
++	__asm__ volatile ("" : : : "memory");
++	for (;;) {
++		u32 *orig, *temp;
++		int count;
++
++		/* Linked list to next page */
++		if (idx == lastidx) {
++			remap_orig = (u32 **)remap_orig[idx];
++			remap_temp = (u32 **)remap_temp[idx];
++			idx = 0;
++		}
++		if (unlikely(!remap_orig || remap_orig[idx] == (u32 *)~0UL))
++			break;
++		orig = remap_orig[idx];
++		temp = remap_temp[idx];
++#ifdef FAST_COPY
++		count = PAGE_SIZE / sizeof(u32) / 32;
++		__asm__ volatile (
++			"1:\n"
++			"ldmia %[rtemp]!, {r0-r7}\n"
++			"stmia %[rorig]!, {r0-r7}\n"
++			"ldmia %[rtemp]!, {r0-r7}\n"
++			"stmia %[rorig]!, {r0-r7}\n"
++			"ldmia %[rtemp]!, {r0-r7}\n"
++			"stmia %[rorig]!, {r0-r7}\n"
++			"ldmia %[rtemp]!, {r0-r7}\n"
++			"subs %[count], %[count], #1\n"
++			"stmia %[rorig]!, {r0-r7}\n"
++			"bgt 1b\n"
++			: /* No outputs */
++			:
++			  [rorig]"h" (orig),
++			  [rtemp]"h" (temp),
++			  [count]"h" (count)
++			: "r0", "r1", "r2",
++			  "r3", "r4", "r5",
++			  "r6", "r7", "cc", "memory"
++		);
++#else
++		count = PAGE_SIZE / sizeof(u32);
++		while (count--)
++			*orig++ = *temp++;
++#endif
++#ifdef SWSUSP_CHECK_COPY_RESULT
++		count = PAGE_SIZE / sizeof(u32);
++		orig = remap_orig[idx];
++		temp = remap_temp[idx];
++		__asm__ volatile (
++			"1:\n"
++			"ldr r3, [%[rorig]]\n"
++			"ldr r4, [%[rtemp]]\n"
++			"cmp r3, r4\n"
++			"bne 2f\n"
++			"add %[rorig], %[rorig], #4\n"
++			"add %[rtemp], %[rtemp], #4\n"
++			"subs %[count], %[count], #1\n"
++			"bgt 1b\n"
++			"b 3f\n"
++			"2:b 2b\n"
++			"3:\n"
++			:
++			 [rorig]"+r" (orig),
++			 [rtemp]"+r" (temp),
++			 [count]"+r" (count)
++			:
++			: "r3", "r4", "cc", "memory"
++		);
++#endif
++		idx++;
++	}
++	context->archdata.cpu_resume_restore_nosave(
++			context->archdata.nosave_backup_phys,
++			context->archdata.nosave_begin_phys,
++			context->archdata.nosave_end_phys);
++}
++
++static int raw_page_init(u64 start)
++{
++#ifdef CONFIG_SH_DMA
++	meta_map = malloc_aligned(PAGE_SIZE, ARCH_DMA_MINALIGN);
++#else
++	meta_map = malloc(PAGE_SIZE);
++#endif
++	if (!meta_map)
++		return -1;
++	meta_map_next = 0;
++	meta_map_curr = 0;
++	meta_map_start = start;
++	return 0;
++}
++
++static void raw_page_start(void)
++{
++	meta_idx = ARRAY_SIZE(meta_map->entries);
++	meta_map_next = meta_map_start;
++}
++
++static int get_meta(void)
++{
++	if (meta_idx == ARRAY_SIZE(meta_map->entries)) {
++		if (!meta_map_next)
++			return 0;
++		if (meta_map_curr != meta_map_next) {
++#ifdef PAGEMAP_DEBUG
++			PAGEMAP_INFO("META: %d (%08x)\n",
++				(int)meta_map_next,
++				(unsigned int)
++					(meta_map_next * PAGE_SIZE));
++#endif
++			if (page_read(meta_map_next, meta_map))
++				return -1;
++			meta_map_curr = meta_map_next;
++			meta_map_next = meta_map->next_swap;
++		}
++		meta_idx = 0;
++	}
++#ifdef PAGEMAP_DEBUG
++	{
++		static unsigned int pre;
++		if ((pre+1) != meta_map->entries[meta_idx]) {
++			PAGEMAP_INFO("DATA-Skipped: %d->%d (%08x->%08x)\n",
++				pre,
++				(unsigned int)meta_map->entries[meta_idx],
++				pre*PAGE_SIZE,
++				(unsigned int)
++					(meta_map->entries[meta_idx] *
++						PAGE_SIZE));
++		}
++		pre = meta_map->entries[meta_idx];
++		_last_read_pages = pre;
++	}
++#endif
++	return 1;
++}
++
++static int raw_page_get_next(void *buffer)
++{
++	if (!get_meta())
++		return 0;
++
++	if (page_read(meta_map->entries[meta_idx++], buffer))
++		return -1;
++
++	return 1;
++}
++
++static void raw_page_exit(void)
++{
++	free(meta_map);
++	meta_map = NULL;
++}
++
++static int image_compressed;
++static int image_pages_avail;
++static unsigned char *unc_buf;
++static unsigned char *cmp_buf;
++static int unc_offset;
++
++static int image_page_init(int compressed)
++{
++	if (!compressed)
++		return 1;
++
++#ifdef CONFIG_SH_DMA
++	cmp_buf = malloc_aligned(LZO_CMP_SIZE, ARCH_DMA_MINALIGN);
++#else
++	cmp_buf = malloc(LZO_CMP_SIZE);
++#endif
++	unc_buf = malloc(LZO_UNC_SIZE);
++	if (!unc_buf || !cmp_buf) {
++		printf("not enogh memory\n");
++		return 1;
++	}
++	image_compressed = compressed;
++	return 0;
++}
++
++static void image_page_start(void)
++{
++	image_pages_avail = 0;
++}
++
++static int image_page_get_next(void *buffer)
++{
++	if (image_compressed) {
++#ifdef CONFIG_LZO
++		if (!image_pages_avail) {
++			int ret;
++			size_t unc_len, cmp_len, cmp_avail;
++
++			ret = raw_page_get_next(cmp_buf);
++			if (ret <= 0)
++				return ret;
++
++			cmp_len = *(size_t *) cmp_buf;
++			cmp_avail = PAGE_SIZE;
++
++			while (cmp_avail < cmp_len + LZO_HEADER) {
++				ret = raw_page_get_next(cmp_buf + cmp_avail);
++				if (unlikely(ret <= 0))
++					return ret;
++				cmp_avail += PAGE_SIZE;
++			}
++			unc_len = LZO_UNC_SIZE;
++			ret = lzo1x_decompress_safe(cmp_buf + LZO_HEADER,
++						cmp_len, unc_buf, &unc_len);
++			if (unlikely(ret != LZO_E_OK)) {
++				printf("Decompression failure:\n");
++				printf("ret = %d\n", ret);
++				printf("cmp_buf = %p\n", cmp_buf + LZO_HEADER);
++				printf("cmp_len = %zu\n", cmp_len);
++				printf("unc_len = %zu\n", unc_len);
++				return ret;
++			}
++			image_pages_avail = unc_len / PAGE_SIZE;
++			unc_offset = 0;
++		}
++
++		memcpy(buffer, unc_buf + unc_offset, PAGE_SIZE);
++		unc_offset += PAGE_SIZE;
++		image_pages_avail--;
++		return 1;
++#else
++		printf("No LZO support in u-boot.\n");
++		return -1;
++#endif
++	} else {
++		return raw_page_get_next(buffer);
++	}
++}
++
++static void image_page_exit(void)
++{
++	free(unc_buf);
++	free(cmp_buf);
++	unc_buf = cmp_buf = NULL;
++}
++
++static void bitmap_set(u32 *bm, unsigned int bit)
++{
++	bm[bit >> 5] |= (1 << (bit & 0x1f));
++}
++
++static int bitmap_is_set(u32 *bm, unsigned int bit)
++{
++	return !!(bm[bit >> 5] & (1 << (bit & 0x1f)));
++}
++
++static u32 *used_bitmap;
++static u32 next_free_page;
++static u32 total_pages;
++
++static int free_page_init(void)
++{
++	total_pages = (u32)((TOP_ADDRESS -
++			LOW_BOTTOM) / PAGE_SIZE); /* 2GB */
++	used_bitmap = malloc(total_pages * sizeof(u32) / 32);
++	if (!used_bitmap)
++		return -1;
++	return 0;
++}
++
++static void free_page_start(int offset)
++{
++	memset(used_bitmap, 0, total_pages * sizeof(u32) / 32);
++	next_free_page = pg_ub2zero(offset);
++}
++
++static void free_page_mark_used(u32 page);
++/* Returns full-address based pages */
++static int free_page_get_next(void)
++{
++	while (bitmap_is_set(used_bitmap, next_free_page))
++		next_free_page++;
++	free_page_mark_used(next_free_page);
++	return pg_zero2ub(next_free_page++);
++}
++
++static void free_page_mark_used(u32 page)
++{
++	bitmap_set(used_bitmap, page);
++}
++
++static void free_page_exit(void)
++{
++	free(used_bitmap);
++	used_bitmap = NULL;
++}
++
++int do_swsusp(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
++{
++	int ret;
++	__u32 offset = 0;
++	void *spare_page = NULL;
++	struct swsusp_header *swsusp_header;
++	struct swsusp_info *swsusp_info;
++	struct swsusp_finish_context *context;
++	int max_page;
++	int i;
++	u32 nr_pfn_pages;
++	u32 **pfn_pages = NULL;
++	u32 *remap_orig_page;
++	u32 *remap_temp_page;
++	u32 **remap_orig;
++	u32 **remap_temp;
++	int remap_idx;
++	int m;
++	void (*swsusp_finish_copy)(void *);
++	char *data_page;
++	char *stack_addr;
++	int high_page;
++#ifdef USE_CRC_32x4
++	CRC32_WORD4_t calc_crc;
++#endif
++#ifdef PAGEMAP_DEBUG
++	int high_page_images = 0;
++	int total_remap = 0;
++	if (getenv("hybdebug") != NULL)
++		debugout = 1;
++#endif
++	/* Address hack */
++	void *swsusp_finish_p = (void *)((u32)swsusp_finish & ~0x1);
++
++	if (argc < 2) {
++		printf("usage: swsusp <interface> "
++		       "[<dev[:part]>] [<offset>]\n");
++		return 0;
++	}
++
++	if (argc == 4) {
++		char *ep;
++		offset = simple_strtoul(argv[3], &ep, 16);
++		if (*ep) {
++			printf("Invalid block offset\n");
++			return 1;
++		}
++	}
++
++	/* Allow for 32 pages of stack */
++	max_page = gd->start_addr_sp / PAGE_SIZE - 32;
++	high_page = (((gd->relocaddr
++		+ _bss_end_ofs)+(PAGE_SIZE-1)) / PAGE_SIZE) + 1;
++#define pfn_is_occupied(pfn) (page > max_page && page <= high_page)
++#ifdef PAGEMAP_DEBUG
++	PAGEMAP_INFO(" *gd->start_addr_sp:%p\n", (void *)gd->start_addr_sp);
++	PAGEMAP_INFO(" *gd->relocaddr:%p\n", (void *)gd->relocaddr);
++	PAGEMAP_INFO(" *bss_start_offset:%d bss_end_offset:%d\n",
++			(int)_bss_start_ofs, (int)_bss_end_ofs);
++	PAGEMAP_INFO(" UBOOT own memory [%p-%p]\n",
++			pg2addr(max_page), pg2addr(high_page));
++#endif
++
++	if (free_page_init())
++		goto mem_err;
++	free_page_start(exclude_max_page + 1);
++
++#ifdef CONFIG_SH_DMA
++	spare_page = malloc_aligned(PAGE_SIZE, ARCH_DMA_MINALIGN);
++#else
++	spare_page = malloc(PAGE_SIZE);
++#endif
++	if (!spare_page)
++		goto mem_err;
++
++	ret = get_device_and_partition(argv[1], argv[2], &swap_dev, &swap_info,
++								1);
++	if (ret < 0)
++		goto err;
++
++	swsusp_header = spare_page;
++	if (page_read(offset, swsusp_header))
++		goto read_err;
++
++#ifdef SWSUSP_DEBUG_INFO
++	PAGEMAP_INFO("swssp_header:\n");
++	PAGEMAP_INFO("    comp_crc: <snip>\n");
++	PAGEMAP_INFO("    img_size: %d\n", swsusp_header->img_size);
++	PAGEMAP_INFO("    image(swap firest sector): %08x\n",
++			(unsigned int)swsusp_header->image);
++	PAGEMAP_INFO("    flags: %08x\n", swsusp_header->flags);
++	PAGEMAP_INFO("    orig_sig:%s\n", swsusp_header->orig_sig);
++	PAGEMAP_INFO("    sig:%s\n",      swsusp_header->sig);
++#endif /* SWSUSP_DEBUG_INFO */
++
++	if (memcmp(HIBERNATE_SIG, swsusp_header->sig, 10)) {
++		printf("No hibernation image present\n");
++		return 0;
++	}
++
++#ifdef USE_CRC_32x4
++	memset(&calc_crc, 0, sizeof(calc_crc));
++	calc_crc32x4((u8 *)((unsigned long)offt_addr + PAGE_SIZE),
++			swsusp_header->img_size, &calc_crc);
++
++	if (memcmp(&calc_crc, &swsusp_header->comp_crc32,
++			sizeof(CRC32_WORD4_t))) {
++		printf("Bad CRC for image, image: %08x:%08x:%08x:%08x, calc: %08x:%08x:%08x:%08x\n",
++			swsusp_header->comp_crc32.crc_w[0],
++			swsusp_header->comp_crc32.crc_w[1],
++			swsusp_header->comp_crc32.crc_w[2],
++			swsusp_header->comp_crc32.crc_w[3],
++			calc_crc.crc_w[0], calc_crc.crc_w[1],
++			calc_crc.crc_w[2], calc_crc.crc_w[3]);
++		return 0;
++	}
++#endif
++
++	/* Overwrite header if necessary */
++#ifndef SWSUSP_KEEP_IMAGE
++	if (memcmp(swsusp_header->sig, swsusp_header->orig_sig, 10)) {
++		memcpy(swsusp_header->sig, swsusp_header->orig_sig, 10);
++		if (page_write(offset, swsusp_header))
++			printf("Write error resetting header\n");
++	}
++#endif
++
++	if (raw_page_init(swsusp_header->image))
++		goto mem_err;
++	raw_page_start();
++
++	if (image_page_init(!(swsusp_header->flags & SF_NOCOMPRESS_MODE)))
++		goto mem_err;
++	image_page_start();
++
++	swsusp_info = spare_page;
++	if (raw_page_get_next(swsusp_info) <= 0)
++		goto read_err;
++
++#ifdef SWSUSP_DEBUG_INFO
++	PAGEMAP_INFO("swsup_info:\n");
++	PAGEMAP_INFO("	utsname.sysname:%s\n", swsusp_info->uts.sysname);
++	PAGEMAP_INFO("            nodename:%s\n", swsusp_info->uts.nodename);
++	PAGEMAP_INFO("            release:%s\n", swsusp_info->uts.release);
++	PAGEMAP_INFO("            version:%s\n", swsusp_info->uts.version);
++	PAGEMAP_INFO("            machine:%s\n", swsusp_info->uts.machine);
++	PAGEMAP_INFO("    vesion_code:%#08x\n",
++		(unsigned int)swsusp_info->version_code);
++	PAGEMAP_INFO("    num_physpages:%d\n",
++		(unsigned int)swsusp_info->num_physpages);
++	PAGEMAP_INFO("    pages        :%d\n",
++		(unsigned int)swsusp_info->pages);
++	PAGEMAP_INFO("    size         :%d\n",
++		(unsigned int)swsusp_info->size);
++#endif
++
++	nr_pfn_pages = (swsusp_info->image_pages * 4 + PAGE_SIZE - 1) /
++								PAGE_SIZE;
++	pfn_pages = malloc(nr_pfn_pages * sizeof(u32 *));
++	if (!pfn_pages)
++		goto mem_err;
++	memset(pfn_pages, 0, nr_pfn_pages * sizeof(u32 *));
++
++	/* UBOOT using memory */
++	for (i = max_page; i <= high_page; i++)
++		free_page_mark_used(pg_ub2zero(i));
++
++	printf("Allocating %u bytes (nr_pfn_pages %u)\n",
++			nr_pfn_pages * PAGE_SIZE, nr_pfn_pages);
++
++	for (i = 0; i < nr_pfn_pages; i++) {
++		u32 idx;
++#ifdef CONFIG_SH_DMA
++		pfn_pages[i] = malloc_aligned(PAGE_SIZE, ARCH_DMA_MINALIGN);
++#else
++		pfn_pages[i] = malloc(PAGE_SIZE);
++#endif
++		if (unlikely(!pfn_pages[i]))
++			goto mem_err;
++		if (unlikely(image_page_get_next(pfn_pages[i]) <= 0))
++			goto read_err;
++		for (idx = 0; idx < PAGE_SIZE / sizeof(u32); idx++) {
++			u32 page = pfn_pages[i][idx];
++			if (page == ~0UL)
++				break;
++			free_page_mark_used(pg_ub2zero(page));
++		}
++	}
++
++	printf("Loading image data pages (%lu pages)\n",
++						swsusp_info->image_pages);
++
++	remap_orig_page = pg2addr(free_page_get_next());
++	remap_temp_page = pg2addr(free_page_get_next());
++
++	remap_orig = (u32 **)remap_orig_page;
++	remap_temp = (u32 **)remap_temp_page;
++	remap_idx = 0;
++
++	m = (swsusp_info->image_pages / 10) ? : 1;
++	for (i = 0; i < swsusp_info->image_pages; i++) {
++		u32 page = pfn_pages[i >> 10][i & 0x3ff];
++		if (unlikely(!pfn_is_valid(page))) {
++			printf("Attempt to restore invalid address %llx\n",
++					pg2phys(page));
++			continue;
++		} else if (unlikely(pfn_is_excluded(page))) {
++			printf("Attempt to restore excluded address %llx\n",
++					pg2phys(page));
++			continue;
++		} else if (unlikely(pfn_is_low(page) &&
++					pfn_is_occupied(page))) {
++			remap_orig[remap_idx] = pg2addr(page);
++			page = free_page_get_next();
++			remap_temp[remap_idx] = pg2addr(page);
++			remap_idx++;
++#ifdef PAGEMAP_DEBUG
++			++total_remap;
++#endif
++			/* If we fill our current page, allocate a new one */
++			if (remap_idx + 1 == PAGE_SIZE / sizeof(u32)) {
++				u32 *next;
++
++				next = pg2addr(free_page_get_next());
++				remap_orig[remap_idx] = next;
++				remap_orig = (u32 **)next;
++
++				next = pg2addr(free_page_get_next());
++				remap_temp[remap_idx] = next;
++				remap_temp = (u32 **)next;
++
++				remap_idx = 0;
++			}
++		}
++		if (image_page_get_next(pg2addr(page)) <= 0)
++			goto read_err;
++		if (!(i % m))
++			printf("Image loading progress: %3d%%\n", 10 * i / m);
++	}
++
++	printf("Image loading done.\n");
++	invalidate_icache_all();
++
++	/* put end markers on the remap list */
++	remap_orig[remap_idx] = (void *) ~0UL;
++	remap_temp[remap_idx] = (void *) ~0UL;
++
++#ifdef PAGEMAP_DEBUG
++	PAGEMAP_INFO("Number of remap pages:%d\n",
++			total_remap);
++	PAGEMAP_INFO("Number of high pages:%d\n",
++			high_page_images);
++	PAGEMAP_INFO("Last read page %d (%08x)\n",
++			_last_read_pages,
++			_last_read_pages * PAGE_SIZE);
++#endif
++	remap_orig = (u32 **)remap_orig_page;
++	remap_temp = (u32 **)remap_temp_page;
++
++	/* Make a copy of swsusp_finish in a free data page */
++	data_page = pg2addr(free_page_get_next());
++	memcpy(data_page, swsusp_finish_p, PAGE_SIZE);
++	swsusp_finish_copy = (void *) data_page;
++
++	/* Setup context for swsusp_finish at the end of the data_page */
++	context = (struct swsusp_finish_context *) (data_page + PAGE_SIZE -
++					sizeof(struct swsusp_finish_context));
++	context->remap_orig_page = remap_orig_page;
++	context->remap_temp_page = remap_temp_page;
++	memcpy((void *)&context->archdata, (void *)swsusp_info->archdata,
++			sizeof(struct swsusp_archdata));
++
++	/* Get a stack pointer for swsusp_finish, growing down from context */
++	stack_addr = (char *) context;
++
++#ifdef CONFIG_NETCONSOLE
++	/*
++	 * Stop the ethernet stack if NetConsole could have
++	 * left it up
++	 */
++	eth_halt();
++#endif
++
++#ifdef CONFIG_USB_DEVICE
++	udc_disconnect();
++#endif
++#ifdef PAGEMAP_DEBUG
++	PAGEMAP_INFO("Execution routine: %08x\n",
++		(u32)context->archdata.cpu_resume_restore_nosave);
++#endif
++	arch_preboot_os();
++	cleanup_before_linux();
++
++	/* Copy the final data from a safe place */
++	call_with_stack(swsusp_finish_copy, context, stack_addr);
++
++	return 0;
++
++mem_err:
++	printf("Not enough memory.\n");
++	goto err;
++
++read_err:
++	printf("Read error while restoring image.\n");
++
++err:
++	__asm__ volatile (
++	"mov	r0, #0\n"
++	"mcr     p15, 0, r0, c7, c5, 0   @ invalidate icache\n"
++	"mcr     p15, 0, r0, c7, c10, 4  @ DSB\n"
++	"mcr     p15, 0, r0, c7, c5, 4   @ ISB\n"
++	: : : "r0", "memory");
++
++	raw_page_exit();
++	image_page_exit();
++	free_page_exit();
++	if (pfn_pages) {
++		for (i = 0; i < nr_pfn_pages; i++)
++			free(pfn_pages[i]);
++		free(pfn_pages);
++	}
++	free(spare_page);
++
++	return 1;
++}
++
++U_BOOT_CMD(swsusp, 4, 0, do_swsusp,
++	"Restore SWSUSP hibernation image",
++	"<interface> [<dev[:part]>] [<offset>]"
++);
+-- 
+1.8.3.1
+
