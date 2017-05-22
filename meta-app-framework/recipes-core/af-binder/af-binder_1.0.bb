@@ -38,7 +38,7 @@ FILES_${PN}-tools = "\
 	${bindir}/afb-genskel \
 "
 
-RDEPENDS_${PN}-dev += "${PN}-tools libafbwsc-dev"
+RDEPENDS_${PN}-dev += "libafbwsc-dev"
 
 #############################################
 # setup sample binding packages
