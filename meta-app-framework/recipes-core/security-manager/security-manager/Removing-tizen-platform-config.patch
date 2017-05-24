@@ -94,7 +94,7 @@ index ae305d3..65cc8b5 100644
 +    if (!globaluid) {
 +        struct passwd pw, *p;
 +        char buf[4096];
-+        int rc = getpwnam_r("userapp", &pw, buf, sizeof buf, &p);
++        int rc = getpwnam_r("afm", &pw, buf, sizeof buf, &p);
 +        globaluid = (rc || p == NULL) ? 555 : p->pw_uid;
 +    }
      return globaluid;
