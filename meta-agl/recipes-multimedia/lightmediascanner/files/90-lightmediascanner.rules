@@ -1,1 +1,0 @@
-SUBSYSTEM=="block", ACTION=="add"    RUN+="/etc/udev/scripts/lightmediascanner.sh"
