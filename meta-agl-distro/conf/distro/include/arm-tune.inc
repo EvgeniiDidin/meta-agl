@@ -6,7 +6,16 @@
 # medium profile boards need to
 #   include conf/machine/include/arch/arm-armv7-a.inc
 
-DEFAULTTUNE = "${@bb.utils.contains('DISTRO_FEATURES', 'agl-medium-arm-compiler', 'armv7athf-neon', 'armv7vethf-neon-vfpv4', d)}"
+# Standard target for 32bit ARM (newer than cortex-a15)
+AGLDEFAULTTUNE = "armv7vethf-neon-vfpv4"
+
+# for cortex-a8, cortex-a9, cortex-a7 (=rpi 2/3)
+AGLDEFAULTTUNE := "${@bb.utils.contains('DISTRO_FEATURES', 'agl-medium-arm-compiler', 'armv7athf-neon', '${AGLDEFAULTTUNE}', d)}"
+
+# for armv6 (=rpi0/1)
+AGLDEFAULTTUNE := "${@bb.utils.contains('DISTRO_FEATURES', 'agl-low-arm-compiler', 'arm1176jzfshf', '${AGLDEFAULTTUNE}', d)}"
+DEFAULTTUNE := "${AGLDEFAULTTUNE}"
+
 QB_SYSTEM_NAME ?= "qemu-system-arm"
 QB_DEFAULT_KERNEL ?= "zImage"
 QB_DEFAULT_FSTYPE ?= "ext4"
