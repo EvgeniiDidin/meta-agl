@@ -13,7 +13,6 @@ ALLOW_EMPTY_${PN} = "1"
 
 RDEPENDS_${PN} += "\
     agl-audio-plugin \
-    alsa-lib \
     alsa-utils \
     pulseaudio-server \
     pulseaudio-misc \

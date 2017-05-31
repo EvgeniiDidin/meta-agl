@@ -12,7 +12,8 @@ SECTION = "console/utils"
 LICENSE = "MPLv2"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=8184208060df880fe3137b93eb88aeea"
 
-DEPENDS = "dbus zlib"
+DEPENDS = "dbus zlib pigz-native"
+do_unpack[depends] += "pigz-native:do_populate_sysroot"
 
 SRCREV = "e9a486a08fff6d3cc7133a350cec3ee10f463207"
 SRC_URI = "git://git.projects.genivi.org/${BPN}.git;protocol=http \
@@ -21,7 +22,7 @@ SRC_URI = "git://git.projects.genivi.org/${BPN}.git;protocol=http \
     "
 S = "${WORKDIR}/git"
 
-inherit gzipnative autotools gettext cmake systemd
+inherit autotools gettext cmake systemd
 
 # -fPIC is needed to prevent relocation errors when we compile gtest with
 # Yocto security flags. See this issue for more details:

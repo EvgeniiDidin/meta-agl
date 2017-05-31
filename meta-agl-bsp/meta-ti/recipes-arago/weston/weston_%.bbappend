@@ -8,8 +8,9 @@ FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 
 RDEPENDS_${PN} += "weston-conf"
 
-
-SRC_URI += " \
+####################### F I X M E  ##########################
+# FIXME pyro
+DISABLED_SRC_URI += " \
 	file://0001-udev-seat-restrict-udev-enumeration-to-card0.patch \
 	file://0001-Add-soc-performance-monitor-utilites.patch \
 	file://0002-Weston-Allow-visual_id-to-be-0.patch \
@@ -18,5 +19,7 @@ SRC_URI += " \
 	file://0001-compositor-drm-fix-hotplug-weston-termination-proble.patch \
 	file://0001-compositor-drm-support-RGB565-with-pixman-renderer.patch \
 "
+####################### F I X M E  ##########################
+
 
 RDEPENDS_${PN}_remove = "weston-conf"

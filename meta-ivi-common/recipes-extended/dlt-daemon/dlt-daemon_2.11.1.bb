@@ -13,7 +13,8 @@ LICENSE = "MPLv2"
 LIC_FILES_CHKSUM = "file://LICENSE.txt;md5=99ba60c3fad7eaf8c56bca6dd75cba09 \
                     file://MPL.txt;md5=ccdb2761cef70c8b2612624c323f89dc"
 
-DEPENDS = "dbus zlib"
+DEPENDS = "dbus zlib pigz-native"
+do_unpack[depends] += "pigz-native:do_populate_sysroot"
 
 # FIX ME
 # This should be TAG = "v${PV}" but yocto doesn't support lightweight tags for now
@@ -27,7 +28,7 @@ SRC_URI = "git://git.projects.genivi.org/${PN}.git;branch=${BRANCH};tag=${TAG} \
            file://0004-Modify-systemd-config-directory.patch"
 S = "${WORKDIR}/git"
 
-inherit gzipnative autotools gettext cmake systemd
+inherit autotools gettext cmake systemd
 
 # -fPIC is needed to prevent relocation errors when we compile gtest with
 # Yocto security flags. See this issue for more details:

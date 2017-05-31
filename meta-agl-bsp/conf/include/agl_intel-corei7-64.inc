@@ -22,7 +22,7 @@ APPEND += "console=ttyS0,115200n8 reboot=efi"
 IMAGE_INSTALL_append = " \
         libva \
         va-intel \
-        gstreamer-vaapi-1.0 "
+        gstreamer1.0-vaapi"
 
 AGL_DEFAULT_IMAGE_FSTYPES := "wic hddimg"
 INITRD_LIVE = "${DEPLOY_DIR_IMAGE}/${INITRD_IMAGE_LIVE}-${MACHINE}.ext4.gz"

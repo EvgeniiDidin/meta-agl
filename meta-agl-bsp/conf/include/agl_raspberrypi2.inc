@@ -11,7 +11,6 @@ MULTI_PROVIDER_WHITELIST += "virtual/libgl virtual/egl virtual/libgles1 virtual/
 
 KERNEL_IMAGETYPE = "uImage"
 KERNEL_DEVICETREE_append = " overlays/vc4-kms-v3d-overlay.dtb"
-PREFERRED_VERSION_linux-raspberrypi = "4.4.%"
 PREFERRED_VERSION_mesa = "12.%"
 
 PREFERRED_PROVIDER_virtual/egl = "mesa"

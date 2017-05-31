@@ -23,7 +23,7 @@ afm_name    = "afm"
 afm_confdir = "${sysconfdir}/${afm_name}"
 afm_datadir = "/var/local/lib/${afm_name}"
 afb_binding_dir = "${libdir}/afb"
-systemd_units_root = "/usr/local/lib/systemd"
+systemd_units_root = "/var/local/lib/systemd"
 
 CFLAGS_append_agl-devel = " -DAGL_DEVEL"
 
