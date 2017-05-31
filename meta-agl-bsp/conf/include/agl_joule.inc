@@ -7,7 +7,7 @@ IMAGE_INSTALL_append = " linux-firmware-iwlwifi-8000c linux-firmware-ibt-11-5"
 IMAGE_INSTALL_append = " \
         libva \
         va-intel \
-        gstreamer-vaapi-1.0 "
+        gstreamer1.0-vaapi"
 OSTREE_BOOTLOADER ?= "u-boot"
 
 AGL_DEFAULT_IMAGE_FSTYPES := "live wic"

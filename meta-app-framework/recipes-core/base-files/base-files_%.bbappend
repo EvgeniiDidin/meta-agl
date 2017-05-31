@@ -1,4 +1,3 @@
-DEPENDS_append_smack = " smack-userspace-native"
 RDEPENDS_${PN}_append_smack = " smack-userspace"
 
 do_install_append() {
@@ -22,6 +21,7 @@ EOF
     chmod 0644 ${D}/${sysconfdir}/smack/accesses.d/default-access-domains-no-user
 }
 
+PACKAGE_WRITE_DEPS_append_smack = " smack-userspace-native"
 pkg_postinst_${PN}_append_smack() {
     chsmack -r -a 'User::Home' -t -D $D/${sysconfdir}/skel
     chsmack -a 'User::App-Shared' -D $D/${sysconfdir}/skel/app-data

@@ -11,7 +11,7 @@ BBCLASSEXTEND = "native"
 
 SECTION = "base"
 
-DEPENDS = "openssl libxml2 xmlsec1 systemd libzip json-c systemd security-manager libcap-native af-binder"
+DEPENDS = "openssl libxml2 xmlsec1 systemd libzip json-c systemd security-manager af-binder"
 DEPENDS_class-native = "openssl libxml2 xmlsec1 libzip json-c"
 
 EXTRA_OECMAKE_class-native  = "\
@@ -48,7 +48,6 @@ FILES_${PN} += "\
 	${@bb.utils.contains('DISTRO_FEATURES', 'systemd', '${systemd_user_unitdir}/afm-user-daemon.service', '', d)} \
 "
 RDEPENDS_${PN}_append_smack = " smack-userspace bash"
-DEPENDS_append_smack = " smack-userspace-native"
 
 # short hacks here
 SRC_URI += "\
@@ -83,6 +82,7 @@ do_install_append_porter() {
     echo "LD_PRELOAD=/usr/lib/libEGL.so" > ${D}${afm_confdir}/unit.env.d/preload-libEGL
 }
 
+PACKAGE_WRITE_DEPS_append = " libcap-native"
 pkg_postinst_${PN}() {
     if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
         for SYS in "system" "user";do
@@ -97,6 +97,7 @@ pkg_postinst_${PN}() {
     setcap cap_mac_override,cap_dac_override=ep $D${bindir}/afm-system-daemon
 }
 
+PACKAGE_WRITE_DEPS_append_smack = " smack-userspace-native libcap-native"
 pkg_postinst_${PN}_smack() {
     if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
         for SYS in "system" "user";do
