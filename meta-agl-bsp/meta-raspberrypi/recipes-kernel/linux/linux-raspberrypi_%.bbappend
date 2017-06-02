@@ -1,9 +1,5 @@
 FILESEXTRAPATHS_prepend := "${THISDIR}/${BPN}:"
 
-SRC_URI_append = "\
-	${@base_conditional('USE_FAYTECH_MONITOR', '1', 'file://0002-faytech-fix-rpi.patch', '', d)} \
-"
-
 # Fix CVE-2017-1000364
 SRC_URI_append = "\
       file://0001-mm-larger-stack-guard-gap-between-vmas.patch \
