@@ -4,7 +4,7 @@ Description=Lightmediascanner (LMS)
 [Service]
 Type=dbus
 BusName=org.lightmediascanner
-ExecStart=/usr/bin/lightmediascannerd --startup-scan --directory=/run/media
+ExecStart=/usr/bin/lightmediascannerd --startup-scan --directory=/media
 
 [Install]
 WantedBy=default.target
