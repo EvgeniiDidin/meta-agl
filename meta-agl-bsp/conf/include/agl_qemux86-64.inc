@@ -17,3 +17,7 @@ APPEND += "console=ttyS0,115200n8"
 #
 # All boot message will be off
 APPEND += "quiet"
+
+# Build updatable image. Only takes effect when sota.bbclass is inherited
+DISTRO_FEATURES_append = " sota"
+

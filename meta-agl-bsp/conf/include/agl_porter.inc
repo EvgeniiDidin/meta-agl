@@ -178,3 +178,6 @@ DISTRO_FEATURES_append = " h264avcenc_lib"
 #DISTRO_FEATURES_append = " aacsdec_mdw"
 # ARM AAC Encode Middleware for Linux
 #DISTRO_FEATURES_append = " aacenc_mdw"
+
+# Build updatable image. Only takes effect when sota.bbclass is inherited
+DISTRO_FEATURES_append = " sota"

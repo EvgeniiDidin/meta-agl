@@ -18,3 +18,7 @@ UBOOT_MACHINE = "porter_vin_config"
 
 PREFERRED_PROVIDER_virtual/libgles2 = "mesa"
 PREFERRED_PROVIDER_virtual/egl = "mesa"
+
+# Build updatable image. Only takes effect when sota.bbclass is inherited
+DISTRO_FEATURES_append = " sota"
+

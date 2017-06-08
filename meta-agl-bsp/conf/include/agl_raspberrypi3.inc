@@ -29,3 +29,7 @@ IMAGE_INSTALL_append = " kernel-modules linux-firmware "
 
 # Psplash causes crash on first boot on RPi
 IMAGE_FEATURES_remove = "splash"
+
+# Build updatable image. Only takes effect when sota.bbclass is inherited
+DISTRO_FEATURES_append = " sota"
+
