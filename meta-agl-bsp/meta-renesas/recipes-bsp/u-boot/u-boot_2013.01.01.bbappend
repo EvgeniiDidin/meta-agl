@@ -6,5 +6,8 @@ SRC_URI_append_agl-porter-hibernate = " file://hibernation/0001-Add-rcar-sdhi-DM
                                         file://hibernation/0002-Add-Hibernation-swsusp-command-support.patch \
                                         file://hibernation/0003-Add-Hibernation-swsuspmem-command-support.patch \
                                         file://hibernation/0004-Add-porter-board-Hibernation-code.patch \
+                                        file://hibernation/0001-Add-hibernation-image-area.patch \
+                                        file://hibernation/0002-Enable-swsusp-DMA-support.patch \
+                                        file://hibernation/0003-Add-hibernation-image-area.patch \
                                       "
 
