@@ -1,0 +1,32 @@
+From 4d35f60f9bd47aebc104d34b9099e8e4f69fa53a Mon Sep 17 00:00:00 2001
+From: Yuichi Kusakabe <yuichi.kusakabe@jp.fujitsu.com>
+Date: Fri, 9 Jun 2017 20:15:32 +0900
+Subject: [PATCH 3/3] Add hibernation image area
+
+0x40000000 <-> 0x77FFFFFF : kernel
+0x78000000 <-> 0x7FFFFFFF : hibernation image area
+
+Signed-off-by: Yuichi Kusakabe <yuichi.kusakabe@jp.fujitsu.com>
+---
+ arch/arm/boot/dts/r8a7791-porter.dts | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/arch/arm/boot/dts/r8a7791-porter.dts b/arch/arm/boot/dts/r8a7791-porter.dts
+index b1acf4a..a0e273e 100644
+--- a/arch/arm/boot/dts/r8a7791-porter.dts
++++ b/arch/arm/boot/dts/r8a7791-porter.dts
+@@ -42,7 +42,10 @@
+ 
+ 	memory@40000000 {
+ 		device_type = "memory";
+-		reg = <0 0x40000000 0 0x40000000>;
++/*		reg = <0 0x40000000 0 0x40000000>; */
++/*		0x40000000 <-> 0x77FFFFFF : kernel */
++/*		0x78000000 <-> 0x7FFFFFFF : snap   */
++		reg = <0 0x40000000 0 0x38000000>;
+ 	};
+ 
+ 	memory@200000000 {
+-- 
+1.8.3.1
+

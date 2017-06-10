@@ -32,6 +32,9 @@ SRC_URI_append_agl-porter-hibernate = " file://hibernation/0001-Add-Hibernation-
                                         file://hibernation/0013-Add-rcar-spi-hibernation-code.patch \
                                         file://hibernation/0014-Add-rcar-sci-hibernation-code.patch \ 
                                         file://hibernation/0015-Add-rcar-usbphy-hibernation-code.patch \
+                                        file://hibernation/0001-Add-shdmac-hibernation-code.patch \
+                                        file://hibernation/0002-Fix-Black-blink-correction-of-display.patch \
+                                        file://hibernation/0003-Add-hibernation-image-area.patch \
                                         file://hibernation/hibernation.cfg \
                                        "
 
