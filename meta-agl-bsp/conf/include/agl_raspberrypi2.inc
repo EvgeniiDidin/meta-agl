@@ -9,7 +9,7 @@ CORE_IMAGE_EXTRA_INSTALL += "wayland weston"
 
 MULTI_PROVIDER_WHITELIST += "virtual/libgl virtual/egl virtual/libgles1 virtual/libgles2"
 
-KERNEL_IMAGETYPE = "uImage"
+KERNEL_IMAGETYPE = "Image"
 KERNEL_DEVICETREE_append = " overlays/vc4-kms-v3d-overlay.dtb"
 PREFERRED_VERSION_linux-raspberrypi = "4.4.%"
 PREFERRED_VERSION_mesa = "12.%"
