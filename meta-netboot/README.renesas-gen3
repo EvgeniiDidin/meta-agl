@@ -56,6 +56,8 @@ setenv bootcmd 'setenv bootargs ${bootargs_console} ${bootargs_video} ${bootargs
 
 setenv ipaddr '<board_IP>'
 setenv serverip '<server_IP>'
+setenv ethact ravb
+setenv ethaddr DE:AD:C0:FF:EE:01
 
 setenv bootargs_root 'root=/dev/ram0 ramdisk_size=16384 ip=dhcp'
 setenv bootkload_net 'tftp ${bootkaddr} ${board}/${bootkfile}'
