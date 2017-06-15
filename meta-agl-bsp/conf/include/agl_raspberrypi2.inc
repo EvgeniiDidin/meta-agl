@@ -1,6 +1,5 @@
-#GPU_MEM = "512"
-# Increase GPU_MEM for AGL apps (navi/poi)
-GPU_MEM = "640"
+# Maximum memory allowed to be assigned
+GPU_MEM = "255"
 
 ENABLE_CMA = "1"
 CMA_LWM = "16"
