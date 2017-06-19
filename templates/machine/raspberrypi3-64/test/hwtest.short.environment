@@ -1,0 +1,10 @@
+DEVICE_TYPE=bcm2837-rpi-3-b
+DEVICE_NAME=raspberrypi3-64
+DEVICE_DTB=Image-bcm2837-rpi-3-b.dtb
+DEVICE_KERNEL=Image
+DEVICE_INITRAMFS=initramfs-netboot-image-raspberrypi3-64.ext4.gz.u-boot
+DEVICE_NBDROOT=agl-demo-platform-raspberrypi3-64.ext4.xz
+DEVICE_NBDROOT_COMPRESSION=xz
+DEVICE_BOOT_METHOD=u-boot
+DEVICE_BOOT_TYPE=booti
+#DEVICE_URL_PREFIX=https://download.automotivelinux.org/AGL
