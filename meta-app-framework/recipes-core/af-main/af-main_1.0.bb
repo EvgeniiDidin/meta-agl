@@ -64,6 +64,8 @@ do_install_append_class-target() {
     install -d -m 0775 ${D}${systemd_units_root}/user
     install -d -m 0775 ${D}${systemd_units_root}/system/default.target.wants
     install -d -m 0775 ${D}${systemd_units_root}/user/default.target.wants
+    install -d -m 0775 ${D}${systemd_units_root}/system/sockets.target.wants
+    install -d -m 0775 ${D}${systemd_units_root}/user/sockets.target.wants
     install -d ${D}${afm_datadir}/applications
     install -d ${D}${afm_datadir}/icons
     if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
