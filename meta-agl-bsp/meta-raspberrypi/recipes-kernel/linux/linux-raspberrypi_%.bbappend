@@ -31,6 +31,39 @@ do_configure_append_sota() {
     kernel_configure_variable BLK_DEV_RAM y
 }
 
+# can
+do_configure_append() {
+
+    kernel_configure_variable TASKSTATS y
+    kernel_configure_variable TASK_DELAY_ACCT y
+    kernel_configure_variable USER_RETURN_NOTIFIER y
+    kernel_configure_variable PREEMPT_NOTIFIERS y
+    kernel_configure_variable CAN m
+    kernel_configure_variable CAN_RAW m
+    kernel_configure_variable CAN_BCM m
+    kernel_configure_variable CAN_GW m
+    kernel_configure_variable CAN_VCAN m
+    kernel_configure_variable CAN_SLCAN m
+    kernel_configure_variable CAN_DEV m
+    kernel_configure_variable CAN_CALC_BITTIMING y
+    kernel_configure_variable CAN_MCP251X m
+    kernel_configure_variable CAN_ESD_USB2 m
+    kernel_configure_variable CAN_GS_USB m
+    kernel_configure_variable CAN_KVASER_USB m
+    kernel_configure_variable CAN_PEAK_USB m
+    kernel_configure_variable CAN_8DEV_USB m
+
+# not enabled, yet ?
+# kernel_configure_variable CAN_LEDS is not set
+# kernel_configure_variable CAN_SJA1000 is not set
+# kernel_configure_variable CAN_C_CAN is not set
+# kernel_configure_variable CAN_M_CAN is not set
+# kernel_configure_variable CAN_CC770 is not set
+# kernel_configure_variable CAN_EMS_USB is not set
+# kernel_configure_variable CAN_SOFTING is not set
+# kernel_configure_variable CAN_DEBUG_DEVICES is not set
+}
+
 do_configure_append() {
 
     # VC4 Wayland/Weston
@@ -41,14 +74,14 @@ do_configure_append() {
     kernel_configure_variable FB_BCM2708 n
 
     # Enable support for TP-Link TL-W722N USB Wifi adapter
-    kernel_configure_variable CONFIG_ATH_CARDS m
-    kernel_configure_variable CONFIG_ATH9K_HTC m
+    kernel_configure_variable ATH_CARDS m
+    kernel_configure_variable ATH9K_HTC m
 
     # Enable support for RTLSDR
-    kernel_configure_variable CONFIG_MEDIA_USB_SUPPORT y
-    kernel_configure_variable CONFIG_MEDIA_DIGITAL_TV_SUPPORT y
-    kernel_configure_variable CONFIG_DVB_USB_V2 m
-    kernel_configure_variable CONFIG_DVB_USB_RTL28XXU m
+    kernel_configure_variable MEDIA_USB_SUPPORT y
+    kernel_configure_variable MEDIA_DIGITAL_TV_SUPPORT y
+    kernel_configure_variable DVB_USB_V2 m
+    kernel_configure_variable DVB_USB_RTL28XXU m
 
     # KEEP until fixed upstream:
       # Keep this the last line

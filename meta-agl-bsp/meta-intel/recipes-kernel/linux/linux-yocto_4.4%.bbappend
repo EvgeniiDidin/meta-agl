@@ -1,9 +1,5 @@
 FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
 
-# adding most supported CAN devices
-SRC_URI_append = " file://can-bus.cfg"
-KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/can-bus.cfg"
- 
 # adding most supported USB Bluetooth, Wifiand Ehternet devices
 SRC_URI_append = " file://usb-devices.cfg"
  

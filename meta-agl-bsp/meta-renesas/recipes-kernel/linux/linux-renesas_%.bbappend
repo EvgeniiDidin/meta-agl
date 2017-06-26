@@ -39,3 +39,6 @@ SRC_URI_append_agl-porter-hibernate = " file://hibernation/0001-Add-Hibernation-
                                        "
 
 KERNEL_CONFIG_FRAGMENTS_append_agl-porter-hibernate += " ${WORKDIR}/hibernation/hibernation.cfg"
+
+# file comes out of  meta-agl-bsp/recipes-kernel/linux/linux_%.bbappend
+KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/can-bus.cfg"
