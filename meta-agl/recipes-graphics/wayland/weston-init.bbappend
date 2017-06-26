@@ -41,6 +41,14 @@ EOF
 SUBSYSTEM=="input", MODE="0660", GROUP="input", SECLABEL{smack}="^"
 EOF
 
+    # user 'display' must also be able to access /dev/media*, etc.
+    cat >${D}${sysconfdir}/udev/rules.d/zz-remote-display.rules <<'EOF'
+SUBSYSTEM=="media", MODE="0660", GROUP="display", SECLABEL{smack}="*"
+SUBSYSTEM=="video4linux", MODE="0660", GROUP="display", SECLABEL{smack}="*"
+KERNEL=="uvcs", SUBSYSTEM=="misc", MODE="0660", GROUP="display", SECLABEL{smack}="*"
+KERNEL=="rgnmm", SUBSYSTEM=="misc", MODE="0660", GROUP="display", SECLABEL{smack}="*"
+EOF
+
     install -d ${D}${sysconfdir}/tmpfiles.d
     install -Dm755 ${WORKDIR}/weston_tmpfiles.conf ${D}/${libdir}/tmpfiles.d/weston.conf
 
