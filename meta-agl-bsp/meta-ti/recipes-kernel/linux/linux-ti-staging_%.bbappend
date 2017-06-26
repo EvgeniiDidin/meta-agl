@@ -28,3 +28,6 @@ KERNEL_CONFIG_FRAGMENTS_append_smack = "\
        ${WORKDIR}/smack.cfg \
        ${WORKDIR}/smack-default-lsm.cfg \
 "
+
+# file comes out of  meta-agl-bsp/recipes-kernel/linux/linux_%.bbappend
+KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/can-bus.cfg"
