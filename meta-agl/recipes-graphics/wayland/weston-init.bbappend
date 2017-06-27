@@ -2,7 +2,7 @@ FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 
 inherit agl-graphical
 
-WESTONSTART ??= "/usr/bin/weston --idle-time=4294967 --tty=${WESTONTTY}"
+WESTONSTART ??= "/usr/bin/weston ${WESTONARGS}"
 WESTONSTART_append = " ${@bb.utils.contains("IMAGE_FEATURES", "debug-tweaks", " --log=${DISPLAY_XDG_RUNTIME_DIR}/weston.log", "",d)}"
 
 SRC_URI += " \
