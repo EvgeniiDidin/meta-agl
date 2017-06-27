@@ -18,3 +18,6 @@ SRC_URI += " file://rtl_sdr.cfg \
 # disk drivers for vmdk
 SRC_URI_append_qemux86 = " file://vbox-vmware-sata.cfg "
 SRC_URI_append_qemux86-64 = " file://vbox-vmware-sata.cfg "
+
+# Backported fix for CVE-2017-1000364
+SRC_URI_append = " file://4.8-0001-SEC-Backport-Fix-CVE-2017-1000364-through-backport.patch "
