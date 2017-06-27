@@ -22,7 +22,7 @@ case "$1" in
 
   add|install)
     f=$(realpath $2)
-    send install '{"wgt":"'"$f"'","force":true}'
+    send install '{"wgt":"'"$f"'","force":true,"reload":false}'
     ;;
 
   -h|--help|help)
