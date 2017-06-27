@@ -1,3 +1,5 @@
+FILESEXTRAPATHS_prepend := "${THISDIR}/${BPN}-4.9:"
+
 #-------------------------------------------------------------------------
 # smack patches for handling bluetooth
 
