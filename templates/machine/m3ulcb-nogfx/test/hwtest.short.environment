@@ -1,5 +1,5 @@
 DEVICE_TYPE=r8a7796-m3ulcb
-DEVICE_NAME=m3ulcb-nogfx
+DEVICE_NAME=m3ulcb
 DEVICE_DTB=Image-r8a7796-m3ulcb.dtb
 DEVICE_KERNEL=Image
 DEVICE_INITRAMFS=initramfs-netboot-image-m3ulcb.ext4.gz
