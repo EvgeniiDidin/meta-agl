@@ -29,3 +29,9 @@ IMAGE_INSTALL_append = " kernel-modules linux-firmware "
 
 # Psplash causes crash on first boot on RPi
 IMAGE_FEATURES_remove = "splash"
+
+# Add the custom rpi-sdimg output format
+AGL_EXTRA_IMAGE_FSTYPES_append  = " rpi-sdimg.xz"
+
+# Use the AGL default ext4.xz to generate the rpi-sdimg
+SDIMG_ROOTFS_TYPE = "ext4.xz"

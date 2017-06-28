@@ -33,3 +33,8 @@ IMAGE_FEATURES_remove = "splash"
 # Build updatable image. Only takes effect when sota.bbclass is inherited
 DISTRO_FEATURES_append = " sota"
 
+# Add the custom rpi-sdimg output format
+AGL_EXTRA_IMAGE_FSTYPES_append  = " rpi-sdimg.xz"
+
+# Use the AGL default ext4.xz to generate the rpi-sdimg
+SDIMG_ROOTFS_TYPE = "ext4.xz"

@@ -17,9 +17,9 @@ python () {
 		d.setVar("INITRAMFS_IMAGE","initramfs-netboot-image")
 		if (d.getVar("KERNEL_IMAGETYPE",True) == "uImage"):
 			# case for "old" u-boot images, like Porter board
-			d.setVar("INITRAMFS_FSTYPES_pn-initramfs-netboot-image", "ext4.gz.u-boot");
+			d.setVar("NETBOOT_FSTYPES", "ext4.gz.u-boot");
 		else:
 			# case for new u-boot images which don't require uImage format 
-			d.setVar("INITRAMFS_FSTYPES_pn-initramfs-netboot-image", "ext4.gz");
+			d.setVar("NETBOOT_FSTYPES", "ext4.gz");
 }
 
