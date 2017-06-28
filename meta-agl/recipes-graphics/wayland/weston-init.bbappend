@@ -57,6 +57,15 @@ EOF
         -i ${D}/${libdir}/tmpfiles.d/weston.conf
 }
 
+do_install_append_imx() {
+
+    install -d ${D}${sysconfdir}/udev/rules.d
+    cat >>${D}${sysconfdir}/udev/rules.d/zz-dri.rules <<'EOF'
+SUBSYSTEM=="gpu_class", MODE="0660", GROUP="${WESTONGROUP}", SECLABEL{smack}="*"
+EOF
+
+}
+
 FILES_${PN} += "${libdir}/tmpfiles.d/*.conf"
 
 
