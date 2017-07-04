@@ -23,10 +23,16 @@ exec_postinst_scriptlets() {
         [ "$POSTINST_LOGGING" = "1" ] && eval echo "Running postinst $i..." $append_log
         if [ -x $i ]; then
             eval sh -c $i $append_log
-            rm $i
+            if [ $? -eq 0 ]; then
+                rm $i
+            else
+                echo "ERROR: postinst $i failed."
+                [ "$POSTINST_LOGGING" = "1" ] && eval echo "ERROR: postinst $i failed." $append_log
+                remove_agl_pi_dir=0
+            fi
         else
-            echo "ERROR: postinst $i failed."
-            [ "$POSTINST_LOGGING" = "1" ] && eval echo "ERROR: postinst $i failed." $append_log
+            echo "ERROR: postinst $i do not exists or do not have execute permission."
+            [ "$POSTINST_LOGGING" = "1" ] && eval echo "ERROR: postinst $i do not exists or do not have execute permission." $append_log
             remove_agl_pi_dir=0
         fi
     done
