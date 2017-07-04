@@ -46,11 +46,17 @@ do_aglwgt_deploy() {
     install -d ${D}/${sysconfdir}/agl-postinsts
     cat > ${D}/${sysconfdir}/agl-postinsts/${POST_INSTALL_SCRIPT} <<EOF
 #!/bin/sh -e
+INSTALL_RESULT=0
 for file in ${APP_FILES}; do
     /usr/bin/afm-install install /usr/AGL/apps/\$file
+    if [ $? -ne 0 ]; then
+        echo "Application \$file failed to install"
+        INSTALL_RESULT=1
+    fi
 done
 sync
 ${EXTRA_WGT_POSTINSTALL}
+exit $INSTALL_RESULT
 EOF
     chmod a+x ${D}/${sysconfdir}/agl-postinsts/${POST_INSTALL_SCRIPT}
 }
