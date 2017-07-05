@@ -16,9 +16,13 @@ SRC_URI = "${SRC_URI_git} \
           "
 
 SRCREV = "305d98f7b6db1a3207cc877bd2cda819e3b90656"
+PV = "master+git${SRCPV}"
+
 S = "${WORKDIR}/git"
 
 inherit cmake pkgconfig
+
+CFLAGS_append_agl-devel = " -DAGL_DEVEL"
 
 pkg_postinst_${PN}() {
 	mkdir -p "$D${libdir}/afb"

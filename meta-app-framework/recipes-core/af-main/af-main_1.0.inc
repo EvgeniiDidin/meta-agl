@@ -15,6 +15,7 @@ SRC_URI = "${SRC_URI_git} \
           "
 
 SRCREV = "5cea66506dff09e8bdebbd623115ea103e87aba6"
+PV = "master+git${SRCPV}"
 
 S = "${WORKDIR}/git"
 
@@ -23,4 +24,6 @@ afm_confdir = "${sysconfdir}/${afm_name}"
 afm_datadir = "/var/local/lib/${afm_name}"
 afb_binding_dir = "${libdir}/afb"
 systemd_units_root = "/usr/local/lib/systemd"
+
+CFLAGS_append_agl-devel = " -DAGL_DEVEL"
 
