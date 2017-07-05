@@ -40,3 +40,5 @@ SECURITY_LDFLAGS_pn-gpm = ""
 SECURITY_CFLAGS_pn-libatasmart = ""
 SECURITY_LDFLAGS_pn-libatasmart = ""
 
+
+AGL_EXTRA_IMAGE_FSTYPES := "wic.xz"
