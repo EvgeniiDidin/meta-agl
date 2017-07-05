@@ -23,3 +23,7 @@ IMAGE_INSTALL_append = " \
         libva \
         va-intel \
         gstreamer-vaapi-1.0 "
+
+AGL_DEFAULT_IMAGE_FSTYPES := "live wic"
+AGL_DEFAULT_INITRAMFS_FSTYPES := "cpio.gz"
+NOISO = "1"
