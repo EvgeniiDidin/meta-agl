@@ -84,7 +84,7 @@ do_install_append_porter() {
 pkg_postinst_${PN}() {
     if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
         for SYS in "system" "user";do
-           for DEST in "default.target.wants" ".";do
+           for DEST in "sockets.target.wants" "default.target.wants" ".";do
               chgrp ${afm_name} $D${systemd_units_root}/${SYS}/${DEST};
            done
         done
@@ -98,7 +98,7 @@ pkg_postinst_${PN}() {
 pkg_postinst_${PN}_smack() {
     if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
         for SYS in "system" "user";do
-           for DEST in "default.target.wants" ".";do
+           for DEST in "sockets.target.wants" "default.target.wants" ".";do
               chgrp ${afm_name} $D${systemd_units_root}/${SYS}/${DEST};
               chsmack -a 'System::Shared' -t $D${systemd_units_root}/${SYS}/${DEST};
            done
