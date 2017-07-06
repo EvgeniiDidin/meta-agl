@@ -33,3 +33,14 @@ IMAGE_INSTALL_append = " \
 
 SECURITY_CFLAGS_pn-devil = "${SECURITY_NO_PIE_CFLAGS}"
 
+# since krogoth, u-boot-fslc does not seem to handle imx6qsabreauto correctly
+
+PREFERRED_PROVIDER_u-boot = "u-boot-imx"
+PREFERRED_PROVIDER_virtual/bootloader = "u-boot-imx"
+PREFERRED_PROVIDER_u-boot-mxsboot-native = "u-boot-imx"
+
+# force generate sdcard image also
+
+AGL_DEFAULT_IMAGE_FSTYPES := "sdcard.xz"
+AGL_DEFAULT_INITRAMFS_FSTYPES := ""
+
