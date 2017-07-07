@@ -28,23 +28,23 @@ do_install_append() {
     install -d ${D}${sysconfdir}/init.d
     install -d ${D}${sysconfdir}/udev/rules.d
     cat >${D}${sysconfdir}/udev/rules.d/zz-dri.rules <<'EOF'
-SUBSYSTEM=="drm", MODE="0660", GROUP="${WESTONGROUP}", SECLABEL{smack}="*"
+SUBSYSTEM=="drm", MODE="0660", GROUP="${WESTONGROUP}", SECLABEL{smack}="*", TAG+="systemd", ENV{SYSTEMD_WANTS}="weston.service"
 EOF
 
     # user 'display' must own /dev/tty${WESTONTTY} for weston to start correctly
     cat >${D}${sysconfdir}/udev/rules.d/zz-tty.rules <<'EOF'
-SUBSYSTEM=="tty", KERNEL=="tty${WESTONTTY}", OWNER="${WESTONUSER}", SECLABEL{smack}="^"
+SUBSYSTEM=="tty", KERNEL=="tty${WESTONTTY}", OWNER="${WESTONUSER}", SECLABEL{smack}="^", TAG+="systemd", ENV{SYSTEMD_WANTS}="weston.service"
 EOF
 
     # user 'display' must also be able to access /dev/input/*
     cat >${D}${sysconfdir}/udev/rules.d/zz-input.rules <<'EOF'
-SUBSYSTEM=="input", MODE="0660", GROUP="input", SECLABEL{smack}="^"
+SUBSYSTEM=="input", MODE="0660", GROUP="input", SECLABEL{smack}="^", TAG+="systemd", ENV{SYSTEMD_WANTS}="weston.service"
 EOF
 
     # user 'display' must also be able to access /dev/media*, etc.
     cat >${D}${sysconfdir}/udev/rules.d/zz-remote-display.rules <<'EOF'
-SUBSYSTEM=="media", MODE="0660", GROUP="display", SECLABEL{smack}="*"
-SUBSYSTEM=="video4linux", MODE="0660", GROUP="display", SECLABEL{smack}="*"
+SUBSYSTEM=="media", MODE="0660", GROUP="display", SECLABEL{smack}="*", TAG+="systemd", ENV{SYSTEMD_WANTS}="weston.service"
+SUBSYSTEM=="video4linux", MODE="0660", GROUP="display", SECLABEL{smack}="*", TAG+="systemd", ENV{SYSTEMD_WANTS}="weston.service"
 KERNEL=="uvcs", SUBSYSTEM=="misc", MODE="0660", GROUP="display", SECLABEL{smack}="*"
 KERNEL=="rgnmm", SUBSYSTEM=="misc", MODE="0660", GROUP="display", SECLABEL{smack}="*"
 EOF
