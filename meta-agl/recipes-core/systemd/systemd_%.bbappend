@@ -20,3 +20,6 @@ do_install_append() {
 }
 
 FILES_${PN} += "${sysconfdir}/e2fsck.conf "
+
+# SPEC-737: connmand also has a NTP client which races with systemd-timesyncd
+PACKAGECONFIG_remove = "timesyncd"
