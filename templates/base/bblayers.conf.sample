@@ -38,6 +38,7 @@ AGL_CORE_DEPENDENCY_LAYERS = " \
   ${METADIR}/meta-openembedded/meta-efl \
   ${METADIR}/meta-openembedded/meta-networking \
   ${METADIR}/meta-openembedded/meta-python \
+  ${METADIR}/meta-openembedded/meta-filesystems \
   "
 
 ####################
