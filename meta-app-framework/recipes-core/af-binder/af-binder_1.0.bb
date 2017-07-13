@@ -15,7 +15,7 @@ SRC_URI = "${SRC_URI_git} \
            ${SRC_URI_files} \
           "
 
-SRCREV = "b2114e0f626ed42a5d6154c681486b4edb19fbbf"
+SRCREV = "c9ec9b1a76ce90048974476b1a5aa1be89b58536"
 PV = "master+git${SRCPV}"
 
 S = "${WORKDIR}/git"
