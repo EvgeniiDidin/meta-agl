@@ -45,7 +45,7 @@ SYSTEMD_AUTO_ENABLE = "enable"
 FILES_${PN} += "\
 	${@bb.utils.contains('DISTRO_FEATURES', 'systemd', '${systemd_user_unitdir}/afm-user-daemon.service', '', d)} \
 "
-RDEPENDS_${PN}_append_smack = " smack-userspace"
+RDEPENDS_${PN}_append_smack = " smack-userspace bash"
 DEPENDS_append_smack = " smack-userspace-native"
 
 # short hacks here
