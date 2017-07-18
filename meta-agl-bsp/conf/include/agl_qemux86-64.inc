@@ -1,4 +1,3 @@
-
 # Configurations to run on VirtualBox/VMWare
 #
 # To get wide screen than default, there are a selection of resolutions
@@ -21,3 +20,5 @@ APPEND += "quiet"
 # Build updatable image. Only takes effect when sota.bbclass is inherited
 DISTRO_FEATURES_append = " sota"
 
+# Root device
+ROOT_VM = "root=PARTUUID=${DISK_SIGNATURE}-02"
