@@ -3,7 +3,7 @@ DEVICE_TYPE=qemu
 DEVICE_NAME=qemux86-64
 DEVICE_DTB=
 DEVICE_KERNEL=bzImage
-DEVICE_INITRAMFS=agl-demo-platform.ext4.xz
+DEVICE_INITRAMFS=agl-demo-platform-qemux86-64.ext4.xz
 DEVICE_INITRAMFS_COMPRESSION=xz
 DEVICE_BOOT_METHOD=qemu
 DEVICE_QEMU_ARGS='"-cpu Nehalem,check=false"'
