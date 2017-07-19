@@ -6,5 +6,5 @@ DEVICE_KERNEL=bzImage
 DEVICE_INITRAMFS=agl-demo-platform-qemux86-64.ext4.xz
 DEVICE_INITRAMFS_COMPRESSION=xz
 DEVICE_BOOT_METHOD=qemu
-DEVICE_QEMU_ARGS='"-cpu Nehalem,check=false"'
+DEVICE_QEMU_ARGS='"-cpu Nehalem,check=false -soundhw hda"'
 DEVICE_KERNEL_CMDLINE='"console=ttyS0,115200 root=/dev/hda debug verbose"'
