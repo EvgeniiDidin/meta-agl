@@ -22,6 +22,7 @@ S = "${WORKDIR}/git"
 
 inherit cmake pkgconfig
 
+EXTRA_OECMAKE_append_agl-devel = " -DAGL_DEVEL=1"
 CFLAGS_append_agl-devel = " -DAGL_DEVEL"
 
 pkg_postinst_${PN}() {
