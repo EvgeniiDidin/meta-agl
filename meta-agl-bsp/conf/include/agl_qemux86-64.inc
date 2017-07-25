@@ -22,3 +22,6 @@ DISTRO_FEATURES_append = " sota"
 
 # Root device
 ROOT_VM = "root=PARTUUID=${DISK_SIGNATURE}-02"
+
+# runqemu tweaks
+QB_OPT_APPEND_append = " -show-cursor"
