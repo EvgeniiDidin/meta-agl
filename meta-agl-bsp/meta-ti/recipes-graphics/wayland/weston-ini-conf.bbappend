@@ -1,0 +1,1 @@
+DEFAULT_SCREEN[name] = "UNNAMED-1"
