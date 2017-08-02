@@ -1,0 +1,10 @@
+DEVICE_TYPE=raspberrypi3-uboot
+DEVICE_NAME=raspberrypi3
+DEVICE_DTB=uImage-bcm2710-rpi-3-b.dtb
+DEVICE_KERNEL=uImage
+DEVICE_INITRAMFS=initramfs-netboot-image-raspberrypi3.ext4.gz.u-boot
+DEVICE_NBDROOT=agl-demo-platform-raspberrypi3.ext4.xz
+DEVICE_NBDROOT_COMPRESSION=xz
+DEVICE_BOOT_METHOD=u-boot
+DEVICE_BOOT_TYPE=bootm
+#DEVICE_URL_PREFIX=https://download.automotivelinux.org/AGL

@@ -9,7 +9,10 @@ CORE_IMAGE_EXTRA_INSTALL += "wayland weston"
 
 MULTI_PROVIDER_WHITELIST += "virtual/libgl virtual/egl virtual/libgles1 virtual/libgles2"
 
-KERNEL_IMAGETYPE = "Image"
+# The correct config for a Raspberry Pi 3 in 32bit mode
+UBOOT_MACHINE = "rpi_3_32b_config"
+
+KERNEL_IMAGETYPE = "uImage"
 KERNEL_DEVICETREE_append = " overlays/vc4-kms-v3d-overlay.dtb"
 PREFERRED_VERSION_linux-raspberrypi = "4.4.%"
 PREFERRED_VERSION_mesa = "12.%"
