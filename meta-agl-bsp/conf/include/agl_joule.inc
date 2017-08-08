@@ -10,6 +10,6 @@ IMAGE_INSTALL_append = " \
         gstreamer-vaapi-1.0 "
 OSTREE_BOOTLOADER ?= "u-boot"
 
-AGL_DEFAULT_IMAGE_FSTYPES := "live wic"
+AGL_DEFAULT_IMAGE_FSTYPES := "wic hddimg"
 AGL_DEFAULT_INITRAMFS_FSTYPES := "cpio.gz"
 NOISO = "1"
