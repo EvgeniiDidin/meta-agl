@@ -15,15 +15,14 @@ SRC_URI = "${SRC_URI_git} \
            ${SRC_URI_files} \
           "
 
-SRCREV = "8406a51db98b563a4562f26de8338efc0478aff2"
+SRCREV = "170aef20bc3a59d5139c2eff8794d9ba4c83a2e5"
 PV = "master+git${SRCPV}"
 
 S = "${WORKDIR}/git"
 
 inherit cmake pkgconfig
 
-EXTRA_OECMAKE_append_agl-devel = " -DAGL_DEVEL=1"
-CFLAGS_append_agl-devel = " -DAGL_DEVEL"
+EXTRA_OECMAKE_append_agl-devel = " -DAGL_DEVEL=ON -DINCLUDE_MONITORING=ON"
 
 pkg_postinst_${PN}() {
 	mkdir -p "$D${libdir}/afb"
@@ -35,6 +34,8 @@ pkg_postinst_${PN}() {
 PACKAGES += "${PN}-tools ${PN}-meta"
 
 FILES_${PN} += "${datadir}"
+
+FILES_${PN}_append_agl-devel = " ${libdir}/afb/monitoring"
 
 ALLOW_EMPTY_${PN}-meta = "1"
 
