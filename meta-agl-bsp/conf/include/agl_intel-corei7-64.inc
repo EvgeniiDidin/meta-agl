@@ -25,5 +25,5 @@ IMAGE_INSTALL_append = " \
         gstreamer-vaapi-1.0 "
 
 AGL_DEFAULT_IMAGE_FSTYPES := "wic hddimg"
-AGL_DEFAULT_INITRAMFS_FSTYPES := "cpio.gz"
+INITRD_LIVE = "${DEPLOY_DIR_IMAGE}/${INITRD_IMAGE_LIVE}-${MACHINE}.ext4.gz"
 NOISO = "1"
