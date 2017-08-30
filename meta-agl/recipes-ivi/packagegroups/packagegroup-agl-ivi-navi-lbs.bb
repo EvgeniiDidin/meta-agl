@@ -10,4 +10,5 @@ PACKAGES = "\
 
 RDEPENDS_${PN} += "\
     gpsd \
+    geoclue \
     "
