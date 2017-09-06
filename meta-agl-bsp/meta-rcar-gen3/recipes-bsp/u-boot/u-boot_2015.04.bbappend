@@ -5,5 +5,5 @@ SRC_URI_append = " \
 "
 
 do_deploy_prepend() {
-    ln -s ${B}/${UBOOT_SREC} ${S}/${UBOOT_SREC}
+    ln -sf ${B}/${UBOOT_SREC} ${S}/${UBOOT_SREC}
 }
