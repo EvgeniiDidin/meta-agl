@@ -45,6 +45,7 @@ DISTRO_FEATURES_BACKFILL_remove = "gobject-introspection-data"
 IMAGE_INSTALL_append_rcar-gen3 = " \
 	kernel-module-pvrsrvkm \
 	kernel-module-vsp2 \
+	kernel-module-vspm  \
 	kernel-module-vspm-if \
 	omx-user-module \
 	weston-bin \
