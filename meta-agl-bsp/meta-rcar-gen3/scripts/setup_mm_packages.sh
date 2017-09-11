@@ -1,7 +1,7 @@
 #!/bin/bash
 
-ZIP_1="R-Car_Gen3_Series_Evaluation_Software_Package_for_Linux-20170427.zip"
-ZIP_2="R-Car_Gen3_Series_Evaluation_Software_Package_of_Linux_Drivers-20170427.zip"
+ZIP_1="R-Car_Gen3_Series_Evaluation_Software_Package_for_Linux-weston2-20170904.zip"
+ZIP_2="R-Car_Gen3_Series_Evaluation_Software_Package_of_Linux_Drivers-weston2-20170904.zip"
 
 COPY_SCRIPT="$METADIR/meta-renesas-rcar-gen3/meta-rcar-gen3/docs/sample/copyscript/copy_evaproprietary_softwares.sh"
 
@@ -44,7 +44,7 @@ function copy_mm_packages() {
                 error "ERROR: FILES \""+$DOWNLOAD_DIR/$ZIP_2+"\" NOT EXTRACTING CORRECTLY"
                 log   "The graphics and multimedia acceleration packages for "
                 log   "the R-Car Gen3 board BSP 2.19 can be downloaded from:"
-                log   " <https://www.renesas.com/solutions/automotive/rcar-demoboard.html>"
+                log   " <https://www.renesas.com/en-us/solutions/automotive/rcar-demoboard-2.html>"
                 log
                 error  "These 2 files from there should be stored in your"
                 error  "'$DOWNLOAD_DIR' directory."
