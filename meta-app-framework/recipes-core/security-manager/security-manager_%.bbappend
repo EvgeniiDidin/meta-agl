@@ -1,5 +1,7 @@
 FILESEXTRAPATHS_prepend := "${THISDIR}/security-manager:"
 
+PACKAGE_WRITE_DEPS_append_smack = " smack-userspace-native"
+
 SRC_URI += " file://0001-Adapt-rules-to-AGL.patch \
 	     file://init-security-manager-db.service \
 	     file://init-security-manager-db.sh \

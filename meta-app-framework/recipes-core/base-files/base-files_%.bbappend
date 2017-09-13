@@ -1,5 +1,5 @@
-DEPENDS_append_smack = " smack-userspace-native"
 RDEPENDS_${PN}_append_smack = " smack-userspace"
+PACKAGE_WRITE_DEPS_append_smack = " smack-userspace-native"
 
 do_install_append() {
     install -d ${D}/${sysconfdir}/skel/app-data

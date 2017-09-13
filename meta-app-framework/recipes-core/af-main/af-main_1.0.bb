@@ -11,8 +11,10 @@ BBCLASSEXTEND = "native"
 
 SECTION = "base"
 
-DEPENDS = "openssl libxml2 xmlsec1 systemd libzip json-c systemd security-manager libcap-native af-binder"
+DEPENDS = "openssl libxml2 xmlsec1 systemd libzip json-c systemd security-manager af-binder"
 DEPENDS_class-native = "openssl libxml2 xmlsec1 libzip json-c"
+
+PACKAGE_WRITE_DEPS_append_smack = " smack-userspace-native libcap-native"
 
 EXTRA_OECMAKE_class-native  = "\
 	-DUSE_LIBZIP=1 \
