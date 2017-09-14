@@ -1,5 +1,4 @@
 INTEL_MACHINE_SUBTYPE = "broxton-m"
-PREFERRED_VERSION_linux-yocto_intel-corei7-64 ?= "4.4%"
 
 APPEND += "console=ttyS2,115200n8 video=efifb maxcpus=4 noxsave reboot=efi kmemleak=off"
 
