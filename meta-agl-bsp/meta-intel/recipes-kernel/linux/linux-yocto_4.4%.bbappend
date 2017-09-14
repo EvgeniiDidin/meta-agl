@@ -18,3 +18,6 @@ SRC_URI_prepend_intel-corei7-64 = "${@bb.utils.contains('INTEL_MACHINE_SUBTYPE',
 KERNEL_FEATURES_remove_corei7-64-intel-common = "${@bb.utils.contains('INTEL_MACHINE_SUBTYPE', 'broxton-m', 'features/amt/mei/mei.scc', '', d)}"
 KERNEL_FEATURES_append_corei7-64-intel-common = "${@bb.utils.contains('INTEL_MACHINE_SUBTYPE', 'broxton-m', ' features/mei/mei-spd.scc', '', d)}"
 SRC_URI_append = "${@bb.utils.contains('INTEL_MACHINE_SUBTYPE', 'broxton-m', ' file://security-tpm.cfg', '', d)}"
+
+# Enable support for usb video class for usb camera devices
+KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/uvc.cfg"

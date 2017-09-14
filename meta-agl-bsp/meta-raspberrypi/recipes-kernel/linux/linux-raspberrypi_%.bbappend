@@ -103,3 +103,6 @@ KERNEL_MODULE_AUTOLOAD += "hid-multitouch"
 
 RDEPENDS_${PN} += "kernel-module-snd-bcm2835"
 PACKAGES += "kernel-module-snd-bcm2835"
+
+# Enable support for usb video class for usb camera devices
+KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/uvc.cfg"

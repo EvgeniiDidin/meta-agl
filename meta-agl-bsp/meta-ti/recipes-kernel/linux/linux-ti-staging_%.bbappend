@@ -31,3 +31,6 @@ KERNEL_CONFIG_FRAGMENTS_append_smack = "\
 
 # file comes out of  meta-agl-bsp/recipes-kernel/linux/linux_%.bbappend
 KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/can-bus.cfg"
+
+# Enable support for usb video class for usb camera devices
+KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/uvc.cfg"

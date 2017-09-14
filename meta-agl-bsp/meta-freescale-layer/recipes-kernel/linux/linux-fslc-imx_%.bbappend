@@ -101,3 +101,5 @@ KERNEL_CONFIG_FRAGMENTS_append_smack = "\
        ${WORKDIR}/smack-default-lsm.cfg \
 "
 
+# Enable support for usb video class for usb camera devices
+KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/uvc.cfg"
