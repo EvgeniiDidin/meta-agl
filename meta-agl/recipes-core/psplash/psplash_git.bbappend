@@ -3,6 +3,7 @@ FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
 SRC_URI += "file://psplash-colors.h \
             file://psplash-start.service \
             file://psplash-quit.service \
+            file://psplash-anim \
             "
 
 SPLASH_IMAGES="file://psplash-poky-img.h;outsuffix=default"
@@ -22,4 +23,5 @@ do_install_append () {
         install -d ${D}${systemd_unitdir}/system
         install -m 644 ${WORKDIR}/*.service ${D}/${systemd_unitdir}/system
     fi
+    install -m 755 ${WORKDIR}/psplash-anim ${D}/${bindir}
 }
