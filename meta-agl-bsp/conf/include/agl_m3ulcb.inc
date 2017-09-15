@@ -12,8 +12,8 @@ MULTI_PROVIDER_WHITELIST += "virtual/libgl virtual/egl virtual/libgles1 virtual/
 
 # for Wayland/Weston
 PREFERRED_PROVIDER_virtual/libgles1 = ""
-PREFERRED_PROVIDER_virtual/libgles2 = "gles-user-module"
-PREFERRED_PROVIDER_virtual/egl = "gles-user-module"
+PREFERRED_PROVIDER_virtual/libgles2 = "virtual-gles-user-module"
+PREFERRED_PROVIDER_virtual/egl = "virtual-gles-user-module"
 PREFERRED_PROVIDER_virtual/libgl = ""
 PREFERRED_PROVIDER_virtual/mesa = "mesa"
 PREFERRED_PROVIDER_libgbm = "libgbm"
