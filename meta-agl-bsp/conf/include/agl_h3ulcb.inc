@@ -45,7 +45,6 @@ IMAGE_INSTALL_append_rcar-gen3 = " \
 	kernel-module-vspm  \
 	kernel-module-vspm-if \
 	omx-user-module \
-	weston-bin \
 "
 
 BBMASK .= "|meta-renesas-rcar-gen3/meta-rcar-gen3/recipes-forward-port/"
