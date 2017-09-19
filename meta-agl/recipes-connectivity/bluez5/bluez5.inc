@@ -24,6 +24,7 @@ SRC_URI = "\
     ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', '', 'file://0001-Allow-using-obexd-without-systemd-in-the-user-sessio.patch', d)} \
     file://0001-tests-add-a-target-for-building-tests-without-runnin.patch \
     file://bluetooth.conf \
+    file://cve-2017-1000250.patch \
 "
 SRCREV = "c64b4d9e8dc3e36672061f39a9dba19ad0fb1ef1"
 S = "${WORKDIR}/git"
