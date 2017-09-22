@@ -10,13 +10,13 @@ should be (id == visual_id || id == 0) instead of (id == visual_id)
 
 Signed-off-by: Eric Ruei <e-ruei1@ti.com>
 ---
- src/gl-renderer.c | 2 +-
+ libweston/gl-renderer.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/src/gl-renderer.c b/src/gl-renderer.c
+diff --git a/libweston/gl-renderer.c b/libweston/gl-renderer.c
 index 23c0cd7..4c1f170 100644
---- a/src/gl-renderer.c
-+++ b/src/gl-renderer.c
+--- a/libweston/gl-renderer.c
++++ b/libweston/gl-renderer.c
 @@ -2462,7 +2462,7 @@ match_config_to_visual(EGLDisplay egl_display,
  				&id))
  			continue;

@@ -11,13 +11,13 @@ notify_touch().
 
 Signed-off-by: Eric Ruei <e-ruei1@ti.com>
 ---
- src/input.c | 6 ++++++
+ libweston/input.c | 6 ++++++
  1 file changed, 6 insertions(+)
 
-diff --git a/src/input.c b/src/input.c
+diff --git a/libweston/input.c b/libweston/input.c
 index 8fe898c..0f72d23 100644
---- a/src/input.c
-+++ b/src/input.c
+--- a/libweston/input.c
++++ b/libweston/input.c
 @@ -1848,6 +1848,12 @@ notify_touch(struct weston_seat *seat, uint32_t time, int touch_id,
  		 * until all touch points are up again. */
  		if (touch->num_tp == 1) {

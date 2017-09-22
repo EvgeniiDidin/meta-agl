@@ -19,13 +19,13 @@ becomes visible at the first time.
 
 Signed-off-by: Eric Ruei <e-ruei1@ti.com>
 ---
- src/text-backend.c | 1 +
+ compositor/text-backend.c | 1 +
  1 file changed, 1 insertion(+)
 
-diff --git a/src/text-backend.c b/src/text-backend.c
+diff --git a/compositor/text-backend.c b/compositor/text-backend.c
 index ab4667f..36c70a5 100644
---- a/src/text-backend.c
-+++ b/src/text-backend.c
+--- a/compositor/text-backend.c
++++ b/compositor/text-backend.c
 @@ -337,6 +337,7 @@ text_input_show_input_panel(struct wl_client *client,
  			       text_input->surface);
  		wl_signal_emit(&ec->update_input_panel_signal,

@@ -17,13 +17,13 @@ Upstream-Status: Pending
 
 Signed-off-by: Anand Balagopalakrishnan <anandb@ti.com>
 ---
- src/compositor-drm.c |    2 +-
+ libweston/compositor-drm.c |    2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/src/compositor-drm.c b/src/compositor-drm.c
+diff --git a/libweston/compositor-drm.c b/libweston/compositor-drm.c
 index 6777bf8..59c2cc5 100644
---- a/src/compositor-drm.c
-+++ b/src/compositor-drm.c
+--- a/libweston/compositor-drm.c
++++ b/libweston/compositor-drm.c
 @@ -2827,7 +2827,7 @@ find_primary_gpu(struct drm_backend *b, const char *seat)
 
 	e = udev_enumerate_new(b->udev);
