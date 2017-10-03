@@ -10,3 +10,10 @@ KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/extra-graphic-devices.cfg"
 
 # Enable support for usb video class for usb camera devices
 KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/uvc.cfg"
+
+# Ensure we have a startup.nsh file
+SRC_URI_append = " file://startup.nsh"
+
+do_deploy_append() {
+	install -m 0755 ${WORKDIR}/startup.nsh ${DEPLOYDIR}/
+}
