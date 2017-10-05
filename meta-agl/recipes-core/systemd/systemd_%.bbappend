@@ -1,6 +1,7 @@
 FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 
-SRC_URI += "file://e2fsck.conf \
+SRC_URI += "file://backport-v234-e266c06-v230.patch \
+            file://e2fsck.conf \
             ${@bb.utils.contains('VIRTUAL-RUNTIME_net_manager','systemd','file://wired.network','',d)} \
            "
 
