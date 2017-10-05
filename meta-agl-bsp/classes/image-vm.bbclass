@@ -94,7 +94,7 @@ build_boot_dd() {
 
 	parted $IMAGE print
 
-	awk "BEGIN { printf \"$(echo ${DISK_SIGNATURE} | fold -w 2 | tac | paste -sd '' | sed 's/\(..\)/\\x&/g')\" }" | \
+	awk "BEGIN { printf \"$(echo ${DISK_SIGNATURE} | sed 's/\(..\)\(..\)\(..\)\(..\)/\\x\4\\x\3\\x\2\\x\1/')\" }" | \
 		dd of=$IMAGE bs=1 seek=440 conv=notrunc
 
 	OFFSET=`expr $END2 / 512`
@@ -113,9 +113,9 @@ build_boot_dd() {
 python do_bootdirectdisk() {
     validate_disk_signature(d)
     set_live_vm_vars(d, 'VM')
-    if d.getVar("PCBIOS", True) == "1":
+    if d.getVar("PCBIOS") == "1":
         bb.build.exec_func('build_syslinux_cfg', d)
-    if d.getVar("EFI", True) == "1":
+    if d.getVar("EFI") == "1":
         bb.build.exec_func('build_efi_cfg', d)
     bb.build.exec_func('build_boot_dd', d)
 }
@@ -133,7 +133,7 @@ def generate_disk_signature():
 def validate_disk_signature(d):
     import re
 
-    disk_signature = d.getVar("DISK_SIGNATURE", True)
+    disk_signature = d.getVar("DISK_SIGNATURE")
 
     if not re.match(r'^[0-9a-fA-F]{8}$', disk_signature):
         bb.fatal("DISK_SIGNATURE '%s' must be an 8 digit hex string" % disk_signature)
