@@ -1,3 +1,5 @@
+require recipes-kernel/linux/linux-dtb.inc
+
 FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
 
 SRC_URI_append = " file://ramblock_nbd.cfg"
