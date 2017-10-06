@@ -9,6 +9,6 @@ IMAGE_INSTALL_append = " \
         gstreamer1.0-vaapi"
 OSTREE_BOOTLOADER ?= "u-boot"
 
-AGL_DEFAULT_IMAGE_FSTYPES = "wic hddimg"
+AGL_EXTRA_IMAGE_FSTYPES = "wic.xz wic.bmap wic.xz.sha256sum hddimg"
 INITRD_LIVE = "${DEPLOY_DIR_IMAGE}/${INITRD_IMAGE_LIVE}-${MACHINE}.ext4.gz"
 NOISO = "1"
