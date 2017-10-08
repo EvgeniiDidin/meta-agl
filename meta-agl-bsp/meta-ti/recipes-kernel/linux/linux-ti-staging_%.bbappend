@@ -31,3 +31,14 @@ KERNEL_CONFIG_FRAGMENTS_append_smack = "\
 
 # file comes out of  meta-agl-bsp/recipes-kernel/linux/linux_%.bbappend
 KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/can-bus.cfg"
+
+# fix issue in kernel-devsrc meta pkg wrt /bin/awk vs /usr/bin/awk
+do_configure_append(){
+
+# enforce all scripts to use /usr/bin/awk . This fixes the rpm dependency failure on install of kernel-devsrc
+cd ${S} || true
+( for i in `git grep "\!/bin/awk" | cut -d":" -f1 ` ; do sed -i -e "s#\!/bin/awk#\!/usr/bin/awk#g" $i ; done ) || true
+cd ${B} || true
+( for i in `git grep "\!/bin/awk" | cut -d":" -f1 ` ; do sed -i -e "s#\!/bin/awk#\!/usr/bin/awk#g" $i ; done ) || true
+
+}
