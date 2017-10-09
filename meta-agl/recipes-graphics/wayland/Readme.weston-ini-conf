@@ -1,5 +1,9 @@
 #Generate a weston.ini file:
 
+# WARNING Due to a bug in Yocto cache, changes in related bbappand are not detected
+# Work-around:
+#   bitbake weston-ini-conf -c clean ; bitbake weston-ini-conf -c cleansstate
+
 To generate the weston.ini file:
 
 '''
