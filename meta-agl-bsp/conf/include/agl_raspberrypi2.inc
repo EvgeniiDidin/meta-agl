@@ -32,8 +32,16 @@ IMAGE_FEATURES_remove = "splash"
 # Build updatable image. Only takes effect when sota.bbclass is inherited
 DISTRO_FEATURES_append = " sota"
 
-# Add the custom rpi-sdimg output format
-AGL_EXTRA_IMAGE_FSTYPES  = " rpi-sdimg.xz"
-
-# Use the AGL default ext4.xz to generate the rpi-sdimg
-SDIMG_ROOTFS_TYPE = "ext4.xz"
+# Create WIC images to write to SD cards.
+WKS_FILE = "sdimage-raspberrypi.wks"
+AGL_EXTRA_IMAGE_FSTYPES = "wic.xz wic.bmap wic.xz.sha256sum"
+IMAGE_BOOT_FILES = "bcm2835-bootfiles/* \
+                 ${@make_dtb_boot_files(d)} \
+                 ${@bb.utils.contains('KERNEL_IMAGETYPE', 'uImage', \
+                    '${KERNEL_IMAGETYPE} u-boot.bin;${SDIMG_KERNELIMAGE} boot.scr', \
+                    '${KERNEL_IMAGETYPE};${SDIMG_KERNELIMAGE}', d)} \
+                 "
+do_image_wic[depends] += " \
+    bcm2835-bootfiles:do_deploy \
+    ${@bb.utils.contains('KERNEL_IMAGETYPE', 'uImage', 'u-boot:do_deploy', '',d)} \
+    "
