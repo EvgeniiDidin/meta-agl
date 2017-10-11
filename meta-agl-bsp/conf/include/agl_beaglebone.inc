@@ -41,4 +41,4 @@ SECURITY_CFLAGS_pn-libatasmart = ""
 SECURITY_LDFLAGS_pn-libatasmart = ""
 
 
-AGL_EXTRA_IMAGE_FSTYPES := "wic.xz"
+AGL_EXTRA_IMAGE_FSTYPES = "wic.xz"

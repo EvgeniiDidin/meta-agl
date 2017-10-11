@@ -41,7 +41,7 @@ PREFERRED_PROVIDER_u-boot-mxsboot-native = "u-boot-imx"
 
 # force generate sdcard image also
 
-AGL_DEFAULT_IMAGE_FSTYPES := "sdcard.xz"
+AGL_DEFAULT_IMAGE_FSTYPES = "sdcard.xz"
 AGL_DEFAULT_INITRAMFS_FSTYPES := ""
 
 PREFERRED_VERSION_weston_mx6_forcevariable = "2.0.0"
