@@ -10,7 +10,3 @@ EXTRANATIVEPATH += "tar-native"
 # security: enable ssh server in place of dropbear to support PAM on user sessions
 IMAGE_FEATURES += "ssh-server-openssh"
 
-# enforce copy of xattrs (to be removed, see SPEC-475)
-PACKAGECONFIG_append_pn-shadow = " attr"
-PACKAGECONFIG_append_pn-shadow-native = " attr"
-
