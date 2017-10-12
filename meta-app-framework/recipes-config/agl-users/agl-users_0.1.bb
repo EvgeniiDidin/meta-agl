@@ -11,10 +11,17 @@ ALLOW_EMPTY_${PN} = "1"
 
 USERADD_PACKAGES = "${PN}"
 
-GROUPADD_PARAM_${PN} = " --system display ; --system weston-launch"
+USERADDEXTENSION = "useradd-staticids"
+
+GROUPADD_PARAM_${PN} = "\
+	--system display ; \
+	--system weston-launch ; \
+	-g 1001 agl-driver ; \
+	-g 1002 agl-passenger \
+"
 
 USERADD_PARAM_${PN} = "\
-  -g users -G display -d /home/agl-driver -m -K PASS_MAX_DAYS=-1 agl-driver ; \
-  -g users -G display -d /home/agl-passenger -m -K PASS_MAX_DAYS=-1 agl-passenger ; \
+  -g 1001 -G display -u 1001 -o -d /home/1001 -m -K PASS_MAX_DAYS=-1 agl-driver ; \
+  -g 1002 -G display -u 1002 -o -d /home/1002 -m -K PASS_MAX_DAYS=-1 agl-passenger ; \
   --gid display --groups weston-launch,video,input --home-dir /run/platform/display --shell /bin/false --comment \"Display daemon\" --key PASS_MAX_DAYS=-1 display \
 "

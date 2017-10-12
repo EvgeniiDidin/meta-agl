@@ -14,3 +14,5 @@ IMAGE_FEATURES += "ssh-server-openssh"
 PACKAGECONFIG_append_pn-shadow = " attr"
 PACKAGECONFIG_append_pn-shadow-native = " attr"
 
+# set the home directory for root
+ROOT_HOME = "/home/0"

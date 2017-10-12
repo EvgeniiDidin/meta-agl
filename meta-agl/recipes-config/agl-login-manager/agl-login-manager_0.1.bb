@@ -12,7 +12,7 @@ SRC_URI += " \
     file://agl-user-session@.service \
 "
 
-LOGIN_USER ??="agl-driver agl-passenger"
+LOGIN_USER ??="1001 1002"
 
 do_install_append() {
 

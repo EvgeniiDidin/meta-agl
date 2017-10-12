@@ -25,5 +25,6 @@ EOF
 pkg_postinst_${PN}_append_smack() {
     chsmack -r -a 'User::Home' -t -D $D/${sysconfdir}/skel
     chsmack -a 'User::App-Shared' -D $D/${sysconfdir}/skel/app-data
+    cp -rTf --preserve=all $D/${sysconfdir}/skel $D/${ROOT_HOME}
 }
 
