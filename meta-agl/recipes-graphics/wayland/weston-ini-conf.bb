@@ -50,6 +50,7 @@ python do_generate_weston_init() {
 #ar_src = d.getVarFlag('ARCHIVER_MODE', 'src', True)
 
 addtask do_generate_weston_init after do_compile before do_install
+do_generate_weston_init[vardeps] = "DEFAULT_SCREEN WESTONCORE WESTONSHELL WESTONOUTPUT1 WESTONSECTION"
 
 do_install_append() {
     WESTON_INI_CONFIG=${sysconfdir}/xdg/weston

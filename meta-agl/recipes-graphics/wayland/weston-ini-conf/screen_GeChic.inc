@@ -2,3 +2,5 @@ SCREEN_GECHIC[name] ?= "HDMI-A-1"
 SCREEN_GECHIC[transform] ?= "270"
 # for 1080p on GeChic 1502i:
 SCREEN_GECHIC[mode] = "173.00 1920 2048 2248 2576 1080 1083 1088 1120 -hsync +vsync"
+
+do_generate_weston_init[vardeps] += "SCREEN_GECHIC"

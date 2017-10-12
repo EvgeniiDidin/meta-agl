@@ -10,3 +10,5 @@ python() {
     if "multimedia" in d.getVar("MACHINE_FEATURES", True).split(" "):
         d.setVarFlag("WESTONSECTION", "WESTONV4L2RENDERER", "v4l2-renderer")
 }
+
+do_generate_weston_init[vardeps] += "WESTONIVISHELL WESTONV4L2RENDERER"

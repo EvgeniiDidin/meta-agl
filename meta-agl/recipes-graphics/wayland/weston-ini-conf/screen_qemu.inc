@@ -14,3 +14,5 @@ SCREEN_QEMU[mode]?="1600x900"
 #mode=800x600
 #mode=848x480
 #mode=640x480
+
+do_generate_weston_init[vardeps] += "SCREEN_QEMU"
