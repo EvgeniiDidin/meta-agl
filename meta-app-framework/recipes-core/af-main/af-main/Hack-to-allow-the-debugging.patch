@@ -11,10 +11,10 @@ Change-Id: I2f10f0cb1fce2ee30bd0754ad2e7bc8e2f6513aa
  conf/afm-user-daemon.conf | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/conf/afm-user-daemon.conf b/conf/afm-user-daemon.conf
+diff --git a/conf/user/afm-user-daemon.conf b/conf/user/afm-user-daemon.conf
 index 801c7ae..98a3152 100644
---- a/conf/afm-user-daemon.conf
-+++ b/conf/afm-user-daemon.conf
+--- a/conf/user/afm-user-daemon.conf
++++ b/conf/user/afm-user-daemon.conf
 @@ -25,7 +25,7 @@
          </policy>
  

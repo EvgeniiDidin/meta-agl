@@ -1,7 +1,6 @@
 require af-main_${PV}.inc 
 
 # NOTE: using libcap-native and setcap in install doesn't work
-# NOTE: there is no SYSTEMD_USER_SERVICE_...
 # NOTE: maybe setting afm_name to agl-framework is cleaner but has implications
 # NOTE: there is a hack of security for using groups and dbus (to be checked)
 # NOTE: using ZIP programs creates directories with mode 777 (very bad)
@@ -13,6 +12,7 @@ SECTION = "base"
 
 DEPENDS = "openssl libxml2 xmlsec1 systemd libzip json-c systemd security-manager af-binder"
 DEPENDS_class-native = "openssl libxml2 xmlsec1 libzip json-c"
+RDEPENDS_${PN}_class-target += "af-binder-tools"
 
 PACKAGE_WRITE_DEPS_append_smack = " smack-userspace-native libcap-native"
 
@@ -43,9 +43,6 @@ USERADD_PACKAGES = "${PN}"
 USERADD_PARAM_${PN} = "-g ${afm_name} -d ${afm_datadir} -r ${afm_name}"
 GROUPADD_PARAM_${PN} = "-r ${afm_name}"
 
-SYSTEMD_SERVICE_${PN} = "afm-system-daemon.service"
-SYSTEMD_AUTO_ENABLE = "enable"
-
 FILES_${PN} += "\
 	${@bb.utils.contains('DISTRO_FEATURES', 'systemd', '${systemd_user_unitdir}/afm-user-daemon.service', '', d)} \
 "
@@ -57,27 +54,24 @@ SRC_URI += "\
 	file://Hack-to-allow-the-debugging.patch \
 "
 
-# tools used to install wgt at first boot
-SRC_URI += "\
-	file://afm-install \
-"
-
 do_install_append_class-target() {
     install -d ${D}${bindir}
     install -d -m 0775 ${D}${systemd_units_root}/system
+    install -d -m 0775 "${D}${systemd_units_root}/system/afm-user-session@.target.wants"
     install -d -m 0775 ${D}${systemd_units_root}/user
-    install -d -m 0775 ${D}${systemd_units_root}/system/default.target.wants
     install -d -m 0775 ${D}${systemd_units_root}/user/default.target.wants
-    install -d -m 0775 ${D}${systemd_units_root}/system/sockets.target.wants
     install -d -m 0775 ${D}${systemd_units_root}/user/sockets.target.wants
     install -d ${D}${afm_datadir}/applications
     install -d ${D}${afm_datadir}/icons
     if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
-        mkdir -p ${D}${sysconfdir}/systemd/system/default.target.wants
-        mkdir -p ${D}${sysconfdir}/systemd/user/default.target.wants
-        ln -sf ${systemd_user_unitdir}/afm-user-daemon.service ${D}${sysconfdir}/systemd/user/default.target.wants
+        install -d -m 0755 ${D}${systemd_user_unitdir}/default.target.wants
+        ln -s ../afm-user-daemon.service ${D}${systemd_user_unitdir}/default.target.wants/afm-user-daemon.service
+        install -d -m 0755 ${D}${systemd_system_unitdir}/default.target.wants
+        install -d -m 0755 ${D}${systemd_system_unitdir}/sockets.target.wants
+        ln -sf ../afm-system-daemon.service ${D}${systemd_system_unitdir}/default.target.wants/afm-system-daemon.service
+        ln -sf ../afm-system-daemon.socket ${D}${systemd_system_unitdir}/sockets.target.wants/afm-system-daemon.socket
+        ln -s ../afm-user-session@.service ${D}${systemd_user_unitdir}/default.target.wants/afm-user-session@0.service
     fi
-    install -m 0755 ${WORKDIR}/afm-install ${D}${bindir}
     echo "QT_WAYLAND_SHELL_INTEGRATION=ivi-shell" > ${D}${afm_confdir}/unit.env.d/qt-for-ivi-shell
 }
 
@@ -87,34 +81,28 @@ do_install_append_porter() {
 
 pkg_postinst_${PN}() {
     if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
-        for SYS in "system" "user";do
-           for DEST in "sockets.target.wants" "default.target.wants" ".";do
-              chgrp ${afm_name} $D${systemd_units_root}/${SYS}/${DEST};
-           done
-        done
+        chgrp ${afm_name} $D${systemd_units_root}/system
+        chgrp ${afm_name} $D${systemd_units_root}/system/afm-user-session@.target.wants
+        chgrp ${afm_name} $D${systemd_units_root}/user/default.target.wants
+        chgrp ${afm_name} $D${systemd_units_root}/user/sockets.target.wants
     fi
-    for DEST in "applications" "icons" ".";do
-        chown ${afm_name}:${afm_name} $D${afm_datadir}/${DEST};
-    done
-    setcap cap_mac_override,cap_dac_override=ep $D${bindir}/afm-system-daemon
+    chown ${afm_name}:${afm_name} $D${afm_datadir}
+    chown ${afm_name}:${afm_name} $D${afm_datadir}/applications
+    chown ${afm_name}:${afm_name} $D${afm_datadir}/icons
 }
 
-pkg_postinst_${PN}_smack() {
+pkg_postinst_${PN}_append_smack() {
     if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
-        for SYS in "system" "user";do
-           for DEST in "sockets.target.wants" "default.target.wants" ".";do
-              chgrp ${afm_name} $D${systemd_units_root}/${SYS}/${DEST};
-              chsmack -a 'System::Shared' -t $D${systemd_units_root}/${SYS}/${DEST};
-           done
-        done
+        chsmack -a 'System::Shared' -t $D${systemd_units_root}/system
+        chsmack -a 'System::Shared' -t $D${systemd_units_root}/system/afm-user-session@.target.wants
+        chsmack -a 'System::Shared' -t $D${systemd_units_root}/user/default.target.wants
+        chsmack -a 'System::Shared' -t $D${systemd_units_root}/user/sockets.target.wants
     fi
-    for DEST in "applications" "icons" ".";do
-        chown ${afm_name}:${afm_name} $D${afm_datadir}/${DEST};
-        chsmack -a 'System::Shared' -t $D${afm_datadir}/${DEST};
-    done
-    setcap cap_mac_override,cap_dac_override=ep $D${bindir}/afm-system-daemon
+    chsmack -a 'System::Shared' -t $D${afm_datadir}
+    chsmack -a 'System::Shared' -t $D${afm_datadir}/applications
+    chsmack -a 'System::Shared' -t $D${afm_datadir}/icons
 }
-FILES_${PN} += " ${systemd_units_root} "
+FILES_${PN} += "${systemd_units_root}/* ${systemd_system_unitdir} ${systemd_user_unitdir}"
 
 PACKAGES =+ "${PN}-binding ${PN}-binding-dbg"
 FILES_${PN}-binding = " ${afb_binding_dir}/afm-main-binding.so "

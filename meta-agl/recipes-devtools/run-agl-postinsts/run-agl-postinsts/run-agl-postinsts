@@ -40,6 +40,7 @@ exec_postinst_scriptlets() {
 
 remove_agl_pi_dir=1
 exec_postinst_scriptlets
+systemctl daemon-reload
 
 # since all postinstalls executed successfully, remove the postinstalls directory
 if [ $remove_agl_pi_dir = 1 ]; then
