@@ -11,6 +11,7 @@ DEFAULT_SCREEN[name]?="HDMI-A-1"
 
 WESTONCORE[shell]??="desktop-shell.so"
 WESTONCORE[backend]??="drm-backend.so"
+WESTONCORE[require-input]??="false"
 
 WESTONSHELL[locking]="true"
 # hide panel
