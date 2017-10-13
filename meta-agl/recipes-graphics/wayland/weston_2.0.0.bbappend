@@ -18,6 +18,7 @@ SRC_URI_append = "\
     file://0014-simple-shm-remove-ivi-application-support.patch \
     file://0015-window-client-remove-ivi-application-support.patch \
     file://0016-ivi-shell_add_screen_remove_layer_api.patch \
+    file://use-XDG_RUNTIMESHARE_DIR.patch \
     "
 
 EXTRA_OECONF_append = " --enable-sys-uid"

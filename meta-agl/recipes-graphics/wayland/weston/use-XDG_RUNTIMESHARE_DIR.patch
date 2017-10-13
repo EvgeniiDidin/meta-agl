@@ -1,0 +1,25 @@
+From 0ed62e1a0beb47e033f7632dbf6d2087366b7830 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Jos=C3=A9=20Bollo?= <jose.bollo@iot.bzh>
+Date: Fri, 13 Oct 2017 14:05:56 +0200
+Subject: [PATCH] use XDG_RUNTIMESHARE_DIR
+
+Change-Id: Ia15f2858417549abcbe8d0f000ca6da817573a74
+---
+ shared/os-compatibility.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/shared/os-compatibility.c b/shared/os-compatibility.c
+index e19fb61b..7e93e818 100644
+--- a/shared/os-compatibility.c
++++ b/shared/os-compatibility.c
+@@ -157,6 +157,7 @@ os_create_anonymous_file(off_t size)
+ 	int fd;
+ 	int ret;
+ 
++	if (!(path = getenv("XDG_RUNTIMESHARE_DIR")))
+ 	path = getenv("XDG_RUNTIME_DIR");
+ 	if (!path) {
+ 		errno = ENOENT;
+-- 
+2.13.6
+
