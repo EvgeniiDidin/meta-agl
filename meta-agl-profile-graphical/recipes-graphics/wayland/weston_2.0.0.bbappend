@@ -21,6 +21,7 @@ SRC_URI_append = "\
     file://0017-ivi-shell-register-ivi_layout_interface.patch \
     file://0018-compositor-add-output-type-to-weston_output.patch \
     file://0019-compositor-drm-introduce-drm_get_dmafd_from_view.patch \
+    file://use-XDG_RUNTIMESHARE_DIR.patch \
     "
 
 EXTRA_OECONF_append = " --enable-sys-uid"
