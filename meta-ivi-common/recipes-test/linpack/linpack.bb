@@ -5,6 +5,8 @@ LIC_FILES_CHKSUM = "file://${S}/${PN}/linpack.c;md5=076f1fd8d313056103f98d425386
 SRC_URI = "git://gerrit.automotivelinux.org/gerrit/src/qa-test-misc;protocol=https;branch=master"
 SRCREV = "920cae73a918d1f516113b0ae967be3ecaba86ef"
 
+DEPENDS += "rsync-native"
+
 inherit autotools
 
 S = "${WORKDIR}/git"
