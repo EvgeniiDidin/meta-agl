@@ -4,6 +4,8 @@ LIC_FILES_CHKSUM = "file://${COREBASE}/LICENSE;md5=4d92cd373abda3937c2bc47fbc49d
 
 S = "${WORKDIR}"
 
+PACKAGE_ARCH = "${MACHINE_ARCH}"
+
 require weston-ini-conf/screen.inc
 
 DEFAULT_SCREEN[transform]?="270"
@@ -50,6 +52,7 @@ python do_generate_weston_init() {
 #ar_src = d.getVarFlag('ARCHIVER_MODE', 'src', True)
 
 addtask do_generate_weston_init after do_compile before do_install
+do_generate_weston_init[vardeps] = "DEFAULT_SCREEN WESTONCORE WESTONSHELL WESTONOUTPUT1 WESTONSECTION"
 
 do_install_append() {
     WESTON_INI_CONFIG=${sysconfdir}/xdg/weston
