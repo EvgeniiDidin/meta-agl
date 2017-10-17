@@ -17,8 +17,8 @@ DEPENDS_append = " af-binder"
 
 do_aglwgt_package()  {
         cd ${B}
+        ${S}/conf.d/autobuild/agl/autobuild package BUILD_DIR=${B} DEST=${B}/package VERBOSE=TRUE || \
         make package || \
-        ${S}/conf.d/autobuild/agl/autobuild package BUILD_DIR=${B} DEST=${B}/package || \
         ( bbwarn "Your makefile must support the 'make package' target" ; \
           bbwarn "and generate a .wgt file using wgtpack in the"; \
           bbwarn "subfolder ./package/ !" ; \
