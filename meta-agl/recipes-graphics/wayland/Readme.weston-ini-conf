@@ -1,36 +1,34 @@
-#Generate a weston.ini file:
+##Generate a weston.ini file:
 
-To generate the weston.ini file:
-
-'''
-[core]
-backend=drm-backend.so
-shell=desktop-shell.so
-'''
-
-Just create a Variable Flag:
+To modify any of the default sections (core, shell, ivi-shell), add a
+do_configure() function to your bbappend:
 
 '''
-WESTONCORE[backend]??="drm-backend.so"
-WESTONCORE[shell]??="desktop-shell.so"
+do_configure() {
+    echo repaint-window=34 >> ${WORKDIR}/core.cfg
+
+    echo transition-duration=300 >> ${WORKDIR}/ivishell.cfg
+    echo cursor-theme=default >> ${WORKDIR}/ivishell.cfg
+}
+'''
+or:
+'''
+do_configure() {
+    sed -i -e 's/drm-backend/fbdev-backend/' ${WORKDIR}/core.cfg
+}
 '''
 
-And add it to the Variable Flag WESTONSECTION, with the name of the section:
-'''
-WESTONSECTION[WESTONCORE]?="core"
-'''
-
-#You can custumize weston.ini by create a weston-ini-conf.bbappend:
+To change the display from the default assumption of an HDMI-1-A connected
+screen that needs to be rotated 270 degrees:
 
 '''
-WESTONCORE[repaint-window] ??= "34"
+SRC_URI_remove = "file://hdmi-a-1-270.cfg"
+SRC_URI += "file://hdmi-a-1-90.cfg"
 '''
 
-This will generate weston.ini file:
-
+To add new sections just list them in SRC_URI:
 '''
-[core]
-backend=drm-backend.so
-shell=ivi-shell.so
-repaint-window=34
+FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
+
+SRC_URI += "file://dsi.cfg"
 '''

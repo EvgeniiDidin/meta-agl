@@ -1,14 +1,10 @@
-WESTONCORE[repaint-window] ??= "34"
+FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 
-WESTONIVISHELL[transition-duration] ??= "300"
-WESTONIVISHELL[cursor-theme] ??= "default"
+SRC_URI += "${@bb.utils.contains("MACHINE_FEATURES", "multimedia", "file://v4l2-renderer.cfg", "",d)}"
 
-WESTONV4L2RENDERER[device] ??= "/dev/media0"
-WESTONV4L2RENDERER[device-module] ??= "vsp2"
+do_configure() {
+    echo repaint-window=34 >> ${WORKDIR}/core.cfg
 
-python() {
-    if "multimedia" in d.getVar("MACHINE_FEATURES", True).split(" "):
-        d.setVarFlag("WESTONSECTION", "WESTONV4L2RENDERER", "v4l2-renderer")
+    echo transition-duration=300 >> ${WORKDIR}/ivishell.cfg
+    echo cursor-theme=default >> ${WORKDIR}/ivishell.cfg
 }
-
-do_generate_weston_init[vardeps] += "WESTONIVISHELL WESTONV4L2RENDERER"

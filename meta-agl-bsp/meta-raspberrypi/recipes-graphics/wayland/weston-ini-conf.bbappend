@@ -1,6 +1,3 @@
-# Disable LVDS
-WESTONOUTPUT2[agl_screen] ??= "SCREEN_DSI"
+FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 
-WESTONSECTION[WESTONOUTPUT2] = "output"
-
-do_generate_weston_init[vardeps] += "WESTONOUTPUT2"
+SRC_URI += "file://dsi.cfg"

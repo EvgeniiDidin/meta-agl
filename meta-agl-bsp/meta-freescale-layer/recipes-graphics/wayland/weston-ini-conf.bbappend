@@ -1,10 +1,11 @@
 # Currently only works with fbdev backend
 # and only one default output
 
-WESTONCORE[backend] = "fbdev-backend.so"
+FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 
-SCREEN_fbdev[name] = "fbdev"
-SCREEN_fbdev[transform] = "270"
-WESTONOUTPUT1[agl_screen] = "SCREEN_fbdev"
+SRC_URI_remove = "file://hdmi-a-1-270.cfg"
+SRC_URI += "file://fbdev.cfg"
 
-do_generate_weston_init[vardeps] += "SCREEN_fbdev"
+do_configure() {
+    sed -i -e 's/drm-backend/fbdev-backend/' ${WORKDIR}/core.cfg
+}

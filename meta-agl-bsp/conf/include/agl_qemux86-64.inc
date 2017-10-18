@@ -26,5 +26,5 @@ AGL_EXTRA_IMAGE_FSTYPES = "vmdk.xz"
 # Root device
 ROOT_VM = "root=PARTUUID=${DISK_SIGNATURE}-02"
 
-# runqemu tweaks
-QB_OPT_APPEND_append = " -show-cursor"
+# Force the virtio video device as 'vmware' doesn't always work
+QB_OPT_APPEND_append = " -vga virtio"
