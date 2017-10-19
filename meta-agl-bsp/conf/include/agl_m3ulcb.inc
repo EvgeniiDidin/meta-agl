@@ -43,6 +43,7 @@ DISTRO_FEATURES_append = " h264dec_lib h264enc_lib aaclcdec_lib aaclcdec_mdw"
 DISTRO_FEATURES_BACKFILL_remove = "gobject-introspection-data"
 
 IMAGE_INSTALL_append_rcar-gen3 = " \
+	kernel-devicetree \
 	kernel-module-pvrsrvkm \
 	kernel-module-vsp2 \
 	kernel-module-vspm  \
@@ -55,3 +56,7 @@ BBMASK .= "|meta-renesas-rcar-gen3/meta-rcar-gen3/recipes-forward-port/"
 OSTREE_KERNEL = "Image"
 IMAGE_BOOT_FILES_sota = "m3ulcb-ota-bootfiles/* Image-r8a7796-m3ulcb.dtb"
 OSTREE_BOOTLOADER ?= "u-boot"
+
+WKS_FILE = "singlepart-noloader.wks"
+
+AGL_EXTRA_IMAGE_FSTYPES = "wic.xz wic.bmap wic.xz.sha256sum"
