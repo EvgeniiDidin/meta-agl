@@ -6,13 +6,14 @@ IMAGE_INSTALL_append = " \
 "
 
 # fsl-image-multimedia-full.bb
-
 IMAGE_INSTALL_append = " \
     packagegroup-fsl-gstreamer1.0-full \
 "
 
-# fix build error
+# prevent of build errors from missing bb files
+BBMASK = "meta-boundary/recipes-(browser|mozilla)"
 
+# fix build error
 SECURITY_CFLAGS_pn-devil = "${SECURITY_NO_PIE_CFLAGS}"
 
 PREFERRED_PROVIDER_virtual/kernel = "linux-boundary"
