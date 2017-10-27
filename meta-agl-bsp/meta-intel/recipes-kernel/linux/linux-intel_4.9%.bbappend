@@ -11,6 +11,9 @@ KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/extra-graphic-devices.cfg"
 # Enable support for usb video class for usb camera devices
 KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/uvc.cfg"
 
+# Enable support for joystick devices
+KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/joystick.cfg"
+
 # Ensure we have a startup.nsh file
 SRC_URI_append = " file://startup.nsh"
 

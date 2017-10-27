@@ -106,3 +106,6 @@ PACKAGES += "kernel-module-snd-bcm2835"
 
 # Enable support for usb video class for usb camera devices
 KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/uvc.cfg"
+
+# Enable support for joystick devices
+KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/joystick.cfg"

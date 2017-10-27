@@ -10,3 +10,6 @@ SRC_URI_append  = " file://namespace_fix.cfg \
 
 # Enable support for usb video class for usb camera devices
 KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/uvc.cfg"
+
+# Enable support for joystick devices
+KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/joystick.cfg"
