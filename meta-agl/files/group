@@ -84,3 +84,6 @@ opensaf::957:
 lldpd::956:
 postdrop::954:
 display::200:
+spacenavd::220:
+systemd-network::900:
+systemd-resolve::901:
