@@ -9,7 +9,7 @@ LIC_FILES_CHKSUM = "file://LICENSE-2.0.txt;md5=3b83ef96387f14655fc854ddc3c6bd57"
 
 DEPENDS = "file json-c libmicrohttpd systemd util-linux openssl cynara"
 
-SRC_URI_git = "git://gerrit.automotivelinux.org/gerrit/src/app-framework-binder;protocol=https;branch=master"
+SRC_URI_git = "git://gerrit.automotivelinux.org/gerrit/src/app-framework-binder;protocol=https;branch=${AGL_BRANCH}"
 SRC_URI_files = ""
 SRC_URI = "${SRC_URI_git} \
            ${SRC_URI_files} \

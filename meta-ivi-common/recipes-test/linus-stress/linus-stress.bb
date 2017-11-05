@@ -3,7 +3,7 @@ HOMEPAGE = "https://chromium.googlesource.com/chromiumos/third_party/autotest/+/
 LICENSE = "GPLv2"
 LIC_FILES_CHKSUM = "file://${S}/linus_stress/LICENSE;md5=b234ee4d69f5fce4486a80fdaf4a4263"
 
-SRC_URI = "git://gerrit.automotivelinux.org/gerrit/src/qa-test-misc;protocol=https;branch=master"
+SRC_URI = "git://gerrit.automotivelinux.org/gerrit/src/qa-test-misc;protocol=https;branch=${AGL_BRANCH}"
 SRCREV = "87cdfd4626c0cb47fc22f328867e49d6268df85c"
 
 inherit autotools
