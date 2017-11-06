@@ -4,6 +4,7 @@ RDEPENDS_${PN} += "\
 	dbus-cynara \
 	security-manager \
 	security-manager-policy \
-	agl-users \
     "
-
+# temp. disabled to figure-out userid addition+sota
+#	agl-users \
+#
