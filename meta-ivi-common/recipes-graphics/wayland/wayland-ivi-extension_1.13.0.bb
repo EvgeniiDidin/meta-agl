@@ -5,9 +5,11 @@ BUGTRACKER = "http://bugs.genivi.org/enter_bug.cgi?product=Wayland%20IVI%20Exten
 LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=1f1a56bb2dadf5f2be8eb342acf4ed79"
 
-SRCREV = "3ebb7b74e60a35d549284e7f77183de66bef18e0"
+SRCREV = "ede33c1c898eeaf673dd2c275e92763a5aabd066"
 SRC_URI = "git://github.com/GENIVI/${BPN}.git;protocol=http \
-    "
+	file://0001-simple-id-agent-initial-commit.patch;patch=1 \
+	file://0002-ivi-controller-load-id-agent-module.patch;patch=1 \
+"
 S = "${WORKDIR}/git"
 
 DEPENDS = "weston virtual/libgles2 pixman wayland-native"
@@ -20,3 +22,10 @@ FILES_${PN} += "${libdir}/weston/*"
 FILES_${PN}-dbg += "${libdir}/weston/.debug/*"
 
 EXTRA_OECMAKE += "-DLIB_SUFFIX=${@d.getVar('baselib', True).replace('lib', '')}"
+
+FILESEXTRAPATHS_prepend := ":${THISDIR}/wayland-ivi-extension:"
+
+SRC_URI_append_wandboard = " file://wandboard_fix_build.patch"
+
+# workaround paralellism issue:
+PARALLEL_MAKE = ""
