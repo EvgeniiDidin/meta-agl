@@ -15,6 +15,9 @@ DEPENDS_append = " af-main-native"
 # for bindings  af-binder is required.
 DEPENDS_append = " af-binder"
 
+# for hal bindings genskel is required.
+DEPENDS_append = " af-binder-devtools-native"
+
 do_aglwgt_package()  {
         cd ${B}
         ${S}/conf.d/autobuild/agl/autobuild package BUILD_DIR=${B} DEST=${B}/package VERBOSE=TRUE || \
