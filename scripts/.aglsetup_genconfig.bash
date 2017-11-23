@@ -213,7 +213,7 @@ function append_fragment() {
 function execute_setup() {
 	script=$1
 	debug "Executing script $script"
-	opts=
+	opts="-e"
 	[[ $DEBUG == 1 ]] && opts="$opts -x"
 	pushd $BUILDDIR &>/dev/null
 		$BASH $opts $script \
