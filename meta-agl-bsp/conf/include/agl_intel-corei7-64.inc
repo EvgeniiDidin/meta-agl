@@ -1,22 +1,3 @@
-# Configurations to run on VirtualBox/VMWare
-#
-# To get wide screen than default, there are a selection of resolutions
-# available:
-#
-#APPEND += "uvesafb.mode_option=1024x768-32"
-#APPEND += "uvesafb.mode_option=1280x1024-32"
-#APPEND += "uvesafb.mode_option=1600x1200-32"
-#
-# To avoid corrupt boot screen by systemd message, you can use serial
-# console separated from VGA console or disable all boot messages by
-# kernel command line.
-#
-# Configuration for serial console
-APPEND += "console=ttyS0,115200n8 reboot=efi"
-#
-# All boot message will be off
-#APPEND += "quiet"
-
 # Enable Libvaapi for HW accelerated video support
 #
 IMAGE_INSTALL_append = " \
@@ -24,6 +5,9 @@ IMAGE_INSTALL_append = " \
         va-intel \
         gstreamer1.0-vaapi"
 
-AGL_EXTRA_IMAGE_FSTYPES = "wic.xz wic.bmap wic.xz.sha256sum hddimg"
+AGL_EXTRA_IMAGE_FSTYPES = "wic.xz wic.bmap wic.xz.sha256sum"
 INITRD_LIVE = "${DEPLOY_DIR_IMAGE}/${INITRD_IMAGE_LIVE}-${MACHINE}.ext4.gz"
-NOISO = "1"
+
+# Modify this file under meta-agl-bsp/meta-intel/wic to change the
+# kernel command line, including to change the screen resolution.
+WKS_FILE = "systemd-intel-corei7-64-bootdisk.wks"
