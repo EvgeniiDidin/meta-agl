@@ -29,6 +29,7 @@ SRC_URI_append = "\
             file://hid.cfg \
             file://drm.cfg \
             file://btusb.cfg \
+            file://usbaudio.cfg \
             "
 KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/can-bus.cfg"
 # Enable support for usb video class for usb camera devices
@@ -42,6 +43,8 @@ KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/hid.cfg"
 KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/drm.cfg"
 # Enable Bluetooth USB devices
 KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/btusb.cfg"
+# Enable USB audio devices
+KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/usbaudio.cfg"
 
 # Enable required features for the agl-netboot feature
 SRC_URI_append_netboot = " file://nbd.cfg \
