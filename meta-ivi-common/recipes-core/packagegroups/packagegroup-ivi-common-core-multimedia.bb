@@ -12,7 +12,7 @@ PACKAGES = "\
 ALLOW_EMPTY_${PN} = "1"
 
 RDEPENDS_${PN} += "\
-    agl-audio-plugin \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'agl-audio-4a-framework', '' , 'agl-audio-plugin', d)} \
     alsa-utils \
     pulseaudio-server \
     pulseaudio-misc \
