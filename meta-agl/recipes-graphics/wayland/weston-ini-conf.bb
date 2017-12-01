@@ -4,6 +4,7 @@ LIC_FILES_CHKSUM = "file://${COREBASE}/LICENSE;md5=4d92cd373abda3937c2bc47fbc49d
 
 SRC_URI = "file://core.cfg \
            file://ivishell.cfg \
+           file://id-agent.cfg \
            file://shell.cfg \
            file://hdmi-a-1-270.cfg \
           "
