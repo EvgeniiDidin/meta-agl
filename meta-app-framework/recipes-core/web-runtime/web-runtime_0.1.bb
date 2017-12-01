@@ -14,7 +14,6 @@ SRC_URI = "\
 
 RDEPENDS_${PN} = "\
   qtdeclarative-tools \
-  qtwebkit-qmlplugins \
   qtwayland-qmlplugins \
   qtquickcontrols-qmlplugins \
 "
