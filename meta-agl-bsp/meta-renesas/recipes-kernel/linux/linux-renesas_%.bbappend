@@ -4,8 +4,6 @@ FILESEXTRAPATHS_prepend := "${THISDIR}/linux:"
 # adapter.
 SRC_URI += " file://disable_delay_printk.patch \
              file://cfg_mac_80211.cfg \
-             file://ath9k_htc.cfg \
-             file://rtl_sdr.cfg \
              file://ra2x00.cfg \
              file://0001-media-r820t-do-not-double-free-fe-tuner_priv-in-r820.patch \
              file://0002-media-r820t-remove-redundant-initializations-in-r820.patch \
@@ -13,8 +11,6 @@ SRC_URI += " file://disable_delay_printk.patch \
              file://hciattach.cfg \
              file://pppd-rcar.cfg \
             "
-
-KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/ath9k_htc.cfg ${WORKDIR}/rtl_sdr.cfg"
 
 SRC_URI_append_agl-porter-hibernate = " file://hibernation/0001-Add-Hibernation-kernel-base-code.patch \
                                         file://hibernation/0002-Add-Hibernation-arch-code-Only-R-CAR-M2W.patch \
