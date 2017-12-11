@@ -70,7 +70,6 @@ do_install_append_class-target() {
         install -d -m 0755 ${D}${systemd_system_unitdir}/sockets.target.wants
         ln -sf ../afm-system-daemon.service ${D}${systemd_system_unitdir}/default.target.wants/afm-system-daemon.service
         ln -sf ../afm-system-daemon.socket ${D}${systemd_system_unitdir}/sockets.target.wants/afm-system-daemon.socket
-        ln -s ../afm-user-session@.service ${D}${systemd_user_unitdir}/default.target.wants/afm-user-session@0.service
     fi
     echo "QT_WAYLAND_SHELL_INTEGRATION=ivi-shell" > ${D}${afm_confdir}/unit.env.d/qt-for-ivi-shell
 }
