@@ -1,6 +1,6 @@
 INTEL_MACHINE_SUBTYPE = "broxton-m"
 
-IMAGE_INSTALL_append = " linux-firmware-iwlwifi-8000c linux-firmware-ibt-11-5"
+IMAGE_INSTALL_append = " linux-firmware-iwlwifi-8000c linux-firmware-ibt"
 IMAGE_INSTALL_append = " \
         libva \
         va-intel \
