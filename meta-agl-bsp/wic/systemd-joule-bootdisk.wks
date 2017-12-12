@@ -4,7 +4,7 @@
 # and we do not have swap.  We assume a Joule system and provide an
 # appropriate kernel command line.
 
-part /boot --source bootimg-efi --sourceparams="loader=systemd-boot" --ondisk sda --label msdos --active --align 1024
+part /boot --source bootimg-efi --sourceparams="loader=systemd-boot,initrd=microcode.cpio" --ondisk sda --label msdos --active --align 1024
 
 part / --source rootfs --ondisk sda --fstype=ext4 --label platform --align 1024 --use-uuid
 
