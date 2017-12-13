@@ -1,4 +1,4 @@
-FILESEXTRAPATHS_prepend := "${THISDIR}/linux/linux-yocto-4.4:"
+FILESEXTRAPATHS_prepend := "${THISDIR}/linux/linux-yocto-4.12:"
 
 #-------------------------------------------------------------------------
 # smack patches for handling bluetooth
