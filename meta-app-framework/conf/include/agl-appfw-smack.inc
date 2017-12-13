@@ -4,7 +4,7 @@ DISTRO_FEATURES_append = " smack dbus-cynara xattr"
 
 # use tar-native to support SMACK extended attributes independently of host config
 IMAGE_CMD_TAR = "tar --xattrs --xattrs-include='*'"
-IMAGE_DEPENDS_tar_append = " tar-replacement-native"
+do_image_tar[depends] += "tar-replacement-native:do_populate_sysroot"
 EXTRANATIVEPATH += "tar-native"
 
 # security: enable ssh server in place of dropbear to support PAM on user sessions
