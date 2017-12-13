@@ -42,6 +42,10 @@ DISTRO_FEATURES_append = " h264dec_lib h264enc_lib aaclcdec_lib aaclcdec_mdw"
 
 DISTRO_FEATURES_BACKFILL_remove = "gobject-introspection-data"
 
+MACHINE_ESSENTIAL_EXTRA_RDEPENDS_append = " \
+	u-boot-script-rcar-gen3 \
+"
+
 IMAGE_INSTALL_append_rcar-gen3 = " \
 	kernel-devicetree \
 	kernel-module-pvrsrvkm \
