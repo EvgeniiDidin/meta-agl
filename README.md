@@ -52,7 +52,6 @@ See README-AGL.md
  Specifically out of meta-openembedded these sub-layers are used:
 	* meta-openembedded/meta-oe
 	* meta-openembedded/meta-multimedia
-	* meta-openembedded/meta-efl
 	* meta-openembedded/meta-networking
 	* meta-openembedded/meta-python
 
