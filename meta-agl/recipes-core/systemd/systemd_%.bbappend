@@ -1,9 +1,9 @@
 FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 
-SRC_URI += "file://backport-v234-e266c06.patch \
-            file://e2fsck.conf \
-            ${@bb.utils.contains('VIRTUAL-RUNTIME_net_manager','systemd','file://wired.network','',d)} \
-           "
+SRC_URI += "\
+    file://e2fsck.conf \
+    ${@bb.utils.contains('VIRTUAL-RUNTIME_net_manager','systemd','file://wired.network','',d)} \
+"
 
 # enable networkd/resolved support
 PACKAGECONFIG_append_pn-systemd = " \
