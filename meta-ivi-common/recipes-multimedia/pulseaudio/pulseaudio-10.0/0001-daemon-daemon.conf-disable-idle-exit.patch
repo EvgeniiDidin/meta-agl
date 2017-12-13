@@ -1,0 +1,28 @@
+From 4410e137da046afd072435ae8cf99a677b277442 Mon Sep 17 00:00:00 2001
+From: Matt Porter <mporter@konsulko.com>
+Date: Wed, 13 Dec 2017 17:24:10 -0500
+Subject: [PATCH] daemon: daemon.conf: disable idle exit
+
+Disable exit on idle by default.
+
+Signed-off-by: Matt Porter <mporter@konsulko.com>
+---
+ src/daemon/daemon.conf.in | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/daemon/daemon.conf.in b/src/daemon/daemon.conf.in
+index f3a1cc32..5c5e948c 100644
+--- a/src/daemon/daemon.conf.in
++++ b/src/daemon/daemon.conf.in
+@@ -39,7 +39,7 @@ ifelse(@HAVE_DBUS@, 1, [dnl
+ ; realtime-scheduling = yes
+ ; realtime-priority = 5
+ 
+-; exit-idle-time = 20
++exit-idle-time = -1
+ ; scache-idle-time = 20
+ 
+ ; dl-search-path = (depends on architecture)
+-- 
+2.11.0
+

@@ -8,6 +8,7 @@ SRC_URI += " \
 	file://0005-sink-input-volume-Add-support-for-volume-ramp-factor.patch \
 	file://0006-sink-input-Remove-pa_sink_input_set_volume_ramp.patch;apply=no \
 	file://enable-ofono-hfp-backend.patch \
+	file://0001-daemon-daemon.conf-disable-idle-exit.patch \
 "
 
 PACKAGES =+ " pulseaudio-module-dev"
