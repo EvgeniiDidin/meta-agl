@@ -3,5 +3,4 @@ RDEPENDS_${PN} += "\
 	ofono-tests \
 	si-tools \
 	ti-bt \
-	ti-bt-firmware \
 "
