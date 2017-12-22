@@ -7,9 +7,9 @@ LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/Apache-2.0;md5=89aea4e17d99a7cacdbeed46a0096b10"
 
 SRC_URI = "gitsm://gerrit.automotivelinux.org/gerrit/apps/low-level-can-service;protocol=https;branch=${AGL_BRANCH}"
-SRCREV = "9cb8f9e5578945b552a6f9b5d3aaaf7794d680d9"
+SRCREV = "0df00bae849ddb2b52d7ef25b42ec0a92734e002"
 
-PV = "4.0+git${SRCPV}"
+PV = "5.0+git${SRCPV}"
 S  = "${WORKDIR}/git"
 
 inherit cmake aglwgt pkgconfig
