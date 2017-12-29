@@ -21,7 +21,8 @@ APPEND += "quiet"
 DISTRO_FEATURES_append = " sota"
 
 # Image support
-AGL_EXTRA_IMAGE_FSTYPES = "vmdk.xz"
+AGL_EXTRA_IMAGE_FSTYPES = "wic.vmdk"
+IMAGE_BOOT_FILES_sota = "u-boot-qemux86-64.rom"
 
 # Root device
 ROOT_VM = "root=PARTUUID=${DISK_SIGNATURE}-02"
