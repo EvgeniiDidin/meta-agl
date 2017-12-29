@@ -1,4 +1,3 @@
-DEPENDS += "gobject-introspection-native"
 inherit gobject-introspection
 
 FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
