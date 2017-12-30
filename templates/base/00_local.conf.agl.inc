@@ -6,3 +6,6 @@ DISTRO = "poky-agl"
 
 #see meta-agl/meta-agl/conf/include/base-agl.inc
 require conf/include/base-agl.inc
+
+# Temporarily disable GObject Introspection Data
+GI_DATA_ENABLED = "False"
