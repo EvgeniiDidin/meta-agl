@@ -6,6 +6,7 @@ ApplicationWindow {
 	width: 1024
 	height: 768
 	visible: true
+	flags: Qt.WindowFullScreen | Qt.FramelessWindowHint
 	WebEngineView {
 		url: Qt.application.arguments[1]
 		anchors.fill: parent
