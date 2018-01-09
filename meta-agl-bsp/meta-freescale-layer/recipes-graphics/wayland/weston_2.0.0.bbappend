@@ -4,6 +4,7 @@ SRC_URI_append_imxgpu3d = " \
     file://0001-libweston-Restore-EGL-support-for-the-fbdev-backend.patch     \
     file://0002-MGS-2352-ccc-Add-GPU-VIV-support-for-weston-2.0.patch     \
     file://0006-Link-compositor-to-egl.patch                               \
+    file://fix-ivi-layout-for-IMX6-fbdev.patch \
 "
 
 # The 'egl' configuration of weston requires gles support, and consideration
