@@ -3,6 +3,7 @@ Description=AGL user config
 
 [Service]
 ExecStart=/bin/ln -sf @DISPLAY_XDG_RUNTIME_DIR@/wayland-0 %t/
+RemainAfterExit=yes
 
 [Install]
 WantedBy=default.target
