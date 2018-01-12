@@ -10,6 +10,7 @@ SRC_URI = "git://github.com/GENIVI/${BPN}.git;protocol=http \
 	file://0001-simple-id-agent-initial-commit.patch;patch=1 \
 	file://0002-ivi-controller-load-id-agent-module.patch;patch=1 \
         file://0003-ivi-controller-add-resize-setting-suit-to-surface-si.patch \
+        file://0001-Resolve-weston-crush-when-repeat-touching-very-quick.patch \
 "
 S = "${WORKDIR}/git"
 
