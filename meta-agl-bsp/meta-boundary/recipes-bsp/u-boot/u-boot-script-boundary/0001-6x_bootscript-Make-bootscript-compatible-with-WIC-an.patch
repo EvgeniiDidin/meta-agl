@@ -1,26 +1,30 @@
-From 785f028c550e50904ca4bc7f399a21e8b5f6910c Mon Sep 17 00:00:00 2001
+From f1c5c08ea5606b358b30b459c74aa932796ded3c Mon Sep 17 00:00:00 2001
 From: Mihail Grigorov <michael.grigorov@konsulko.com>
-Date: Mon, 23 Oct 2017 14:26:12 +0300
+Date: Wed, 10 Jan 2018 10:30:14 +0200
 Subject: [PATCH] 6x_bootscript: Make bootscript compatible with WIC and SDCARD
  images
 
-Get partition 2 UUID,
+a) Get partition 2 UUID,
 in case of error, points the boot directory to /boot
 otherwise /
 
+b) Modify DTB/hdmi to use 1920x1080
+
 Signed-off-by: Mihail Grigorov <michael.grigorov@konsulko.com>
 ---
- .../boundary/nitrogen6x/6x_bootscript-yocto-3.14.txt  | 19 +++++++++++++++----
- 1 file changed, 15 insertions(+), 4 deletions(-)
+ .../nitrogen6x/6x_bootscript-yocto-3.14.txt         | 21 +++++++++++++++++----
+ 1 file changed, 17 insertions(+), 4 deletions(-)
 
 diff --git a/board/boundary/nitrogen6x/6x_bootscript-yocto-3.14.txt b/board/boundary/nitrogen6x/6x_bootscript-yocto-3.14.txt
-index f6bf2f5289..9b5946692d 100644
+index f6bf2f5289..250310e37f 100644
 --- a/board/boundary/nitrogen6x/6x_bootscript-yocto-3.14.txt
 +++ b/board/boundary/nitrogen6x/6x_bootscript-yocto-3.14.txt
-@@ -48,6 +48,15 @@ if itest.s "x" == "x${dtbname}" ; then
+@@ -48,6 +48,17 @@ if itest.s "x" == "x${dtbname}" ; then
  	fi
  fi
  
++setenv cmd_hdmi 'fdt set fb_hdmi status okay;fdt set fb_hdmi mode_str 1920x1080M@60;'
++
 +setenv p2uuid 'x'
 +part uuid ${dtype} ${disk}:2 p2uuid
 +
@@ -33,7 +37,7 @@ index f6bf2f5289..9b5946692d 100644
  if itest.s x${bootpart} == x ; then
  	bootpart=1
  fi
-@@ -58,7 +67,11 @@ fi
+@@ -58,7 +69,11 @@ fi
  setenv bootargs ${bootargs} console=${console},115200 vmalloc=400M consoleblank=0 rootwait fixrtc cpu=${cpu} board=${board}
  
  if itest.s x == x${bootdir} ; then
@@ -46,7 +50,7 @@ index f6bf2f5289..9b5946692d 100644
  fi
  
  if load ${dtype} ${disk}:${bootpart} ${a_fdt} ${bootdir}${dtbname} ; then
-@@ -116,8 +129,6 @@ if itest.s "x" == "x${cmd_xxx_present}" ; then
+@@ -116,8 +131,6 @@ if itest.s "x" == "x${cmd_xxx_present}" ; then
  	echo "!!!!!!!!!!!!!!!!"
  fi
  
@@ -55,7 +59,7 @@ index f6bf2f5289..9b5946692d 100644
  if test "sata" = "${dtype}" ; then
  	setenv bootargs "${bootargs} root=/dev/sda${bpart}" ;
  elif test "usb" = "${dtype}" ; then
-@@ -167,7 +178,7 @@ if itest.s "x" != "x${show_env}" ; then
+@@ -167,7 +180,7 @@ if itest.s "x" != "x${show_env}" ; then
  	printenv
  fi
  
