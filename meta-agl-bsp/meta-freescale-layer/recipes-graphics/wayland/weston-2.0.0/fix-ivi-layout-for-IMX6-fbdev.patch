@@ -1,0 +1,13 @@
+--- a/ivi-shell/ivi-layout.c	2018-01-09 12:36:35.595811484 +0200
++++ b/ivi-shell/ivi-layout.c	2018-01-09 12:39:59.579122491 +0200
+@@ -629,10 +629,6 @@
+ 	struct ivi_rectangle r;
+ 	bool can_calc = true;
+ 
+-	/*In case of no prop change, this just returns*/
+-	if (!ivilayer->prop.event_mask && !ivisurf->prop.event_mask)
+-		return;
+-
+ 	update_opacity(ivilayer, ivisurf, ivi_view->view);
+ 
+ 	if (ivisurf->prop.source_width == 0 || ivisurf->prop.source_height == 0) {
