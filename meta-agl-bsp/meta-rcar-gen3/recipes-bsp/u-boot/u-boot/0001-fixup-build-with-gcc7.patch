@@ -1,22 +1,22 @@
 From ba619c7ec7820e80d1b5b520440fdb81c31c0baf Mon Sep 17 00:00:00 2001
 From: Ronan Le Martret <ronan.lemartret@iot.bzh>
 Date: Fri, 14 Oct 2016 09:03:11 +0200
-Subject: [PATCH] fix gcc6 build
+Subject: [PATCH] fix gcc7 build
 
 Signed-off-by: ronan <ronan@linux-pgnz.suse>
 ---
- include/linux/compiler-gcc6.h | 66 +++++++++++++++++++++++++++++++++++++++++++
+ include/linux/compiler-gcc7.h | 66 +++++++++++++++++++++++++++++++++++++++++++
  1 file changed, 66 insertions(+)
- create mode 100644 include/linux/compiler-gcc6.h
+ create mode 100644 include/linux/compiler-gcc7.h
 
-diff --git a/include/linux/compiler-gcc6.h b/include/linux/compiler-gcc6.h
+diff --git a/include/linux/compiler-gcc7.h b/include/linux/compiler-gcc7.h
 new file mode 100644
 index 0000000..a3d00d8
 --- /dev/null
-+++ b/include/linux/compiler-gcc6.h
++++ b/include/linux/compiler-gcc7.h
 @@ -0,0 +1,66 @@
 +#ifndef __LINUX_COMPILER_H
-+#error "Please don't include <linux/compiler-gcc6.h> directly, include <linux/compiler.h> instead."
++#error "Please don't include <linux/compiler-gcc7.h> directly, include <linux/compiler.h> instead."
 +#endif
 +
 +#define __used				__attribute__((__used__))
