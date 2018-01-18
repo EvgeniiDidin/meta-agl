@@ -33,6 +33,8 @@ PREFERRED_VERSION_gstreamer1.0-plugins-good = "1.6.3"
 PREFERRED_VERSION_gstreamer1.0-plugins-ugly = "1.6.3"
 PREFERRED_VERSION_gstreamer1.0-plugins-vspfilter = "1.0%"
 
+PREFERRED_VERSION_gstreamer1.0-omx          ?= "1.2.0"
+
 MACHINE_FEATURES_append = " multimedia"
 
 DISTRO_FEATURES_append = " use_eva_pkg"
