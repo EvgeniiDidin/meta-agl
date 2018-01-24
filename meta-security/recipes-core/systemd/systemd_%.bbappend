@@ -53,7 +53,7 @@ install_file() {
 # /var/tmp point into /var/volatile (tmpfs) and get created anew during
 # startup. We set these permissions directly after creating them via
 # /etc/tmpfiles.d/00-create-volatile.conf
-RDEPENDS_${PN}_append_with-lsm-smack = " smack-userspace"
+RDEPENDS_${PN}_append_with-lsm-smack = " smack"
 do_install_append_with-lsm-smack() {
     install_file ${D}${systemd_unitdir}/system/systemd-tmpfiles-setup.service.d/smack.conf <<EOF
 [Service]

@@ -40,8 +40,8 @@ EOF
 # via postinst. This is much easier to use with bitbake, too:
 # - no need to maintain a patched rpm
 # - works for directories which are not packaged by default when empty
-RDEPENDS_${PN}_append_with-lsm-smack = " smack-userspace"
-DEPENDS_append_with-lsm-smack = " smack-userspace-native"
+RDEPENDS_${PN}_append_with-lsm-smack = " smack"
+DEPENDS_append_with-lsm-smack = " smack-native"
 pkg_postinst_${PN}_with-lsm-smack() {
     #!/bin/sh -e
 

@@ -14,7 +14,7 @@ DEPENDS = "openssl libxml2 xmlsec1 systemd libzip json-c systemd security-manage
 DEPENDS_class-native = "openssl libxml2 xmlsec1 libzip json-c"
 RDEPENDS_${PN}_class-target += "af-binder-tools"
 
-PACKAGE_WRITE_DEPS_append_with-lsm-smack = " smack-userspace-native libcap-native"
+PACKAGE_WRITE_DEPS_append_with-lsm-smack = " smack-native libcap-native"
 
 EXTRA_OECMAKE_class-native  = "\
 	-DUSE_LIBZIP=1 \
@@ -46,8 +46,8 @@ GROUPADD_PARAM_${PN} = "-r ${afm_name}"
 FILES_${PN} += "\
 	${@bb.utils.contains('DISTRO_FEATURES', 'systemd', '${systemd_user_unitdir}/afm-user-daemon.service', '', d)} \
 "
-RDEPENDS_${PN}_append_with-lsm-smack = " smack-userspace bash"
-DEPENDS_append_with-lsm-smack = " smack-userspace-native"
+RDEPENDS_${PN}_append_with-lsm-smack = " smack bash"
+DEPENDS_append_with-lsm-smack = " smack-native"
 
 # short hacks here
 SRC_URI += "\

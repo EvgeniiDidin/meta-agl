@@ -1,6 +1,4 @@
-FILESEXTRAPATHS_append := ":${THISDIR}/${PN}"
-SRC_URI += "file://Only-require-libxslt-in-.pc-files-when-necessary.patch"
 
-DEPENDS += "libxml2"
+DEPENDS = "libtool libxml2 libxslt openssl"
 
 BBCLASSEXTEND = "native nativesdk"

@@ -113,8 +113,8 @@ FILES_${PN} += "${systemd_unitdir}/system"
 # the postinst completes, but that is a general problem. It gets
 # avoided entirely when calling this script while building the
 # rootfs.
-RDEPENDS_${PN}_append_with-lsm-smack = " smack-userspace"
-DEPENDS_append_with-lsm-smack = " smack-userspace-native"
+RDEPENDS_${PN}_append_with-lsm-smack = " smack"
+DEPENDS_append_with-lsm-smack = " smack-native"
 CHSMACK_with-lsm-smack = "chsmack"
 CHSMACK = "true"
 pkg_postinst_${PN} () {
