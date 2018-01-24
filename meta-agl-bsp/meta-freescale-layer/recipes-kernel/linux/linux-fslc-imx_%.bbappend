@@ -13,6 +13,6 @@ KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/cgroup.cfg"
 #-------------------------------------------------------------------------
 # smack patches for handling bluetooth
 
-SRC_URI_append_smack = "\
+SRC_URI_append_with-lsm-smack = "\
        file://0004-Smack-Assign-smack_known_web-label-for-kernel-thread.patch \
 "

@@ -3,7 +3,7 @@ FILESEXTRAPATHS_prepend := "${THISDIR}/linux/linux-yocto-4.12:"
 #-------------------------------------------------------------------------
 # smack patches for handling bluetooth
 
-SRC_URI_append_smack = "\
+SRC_URI_append_with-lsm-smack = "\
 	file://0002-smack-fix-cache-of-access-labels.patch \
 	file://0003-Smack-ignore-null-signal-in-smack_task_kill.patch \
 	file://0004-Smack-Assign-smack_known_web-label-for-kernel-thread.patch \
