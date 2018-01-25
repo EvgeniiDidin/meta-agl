@@ -2,15 +2,26 @@ DESCRIPTION = "Cynara service with client libraries"
 LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=86d3f3a95c324c9479bd8986968f4327;beginline=3"
 
+PV = "0.14.10+git${SRCPV}"
+SRCREV = "be455dcaf1400bec0272a6ce90852b9147393a60"
+SRC_URI = "git://github.com/Samsung/cynara.git"
+S = "${WORKDIR}/git"
+
+SRC_URI += " \
+  file://cynara-db-migration-abort-on-errors.patch \
+  file://0001-Add-fallthrough-tags.patch \
+  file://0002-gcc-7-requires-include-functional-for-std-function.patch \
+  file://0003-Avoid-warning-when-compiling-without-smack.patch \
+  file://0004-Fix-mode-of-sockets.patch \
+  file://0005-Allow-to-tune-sockets.patch \
+  file://0006-Install-socket-activation-by-default.patch \
+"
+
 DEPENDS = " \
-dbus \
 glib-2.0 \
 systemd \
 zip \
 "
-
-# For testing:
-# DEPENDS += "gmock"
 
 PACKAGECONFIG ??= ""
 # Use debug mode to increase logging. Beware, also compiles with less optimization
@@ -19,19 +30,16 @@ PACKAGECONFIG[debug] = "-DCMAKE_BUILD_TYPE=DEBUG,-DCMAKE_BUILD_TYPE=RELEASE,libu
 
 inherit cmake
 
-CXXFLAGS_append = " \
--DCYNARA_STATE_PATH=\\\\\"${localstatedir}/cynara/\\\\\" \
--DCYNARA_LIB_PATH=\\\\\"${prefix}/lib/cynara/\\\\\" \
--DCYNARA_TESTS_DIR=\\\\\"${prefix}/share/cynara/tests/\\\\\" \
--DCYNARA_CONFIGURATION_DIR=\\\\\"${sysconfdir}/cynara/\\\\\" \
-${@bb.utils.contains('PACKAGECONFIG', 'debug', '-Wp,-U_FORTIFY_SOURCE', '', d)} \
-"
-
 EXTRA_OECMAKE += " \
--DCMAKE_VERBOSE_MAKEFILE=ON \
--DBUILD_WITH_SYSTEMD=ON \
--DSYSTEMD_UNIT_DIR=${systemd_unitdir}/system \
--DSOCKET_DIR=/run/cynara \
+  -DCMAKE_VERBOSE_MAKEFILE=ON \
+  -DBUILD_WITH_SYSTEMD_DAEMON=ON \
+  -DBUILD_WITH_SYSTEMD_JOURNAL=ON \
+  -DSYSTEMD_UNIT_DIR=${systemd_system_unitdir} \
+  -DSOCKET_DIR=/run/cynara \
+  -DBUILD_COMMONS=ON \
+  -DBUILD_SERVICE=ON \
+  -DBUILD_DBUS=OFF \
+  -DCYNARA_ADMIN_SOCKET_GROUP=cynara \
 "
 
 # Explicitly package empty directory. Otherwise Cynara prints warnings
@@ -41,30 +49,6 @@ FILES_${PN}_append = " \
 ${libdir}/cynara/plugin/service \
 ${libdir}/cynara/plugin/client \
 "
-
-# Testing depends on gmock and gtest. They can be found in meta-oe
-# and are not necessarily available, so this feature is off by default.
-# If gmock from meta-oe is used, then a workaround is needed to avoid
-# a link error (libgmock.a calls pthread functions without libpthread
-# being listed in the .pc file).
-PACKAGECONFIG[tests] = "-DBUILD_TESTS:BOOL=ON,-DBUILD_TESTS:BOOL=OFF,gmock gtest,"
-SRC_URI_append = "${@bb.utils.contains('PACKAGECONFIG', 'tests', ' file://gmock-pthread-linking.patch file://run-ptest', '', d)}"
-
-# Will be empty if no tests were built.
-inherit ptest
-FILES_${PN}-ptest += "${bindir}/cynara-tests ${bindir}/cynara-db-migration-tests ${datadir}/cynara/tests"
-do_install_ptest () {
-    if ${@bb.utils.contains('PACKAGECONFIG', 'tests', 'true', 'false', d)}; then
-        mkdir -p ${D}/${datadir}/cynara/tests
-        cp -r ${S}/test/db/* ${D}/${datadir}/cynara/tests
-    fi
-}
-
-do_compile_prepend () {
-    # en_US.UTF8 is not available, causing cynara-tests parser.getKeyAndValue to fail.
-    # Submitted upstream: https://github.com/Samsung/cynara/issues/10
-    sed -i -e 's/std::locale("en_US.UTF8")/std::locale::classic()/g' ${S}/test/credsCommons/parser/Parser.cpp
-}
 
 inherit useradd
 USERADD_PACKAGES = "${PN}"
@@ -79,28 +63,28 @@ USERADD_PARAM_${PN} = "\
 #inherit systemd
 #SYSTEMD_SERVICE_${PN} = "cynara.service"
 
-do_install_append () {
-   chmod a+rx ${D}/${sbindir}/cynara-db-migration
+#do_install_append () {
+#   chmod a+rx ${D}/${sbindir}/cynara-db-migration
+#
+#   install -d ${D}${sysconfdir}/cynara/
+#   install -m 644 ${S}/conf/creds.conf ${D}/${sysconfdir}/cynara/creds.conf
+#
+#   # No need to create empty directories except for those which
+#   # Cynara expects to find.
+#   # install -d ${D}${localstatedir}/cynara/
+#   # install -d ${D}${prefix}/share/cynara/tests/empty_db
+#   install -d ${D}${libdir}/cynara/plugin/client
+#   install -d ${D}${libdir}/cynara/plugin/service
+#
+#   # install db* ${D}${prefix}/share/cynara/tests/
+#
+#   install -d ${D}${systemd_system_unitdir}/sockets.target.wants
+#   ln -s ../cynara.socket ${D}${systemd_system_unitdir}/sockets.target.wants/cynara.socket
+#   ln -s ../cynara-admin.socket ${D}${systemd_system_unitdir}/sockets.target.wants/cynara-admin.socket
+#   ln -s ../cynara-agent.socket ${D}${systemd_system_unitdir}/sockets.target.wants/cynara-agent.socket
+#}
 
-   install -d ${D}${sysconfdir}/cynara/
-   install -m 644 ${S}/conf/creds.conf ${D}/${sysconfdir}/cynara/creds.conf
-
-   # No need to create empty directories except for those which
-   # Cynara expects to find.
-   # install -d ${D}${localstatedir}/cynara/
-   # install -d ${D}${prefix}/share/cynara/tests/empty_db
-   install -d ${D}${libdir}/cynara/plugin/client
-   install -d ${D}${libdir}/cynara/plugin/service
-
-   # install db* ${D}${prefix}/share/cynara/tests/
-
-   install -d ${D}${systemd_unitdir}/system/sockets.target.wants
-   ln -s ../cynara.socket ${D}${systemd_unitdir}/system/sockets.target.wants/cynara.socket
-   ln -s ../cynara-admin.socket ${D}${systemd_unitdir}/system/sockets.target.wants/cynara-admin.socket
-   ln -s ../cynara-agent.socket ${D}${systemd_unitdir}/system/sockets.target.wants/cynara-agent.socket
-}
-
-FILES_${PN} += "${systemd_unitdir}/system"
+FILES_${PN} += "${systemd_system_unitdir}"
 
 # Cynara itself has no dependency on Smack. Only its installation
 # is Smack-aware in the sense that it sets Smack labels. Do not
@@ -113,8 +97,8 @@ FILES_${PN} += "${systemd_unitdir}/system"
 # the postinst completes, but that is a general problem. It gets
 # avoided entirely when calling this script while building the
 # rootfs.
-RDEPENDS_${PN}_append_with-lsm-smack = " smack"
-DEPENDS_append_with-lsm-smack = " smack-native"
+DEPENDS_append_with-lsm-smack = " smack smack-native"
+EXTRA_OECMAKE_append_with-lsm-smack = " -DDB_FILES_SMACK_LABEL=System"
 CHSMACK_with-lsm-smack = "chsmack"
 CHSMACK = "true"
 pkg_postinst_${PN} () {
@@ -134,7 +118,7 @@ pkg_postinst_${PN} () {
 
    # Strip git patch level information, the version comparison code
    # in cynara-db-migration only expect major.minor.patch version numbers.
-   VERSION=${@bb.data.getVar('PV',d,1).split('+git')[0]}
+   VERSION=${@d.getVar('PV',d,1).split('+git')[0]}
    if [ -d $D${localstatedir}/cynara ] ; then
       # upgrade
       echo "NOTE: updating cynara DB to version $VERSION"
@@ -156,3 +140,24 @@ pkg_postinst_${PN} () {
    systemctl enable cynara
    systemctl start --no-block cynara
 }
+
+# Testing depends on gmock and gtest. They can be found in meta-oe
+# and are not necessarily available, so this feature is off by default.
+# If gmock from meta-oe is used, then a workaround is needed to avoid
+# a link error (libgmock.a calls pthread functions without libpthread
+# being listed in the .pc file).
+DEPENDS_append = "${@bb.utils.contains('PACKAGECONFIG', 'tests', ' gmock', '', d)}"
+LDFLAGS_append = "${@bb.utils.contains('PACKAGECONFIG', 'tests', ' -lpthread', '', d)}"
+SRC_URI_append = "${@bb.utils.contains('PACKAGECONFIG', 'tests', ' file://run-ptest', '', d)}"
+PACKAGECONFIG[tests] = "-DBUILD_TESTS:BOOL=ON,-DBUILD_TESTS:BOOL=OFF,gmock gtest,"
+
+# Will be empty if no tests were built.
+inherit ptest
+FILES_${PN}-ptest += "${bindir}/cynara-tests ${bindir}/cynara-db-migration-tests ${datadir}/cynara/tests"
+do_install_ptest () {
+    if ${@bb.utils.contains('PACKAGECONFIG', 'tests', 'true', 'false', d)}; then
+        mkdir -p ${D}/${datadir}/cynara/tests
+        cp -r ${S}/test/db/* ${D}/${datadir}/cynara/tests
+    fi
+}
+

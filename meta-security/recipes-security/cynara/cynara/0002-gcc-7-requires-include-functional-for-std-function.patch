@@ -1,7 +1,7 @@
-From 2169344adbb42ff580856204e2b290e3b04fd447 Mon Sep 17 00:00:00 2001
+From b18e66ce7f81c56e3a97ed075cb60d5a43b2e57c Mon Sep 17 00:00:00 2001
 From: Changhyeok Bae <changhyeok.bae@gmail.com>
 Date: Sun, 17 Dec 2017 15:28:28 +0000
-Subject: [PATCH] gcc-7 requires include <functional> for std::function
+Subject: [PATCH 2/6] gcc-7 requires include <functional> for std::function
 
 Signed-off-by: Changhyeok Bae <changhyeok.bae@gmail.com>
 ---
@@ -34,5 +34,5 @@ index 53dde23..f38c194 100644
  #include <cyad/CynaraAdminPolicies.h>
  
 -- 
-2.7.4
+2.14.3
 
