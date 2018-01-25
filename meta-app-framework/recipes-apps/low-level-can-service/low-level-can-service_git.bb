@@ -12,5 +12,7 @@ SRCREV = "d8d990528ea9746b21788f97be3fdbcc392c5d96"
 PV = "5.0+git${SRCPV}"
 S  = "${WORKDIR}/git"
 
+RDEPENDS_${PN} = "dev-mapping"
+
 inherit cmake aglwgt pkgconfig
 
