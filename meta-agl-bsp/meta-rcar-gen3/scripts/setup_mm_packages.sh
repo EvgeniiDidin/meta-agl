@@ -43,8 +43,8 @@ function copy_mm_packages() {
                 error "ERROR: FILES \""+$DOWNLOAD_DIR/$ZIP_1+"\" NOT EXTRACTING CORRECTLY"
                 error "ERROR: FILES \""+$DOWNLOAD_DIR/$ZIP_2+"\" NOT EXTRACTING CORRECTLY"
                 log   "The graphics and multimedia acceleration packages for "
-                log   "the R-Car Gen3 board BSP 2.19 can be downloaded from:"
-                log   " <https://www.renesas.com/en-us/solutions/automotive/rcar-demoboard-2.html>"
+                log   "the R-Car Gen3 board BSP can be downloaded from:"
+                log   "<https://www.renesas.com/en-us/solutions/automotive/rcar-demoboard-2.html>"
                 log
                 error  "These 2 files from there should be stored in your"
                 error  "'$DOWNLOAD_DIR' directory."
