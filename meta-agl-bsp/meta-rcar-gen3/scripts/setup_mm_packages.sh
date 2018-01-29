@@ -35,30 +35,30 @@ function log() {
 }
 
 function copy_mm_packages() {
-        if [ -f $DOWNLOAD_DIR/$ZIP_1 -a -f $DOWNLOAD_DIR/$ZIP_2 ]; then
-                mkdir -p $EXTRACT_DIR
-                cp --update $DOWNLOAD_DIR/$ZIP_1 $EXTRACT_DIR
-                cp --update $DOWNLOAD_DIR/$ZIP_2 $EXTRACT_DIR
-        else
-                error "ERROR: FILES \""+$DOWNLOAD_DIR/$ZIP_1+"\" NOT EXTRACTING CORRECTLY"
-                error "ERROR: FILES \""+$DOWNLOAD_DIR/$ZIP_2+"\" NOT EXTRACTING CORRECTLY"
-                log   "The graphics and multimedia acceleration packages for "
-                log   "the R-Car Gen3 board BSP can be downloaded from:"
-                log   "<https://www.renesas.com/en-us/solutions/automotive/rcar-demoboard-2.html>"
-                log
-                error  "These 2 files from there should be stored in your"
-                error  "'$DOWNLOAD_DIR' directory."
-                error  "  $ZIP_1"
-                error  "  $ZIP_2"
-                return 1
-        fi
+    if [ -f $DOWNLOAD_DIR/$ZIP_1 -a -f $DOWNLOAD_DIR/$ZIP_2 ]; then
+        mkdir -p $EXTRACT_DIR
+        cp --update $DOWNLOAD_DIR/$ZIP_1 $EXTRACT_DIR
+        cp --update $DOWNLOAD_DIR/$ZIP_2 $EXTRACT_DIR
+    else
+        error "ERROR: FILES \""+$DOWNLOAD_DIR/$ZIP_1+"\" NOT EXTRACTING CORRECTLY"
+        error "ERROR: FILES \""+$DOWNLOAD_DIR/$ZIP_2+"\" NOT EXTRACTING CORRECTLY"
+        log   "The graphics and multimedia acceleration packages for "
+        log   "the R-Car Gen3 board BSP can be downloaded from:"
+        log   "<https://www.renesas.com/en-us/solutions/automotive/rcar-demoboard-2.html>"
+        log
+        error  "These 2 files from there should be stored in your"
+        error  "'$DOWNLOAD_DIR' directory."
+        error  "  $ZIP_1"
+        error  "  $ZIP_2"
+        return 1
+    fi
 
-        if [ -f $COPY_SCRIPT ]; then
-                cd $METADIR/meta-renesas-rcar-gen3/
-                $COPY_SCRIPT -d -f $EXTRACT_DIR
-                cd ..
-        else
-                log   "scripts to copy drivers for Gen3 not found."
-                return 1
-        fi
+    if [ -f $COPY_SCRIPT ]; then
+        cd $METADIR/meta-renesas-rcar-gen3/
+        $COPY_SCRIPT -d -f $EXTRACT_DIR
+        cd ..
+    else
+        log   "scripts to copy drivers for Gen3 not found."
+        return 1
+    fi
 }
