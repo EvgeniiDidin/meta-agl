@@ -15,10 +15,14 @@ function color {
 	[[ $stdout_in_terminal == 0 ]] && return
 	for k in $*; do
 		case $k in
-			bold) tput bold 2>/dev/null;;
-			none) tput sgr0 2>/dev/null;;
-			*) tput setaf $k 2>/dev/null;;
+			bold) tput bold;;
+			none) tput sgr0;;
+			*) tput setaf $k;;
 		esac
+        if [[ $? != 0 ]]; then
+            echo "tput: terminal doesn't support color settings, continuing" >&2
+            true
+        fi
 	done
 }
 color_green=$(color bold 2)
