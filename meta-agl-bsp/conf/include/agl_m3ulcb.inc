@@ -19,6 +19,8 @@ PREFERRED_PROVIDER_virtual/mesa = "mesa"
 PREFERRED_PROVIDER_libgbm = "libgbm"
 PREFERRED_RPROVIDER_libgbm-dev = "libgbm"
 
+PREFERRED_RPROVIDER_libomxil = "omx-user-module"
+
 # Mask the gstreamer recipe for MMP
 BBMASK = "meta-renesas/meta-rcar-gen3/recipes-multimedia/gstreamer"
 
