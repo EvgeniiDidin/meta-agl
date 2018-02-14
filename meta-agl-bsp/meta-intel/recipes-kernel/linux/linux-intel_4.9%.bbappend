@@ -10,6 +10,10 @@ KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/usb-devices.cfg"
 SRC_URI_append = " file://extra-graphic-devices.cfg"
 KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/extra-graphic-devices.cfg"
 
+# adding internal network in kernel for network boot
+SRC_URI_append = " file://net-devices.cfg"
+KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/net-devices.cfg"
+
 # Ensure we have a startup.nsh file
 SRC_URI_append = " file://startup.nsh"
 
