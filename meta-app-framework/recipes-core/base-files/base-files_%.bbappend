@@ -1,5 +1,5 @@
-RDEPENDS_${PN}_append_smack = " smack-userspace"
-PACKAGE_WRITE_DEPS_append_smack = " smack-userspace-native"
+RDEPENDS_${PN}_append_with-lsm-smack = " smack"
+PACKAGE_WRITE_DEPS_append_with-lsm-smack = " smack-native"
 
 do_install_append() {
     install -d ${D}/${sysconfdir}/skel/app-data
@@ -13,7 +13,7 @@ do_install_append() {
     ln -s ../../var/local ${D}/usr/local
 }
 
-do_install_append_smack () {
+do_install_append_with-lsm-smack () {
     install -d ${D}/${sysconfdir}/smack/accesses.d
     cat > ${D}/${sysconfdir}/smack/accesses.d/default-access-domains-no-user <<EOF
 System User::App-Shared rwxat
@@ -22,7 +22,7 @@ EOF
     chmod 0644 ${D}/${sysconfdir}/smack/accesses.d/default-access-domains-no-user
 }
 
-pkg_postinst_${PN}_append_smack() {
+pkg_postinst_${PN}_append_with-lsm-smack() {
     chsmack -r -a 'User::Home' -t -D $D/${sysconfdir}/skel
     chsmack -a 'User::App-Shared' -D $D/${sysconfdir}/skel/app-data
     cp -rTf --preserve=all $D/${sysconfdir}/skel $D/${ROOT_HOME}

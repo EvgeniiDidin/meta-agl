@@ -1,6 +1,6 @@
 # enable security features (smack, cynara) - required by Application Framework
-OVERRIDES .= ":smack"
-DISTRO_FEATURES_append = " smack dbus-cynara xattr"
+OVERRIDES .= ":with-lsm-smack"
+DISTRO_FEATURES_append = " smack xattr"
 
 # use tar-native to support SMACK extended attributes independently of host config
 IMAGE_CMD_TAR = "tar --xattrs --xattrs-include='*'"

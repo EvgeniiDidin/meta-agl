@@ -7,6 +7,7 @@ ConditionPathExists=#SYSCONFDIR#/agl-postinsts
 
 [Service]
 Type=oneshot
+StandardOutput=journal+console
 ExecStart=#SBINDIR#/run-agl-postinsts
 ExecStartPost=#BASE_BINDIR#/systemctl disable run-agl-postinsts.service
 RemainAfterExit=No

@@ -67,7 +67,7 @@ SRC_URI_append_virtualmachine = " file://vbox-vmware-sata.cfg"
 KERNEL_CONFIG_FRAGMENTS_append_virtualmachine = " ${WORKDIR}/vbox-vmware-sata.cfg"
 
 # Enable support for smack
-KERNEL_CONFIG_FRAGMENTS_append_smack = "\
+KERNEL_CONFIG_FRAGMENTS_append_with-lsm-smack = "\
        ${WORKDIR}/audit.cfg \
        ${WORKDIR}/smack.cfg \
        ${WORKDIR}/smack-default-lsm.cfg \

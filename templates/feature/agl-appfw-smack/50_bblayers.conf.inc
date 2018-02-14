@@ -1,6 +1,7 @@
 BBLAYERS =+ " \
-	${METADIR}/meta-intel-iot-security/meta-security-smack \
-	${METADIR}/meta-intel-iot-security/meta-security-framework \
+        ${METADIR}/meta-security \
+	${METADIR}/meta-openembedded/meta-perl \
+        ${METADIR}/meta-agl/meta-security \
 	${METADIR}/meta-agl/meta-app-framework \
     "
 

@@ -6,7 +6,7 @@ LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=1f1a56bb2dadf5f2be8eb342acf4ed79"
 
 SRCREV = "ff067a640451de46836200624ece7ac777977c30"
-SRC_URI = "git://github.com/GENIVI/${BPN}.git;protocol=http \
+SRC_URI = "git://github.com/GENIVI/${BPN}.git;branch=2.0;protocol=http \
     "
 SRC_URI_append_wandboard = " file://wandboard_fix_build.patch"
 

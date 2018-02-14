@@ -19,19 +19,14 @@ PREFERRED_PROVIDER_virtual/mesa = "mesa"
 PREFERRED_PROVIDER_libgbm = "libgbm"
 PREFERRED_RPROVIDER_libgbm-dev = "libgbm"
 
+PREFERRED_RPROVIDER_libomxil = "omx-user-module"
+
 # Mask the gstreamer recipe for MMP
 BBMASK = "meta-renesas/meta-rcar-gen3/recipes-multimedia/gstreamer"
 
 # Add for gstreamer plugins ugly
 LICENSE_FLAGS_WHITELIST = "commercial"
 
-PREFERRED_VERSION_gstreamer1.0 = "1.6.3"
-PREFERRED_VERSION_gstreamer1.0-libav = "1.6.3"
-PREFERRED_VERSION_gstreamer1.0-plugins-base = "1.6.3"
-PREFERRED_VERSION_gstreamer1.0-plugins-bad = "1.6.3"
-PREFERRED_VERSION_gstreamer1.0-plugins-good = "1.6.3"
-PREFERRED_VERSION_gstreamer1.0-plugins-ugly = "1.6.3"
-PREFERRED_VERSION_gstreamer1.0-plugins-vspfilter = "1.0%"
 
 MACHINE_FEATURES_append = " multimedia"
 
@@ -50,8 +45,6 @@ IMAGE_INSTALL_append_rcar-gen3 = " \
 	kernel-module-vspm-if \
 	omx-user-module \
 "
-
-BBMASK .= "|meta-renesas-rcar-gen3/meta-rcar-gen3/recipes-forward-port/"
 
 DISTRO_FEATURES_append = " sota"
 OSTREE_KERNEL = "Image"

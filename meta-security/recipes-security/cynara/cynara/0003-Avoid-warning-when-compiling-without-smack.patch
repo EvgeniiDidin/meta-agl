@@ -1,0 +1,45 @@
+From 6ad54c5e732e7cf0a29f29f48fa757e3e56d6860 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Jos=C3=A9=20Bollo?= <jose.bollo@iot.bzh>
+Date: Thu, 25 Jan 2018 11:38:16 +0100
+Subject: [PATCH 3/6] Avoid warning when compiling without smack
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+When DB_FILES_SMACK_LABEL is not defined, cmake complains
+with the following message:
+
+>  -- Checking for modules ''
+>  Please specify at least one package name on the command line.
+
+Change-Id: Ie837cae81114d096f951ec0ee4ada4173fb60190
+Signed-off-by: José Bollo <jose.bollo@iot.bzh>
+---
+ src/admin/CMakeLists.txt | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/src/admin/CMakeLists.txt b/src/admin/CMakeLists.txt
+index e4f354a..38b8669 100644
+--- a/src/admin/CMakeLists.txt
++++ b/src/admin/CMakeLists.txt
+@@ -23,12 +23,12 @@ IF (DB_FILES_SMACK_LABEL)
+    SET(SMACK "smack")
+    SET(LIBSMACK "libsmack")
+    ADD_DEFINITIONS("-DDB_FILES_SMACK_LABEL=\"${DB_FILES_SMACK_LABEL}\"")
+-ENDIF (DB_FILES_SMACK_LABEL)
+ 
+-PKG_CHECK_MODULES(CYNARA_ADMIN_API_DEP
+-    REQUIRED
+-    ${LIBSMACK}
+-    )
++   PKG_CHECK_MODULES(CYNARA_ADMIN_API_DEP
++      REQUIRED
++      ${LIBSMACK}
++   )
++ENDIF (DB_FILES_SMACK_LABEL)
+ 
+ SET(CYNARA_LIB_CYNARA_ADMIN_PATH ${CYNARA_PATH}/admin)
+ 
+-- 
+2.14.3
+

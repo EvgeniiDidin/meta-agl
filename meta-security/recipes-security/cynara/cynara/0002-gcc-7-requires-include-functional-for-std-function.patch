@@ -1,0 +1,38 @@
+From b18e66ce7f81c56e3a97ed075cb60d5a43b2e57c Mon Sep 17 00:00:00 2001
+From: Changhyeok Bae <changhyeok.bae@gmail.com>
+Date: Sun, 17 Dec 2017 15:28:28 +0000
+Subject: [PATCH 2/6] gcc-7 requires include <functional> for std::function
+
+Signed-off-by: Changhyeok Bae <changhyeok.bae@gmail.com>
+---
+ src/common/types/PolicyBucket.h | 1 +
+ src/cyad/AdminPolicyParser.h    | 1 +
+ 2 files changed, 2 insertions(+)
+
+diff --git a/src/common/types/PolicyBucket.h b/src/common/types/PolicyBucket.h
+index 029d3dd..1bceeca 100644
+--- a/src/common/types/PolicyBucket.h
++++ b/src/common/types/PolicyBucket.h
+@@ -30,6 +30,7 @@
+ #include <set>
+ #include <string>
+ #include <vector>
++#include <functional>
+ 
+ #include <exceptions/NotImplementedException.h>
+ #include <types/pointers.h>
+diff --git a/src/cyad/AdminPolicyParser.h b/src/cyad/AdminPolicyParser.h
+index 53dde23..f38c194 100644
+--- a/src/cyad/AdminPolicyParser.h
++++ b/src/cyad/AdminPolicyParser.h
+@@ -25,6 +25,7 @@
+ 
+ #include <istream>
+ #include <memory>
++#include <functional>
+ 
+ #include <cyad/CynaraAdminPolicies.h>
+ 
+-- 
+2.14.3
+
