@@ -173,7 +173,7 @@ To build an image from 'meta-agl'
      >      $ bitbake agl-demo-platform
 
  - If you want to run QEMU directly as VM in Virtual Box or your other favorite VM software then add this line to your "conf/local.conf" file.
-     >      IMAGE_FSTYPES += "vmdk"
+     >      IMAGE_FSTYPES += "wic.vmdk"
 
 5. Run in the emulator
      >      $ runqemu agl-image-ivi qemux86-64
@@ -194,7 +194,7 @@ To build an image from 'meta-agl'
      >      $ runqemu agl-image-ivi qemux86-64 bootparams="uvesafb.mode_option=1280x720-32" serial
 
 	**Or use the virtual disk in Virtual Box from this location:**
-	> tmp/deploy/images/qemux86-64/agl-demo-platform-qemux86-64.vmdk
+	> tmp/deploy/images/qemux86-64/agl-demo-platform-qemux86-64.wic.vmdk
 
 6.  Some weston samples are available from weston terminal (click top left icon).
    Check the folder `/opt/AGL/ALS2016`.

@@ -34,9 +34,6 @@ RDEPENDS_${PN} += "\
     "
 # to be added, but needs LICENSE_FLAGS_WHITELIST="non-commercial"
 #    netperf
-# wayland-fits is broken in jethro, https://www.mail-archive.com/openembedded-devel@lists.openembedded.org/msg46505.html
-# http://errors.yoctoproject.org/Errors/Details/35141/
-#     wayland-fits
 
 # FTBS, SPEC-316
 #    himeno 

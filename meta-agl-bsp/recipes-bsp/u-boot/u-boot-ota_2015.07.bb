@@ -14,6 +14,7 @@ SRC_URI = "\
     file://0001-Set-up-environment-for-OSTree-integration.patch \
     file://0002-Replace-wraps-with-built-in-code-to-remove-dependenc.patch \
     file://0001-fixup-build-with-gcc6.patch \
+    file://0002-fixup-build-with-gcc7.patch \
 "
 S = "${WORKDIR}/git"
 

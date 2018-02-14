@@ -1,10 +1,7 @@
 # Enable network bootable image and initrd/initramfs
 
-# add image classes for uboot
-IMAGE_CLASSES += "${@'image_types_uboot' if (d.getVar("KERNEL_IMAGETYPE", True) == "uImage") else ''}"
-
 python () {
-	if (bb.utils.contains_any("IMAGE_FSTYPES",["live","vmdk","vmdk.xz"],True,False,d)):
+	if (bb.utils.contains_any("IMAGE_FSTYPES",["live","wic.vmdk"],True,False,d)):
 		# typical case for Minnowboard Max
 		d.setVar("INITRD_IMAGE","initramfs-netboot-image")
 		d.setVar("INITRD_IMAGE_LIVE",d.getVar("INITRD_IMAGE",True))

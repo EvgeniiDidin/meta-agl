@@ -1,3 +1,8 @@
+FILESEXTRAPATHS_prepend := "${THISDIR}/${BPN}:"
+SRC_URI_append = " file://0001-gcc-7-requires-include-functional-for-std-function.patch"
+
+CXXFLAGS_append = " -Wimplicit-fallthrough=0"
+
 pkg_postinst_${PN} () {
    # Fail on error.
    set -e

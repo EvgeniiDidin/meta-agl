@@ -7,6 +7,7 @@ SRC_URI += " file://0001-Adapt-rules-to-AGL.patch \
 	     file://init-security-manager-db.sh \
              file://0001-Fix-gcc6-build.patch \
              file://0001-Fix-Cmake-conf-for-gcc6-build.patch \
+             file://0001-gcc-7-requires-include-functional-for-std-function.patch \
 "
 
 FILES_${PN}_append = "${bindir}/init-security-manager-db.sh \

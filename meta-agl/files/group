@@ -86,3 +86,5 @@ postdrop::954:
 display::200:
 agl-driver::1001:
 agl-passenger::1002:
+systemd-network::1005:
+systemd-resolve::1006:
