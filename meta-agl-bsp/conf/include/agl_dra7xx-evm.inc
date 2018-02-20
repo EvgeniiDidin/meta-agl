@@ -24,7 +24,9 @@ PREFERRED_VERSION_libgbm            = "10.0.0"
 ## Multimedia section ##
 #-------------------------------------------------
 
-GSTREAMER_PLUGINS = " \
+# FIXME
+GSTREAMER_PLUGINS = ""
+DISABLED_ROCKO_GSTREAMER_PLUGINS = " \
      gstreamer1.0-plugins-bad-meta \
      gstreamer1.0-plugins-ducati \
      gstreamer1.0-plugins-vpe \
