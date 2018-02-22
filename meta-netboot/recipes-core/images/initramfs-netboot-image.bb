@@ -11,8 +11,11 @@ IMAGE_LINGUAS = ""
 
 LICENSE = "MIT"
 
-IMAGE_FSTYPES = "${NETBOOT_FSTYPES}"
+IMAGE_FSTYPES := "${NETBOOT_FSTYPES}"
 inherit core-image
+
+# hotfix for dragonboard (which uses _append in the bsp) 
+IMAGE_FSTYPES_remove += "wic.gz"
 
 IMAGE_ROOTFS_SIZE = "8192"
 IMAGE_ROOTFS_EXTRA_SPACE = "256"
