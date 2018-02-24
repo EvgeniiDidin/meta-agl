@@ -35,8 +35,6 @@ DISTRO_FEATURES_append = " use_eva_pkg"
 #DISTRO_FEATURES_append = " h265dec_lib mpeg2dec_lib"
 DISTRO_FEATURES_append = " h264dec_lib h264enc_lib aaclcdec_lib aaclcdec_mdw"
 
-DISTRO_FEATURES_BACKFILL_remove = "gobject-introspection-data"
-
 IMAGE_INSTALL_append_rcar-gen3 = " \
 	kernel-devicetree \
 	kernel-module-pvrsrvkm \
