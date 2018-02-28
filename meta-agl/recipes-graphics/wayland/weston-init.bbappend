@@ -17,7 +17,15 @@ do_install_append() {
     sed -i "/\[Service\]/r ${S}/weston.service.add" \
            ${D}${systemd_system_unitdir}/weston.service
 
+    if ! grep -q '^Group=' ${D}${systemd_system_unitdir}/weston.service; then
+        sed -i "/\[Service\]/aGroup=root" ${D}${systemd_system_unitdir}/weston.service
+    fi
+    if ! grep -q '^User=' ${D}${systemd_system_unitdir}/weston.service; then
+        sed -i "/\[Service\]/aUser=root" ${D}${systemd_system_unitdir}/weston.service
+    fi
+
     sed -e 's,User=root,User=${WESTONUSER},g' \
+        -e 's,Group=root,Group=${WESTONGROUP},g' \
         -e 's,ExecStart=.*,ExecStart=${WESTONSTART},g' \
         -e 's,@WESTONTTY@,${WESTONTTY},g' \
         -e 's,@XDG_RUNTIME_DIR@,${DISPLAY_XDG_RUNTIME_DIR},g' \
