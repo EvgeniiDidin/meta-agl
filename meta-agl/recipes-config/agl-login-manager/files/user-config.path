@@ -1,8 +1,0 @@
-[Unit]
-Description=AGL user config unit path
-
-[Path]
-PathExists=@DISPLAY_XDG_RUNTIME_DIR@/wayland-0
-
-[Install]
-WantedBy=default.target
