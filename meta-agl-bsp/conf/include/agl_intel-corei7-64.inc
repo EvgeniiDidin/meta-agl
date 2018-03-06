@@ -11,3 +11,6 @@ INITRD_LIVE = "${DEPLOY_DIR_IMAGE}/${INITRD_IMAGE_LIVE}-${MACHINE}.ext4.gz"
 # Modify this file under meta-agl-bsp/meta-intel/wic to change the
 # kernel command line, including to change the screen resolution.
 WKS_FILE = "systemd-intel-corei7-64-bootdisk.wks"
+
+PREFERRED_VERSION_linux-intel ?= "4.14%"
+PREFERRED_VERSION_linux-intel-rt ?= "4.14%"
