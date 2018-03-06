@@ -4,10 +4,25 @@ DEPENDS = "file json-c libmicrohttpd systemd util-linux openssl cynara"
 
 inherit cmake pkgconfig
 
-EXTRA_OECMAKE_append_agl-devel = " -DAGL_DEVEL=ON -DINCLUDE_MONITORING=ON"
+EXTRA_OECMAKE_append_class-target = "\
+	-DUNITDIR_SYSTEM=${systemd_system_unitdir} \
+"
+
+EXTRA_OECMAKE_append_agl-devel = " \
+	-DAGL_DEVEL=ON \
+	-DINCLUDE_MONITORING=ON \
+	-DINCLUDE_SUPERVISOR=ON -DAFS_SURPERVISION_SOCKET=/run/platform/supervisor \
+"
 
 pkg_postinst_${PN}() {
 	mkdir -p "$D${libdir}/afb"
+}
+
+do_install_append_agl-devel_class-target() {
+    if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
+        install -d -m 0755 ${D}${systemd_system_unitdir}/multi-user.target.wants
+        ln -s ../afs-supervisor.service ${D}${systemd_system_unitdir}/multi-user.target.wants/afs-supervisor.service
+    fi
 }
 
 #############################################
@@ -17,7 +32,7 @@ PACKAGES =+ "${PN}-tools ${PN}-devtools ${PN}-meta"
 
 FILES_${PN} += "${datadir}"
 
-FILES_${PN}_append_agl-devel = " ${libdir}/afb/monitoring"
+FILES_${PN}_append_agl-devel = " ${libdir}/afb/monitoring ${systemd_system_unitdir}"
 
 ALLOW_EMPTY_${PN}-meta = "1"
 
