@@ -52,7 +52,7 @@ IMAGE_INSTALL_append = " \
 
 # Include WIC support based on beaglebone
 do_image_wic[depends] += "mtools-native:do_populate_sysroot dosfstools-native:do_populate_sysroot"
-WKS_FILE = "sdimage-bootpart.wks"
+WKS_FILE = "sdimage-bootpart-uuid.wks"
 IMAGE_BOOT_FILES = "MLO u-boot.img uEnv.txt"
 
 AGL_EXTRA_IMAGE_FSTYPES = "wic.xz wic.bmap wic.xz.sha256sum"
