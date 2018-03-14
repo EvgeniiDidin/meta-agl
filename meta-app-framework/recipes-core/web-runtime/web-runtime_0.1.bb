@@ -16,6 +16,7 @@ RDEPENDS_${PN} = "\
   qtdeclarative-tools \
   qtwayland-qmlplugins \
   qtquickcontrols-qmlplugins \
+  bash \
 "
 
 PROVIDES += "virtual/webruntime"
