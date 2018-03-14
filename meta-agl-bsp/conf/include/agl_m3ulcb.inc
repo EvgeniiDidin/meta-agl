@@ -21,8 +21,6 @@ PREFERRED_RPROVIDER_libgbm-dev = "libgbm"
 
 PREFERRED_RPROVIDER_libomxil = "omx-user-module"
 
-# Mask the gstreamer recipe for MMP
-BBMASK = "meta-renesas/meta-rcar-gen3/recipes-multimedia/gstreamer"
 
 # Add for gstreamer plugins ugly
 LICENSE_FLAGS_WHITELIST = "commercial"
