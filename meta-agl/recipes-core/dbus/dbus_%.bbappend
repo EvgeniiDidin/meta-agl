@@ -1,4 +1,4 @@
-FILESEXTRAPATHS_append := ":${THISDIR}/${PN}"
+FILESEXTRAPATHS_append := ":${THISDIR}/dbus"
 
 SRC_URI_append = "file://dbus.service \
                   file://dbus.socket \
