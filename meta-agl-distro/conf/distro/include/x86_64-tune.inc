@@ -51,6 +51,5 @@ QB_SYSTEM_NAME_x86-64 = "qemu-system-x86_64"
 QB_CPU_x86-64 = "-cpu qemu64,+ssse3,+sse4.1,+sse4.2,+popcnt"
 QB_CPU_KVM_x86-64 = "-cpu kvm64 -cpu qemu64,+ssse3,+sse4.1,+sse4.2,+popcnt"
 
-QB_KERNEL_CMDLINE_APPEND = "vga=0 uvesafb.mode_option=1024x768-32 oprofile.timer=1 uvesafb.task_timeout=-1"
 # Add the 'virtio-rng-pci' device otherwise the guest may run out of entropy
 QB_OPT_APPEND = "-vga vmware -show-cursor -usb -usbdevice tablet -device virtio-rng-pci"
