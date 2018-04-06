@@ -12,6 +12,8 @@ SRC_URI_append = "\
 "
 
 DEPENDS += "cynara smack"
+RDEPENDS_${PN} += "dbus"
+
 EXTRA_OECONF += "--enable-cynara --disable-selinux"
 
 inherit distro_features_check
