@@ -28,3 +28,7 @@ KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/joystick.cfg"
 # Enable support for Pi foundation touchscreen
 SRC_URI_append = " file://raspberrypi-panel.cfg"
 KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/raspberrypi-panel.cfg"
+
+# Enable bt hci uart
+SRC_URI_append = " file://raspberrypi-hciuart.cfg"
+KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/raspberrypi-hciuart.cfg"
