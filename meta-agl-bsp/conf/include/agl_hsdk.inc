@@ -1,0 +1,2 @@
+KERNEL_IMAGETYPE = "uImage"
+//PREFERRED_VERSION_gcc	= "arc-7.1.1"
