@@ -30,13 +30,14 @@ RDEPENDS_${PN} += "\
     packagegroup-ivi-common-test-ltp \
     rt-tests \
     stress \
-    trinity \
     "
 # to be added, but needs LICENSE_FLAGS_WHITELIST="non-commercial"
 #    netperf
 
 # FTBS, SPEC-316
 #    himeno 
+# FTBS, SPEC-1384
+#    trinity
 
 
 # Packages for shell commands which are required by LTP
