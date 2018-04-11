@@ -15,6 +15,7 @@ RDEPENDS_${PN} += "\
     packagegroup-agl-image-minimal \
     packagegroup-agl-image-weston \
     packagegroup-agl-graphical-services \
+    waltham-transmitter \
 "
 
 RDEPENDS_profile-graphical = "${PN}"

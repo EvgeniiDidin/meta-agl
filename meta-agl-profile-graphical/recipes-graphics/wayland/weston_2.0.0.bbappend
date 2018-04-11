@@ -18,6 +18,9 @@ SRC_URI_append = "\
     file://0014-simple-shm-remove-ivi-application-support.patch \
     file://0015-window-client-remove-ivi-application-support.patch \
     file://0016-ivi-shell_add_screen_remove_layer_api.patch \
+    file://0017-ivi-shell-register-ivi_layout_interface.patch \
+    file://0018-compositor-add-output-type-to-weston_output.patch \
+    file://0019-compositor-drm-introduce-drm_get_dmafd_from_view.patch \
     "
 
 EXTRA_OECONF_append = " --enable-sys-uid"
