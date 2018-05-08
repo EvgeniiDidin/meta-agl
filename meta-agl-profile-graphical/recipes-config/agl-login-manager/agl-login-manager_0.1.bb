@@ -3,8 +3,6 @@ SUMMARY = "AGL Login manager"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
 
-inherit agl-graphical
-
 LOGIN_USER ??="1001 1002"
 
 RDEPENDS_${PN} += "af-main"
