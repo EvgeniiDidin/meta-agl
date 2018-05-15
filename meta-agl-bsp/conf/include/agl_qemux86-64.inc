@@ -21,7 +21,7 @@ QB_KERNEL_CMDLINE_APPEND_append = " quiet"
 DISTRO_FEATURES_append = " sota"
 
 # Image support
-AGL_EXTRA_IMAGE_FSTYPES = "wic.vmdk"
+AGL_EXTRA_IMAGE_FSTYPES = "ext4 wic.vmdk"
 IMAGE_BOOT_FILES_sota = "u-boot-qemux86-64.rom"
 
 # Root device

@@ -1,8 +1,8 @@
 IMAGE_FEATURES =+ "debug-tweaks eclipse-debug tools-debug tools-profile"
 
-#IMAGE_INSTALL_append = " \
-#    packagegroup-agl-core-devel \
-#"
+IMAGE_INSTALL_append = " \
+    packagegroup-agl-core-devel \
+"
 
 IMAGE_INSTALL_append = "${@bb.utils.contains('IMAGE_FSTYPES', 'wic.vmdk', ' open-vm-tools vboxguestdrivers', '', d)}"
 

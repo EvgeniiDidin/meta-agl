@@ -10,6 +10,3 @@ DISTRO_FEATURES_append = " sota"
 OSTREE_KERNEL = "Image"
 IMAGE_BOOT_FILES_sota = "m3ulcb-ota-bootfiles/* Image-r8a7796-m3ulcb.dtb"
 OSTREE_BOOTLOADER ?= "u-boot"
-
-# HOTFIX during layer reorg
-BBMASK .= "|meta-agl/meta-agl-profile-demo/recipes-qt/"

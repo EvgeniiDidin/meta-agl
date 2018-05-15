@@ -1,6 +1,18 @@
 FILESEXTRAPATHS_append := ":${THISDIR}/${PN}"
 
+
+SRC_URI += "file://10-unload-modules.pa"
+
 inherit systemd
+
+
+# Add .include directive to default.pa so optional configuration can be added
+do_install_append () {
+    echo ".include ${sysconfdir}/pulse/default.d" >> ${D}${sysconfdir}/pulse/default.pa
+    install -d ${D}${sysconfdir}/pulse/default.d
+    install -m 0644 ${WORKDIR}/10-unload-modules.pa ${D}${sysconfdir}/pulse/default.d/
+}
+
 
 do_install_append() {
        # Install pulseaudio systemd service
@@ -26,3 +38,4 @@ FILES_${PN}-server += " \
     ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', '${systemd_user_unitdir}/pulseaudio.service', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', '${systemd_user_unitdir}/default.target.wants/pulseaudio.service', '', d)} \
 "
+

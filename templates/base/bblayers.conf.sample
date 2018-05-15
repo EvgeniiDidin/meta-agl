@@ -47,20 +47,12 @@ AGL_CORE_DEPENDENCY_LAYERS = " \
   ${METADIR}/meta-openembedded/meta-filesystems \
   "
 
-# temporary ... to avoid build breakage. To move to upper layers.
-AGL_TEMP_GFX_LAYERS = " \
-  ${METADIR}/meta-agl/meta-agl-profile-graphical \
-  ${METADIR}/meta-agl/meta-agl-profile-demo \
-  "
-
-
 ####################
 # Combine the layers
 BBLAYERS ?= " \
   ${AGL_CORE_DEPENDENCY_LAYERS} \
   ${AGL_CORE_LAYERS} \
   ${AGL_APPFW_LAYERS} \
-  ${AGL_TEMP_GFX_LAYERS} \
   ${YOCTO_LAYERS} \
   "
 
