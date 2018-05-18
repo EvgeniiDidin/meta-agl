@@ -1,7 +1,7 @@
 #!/bin/bash
 
-ZIP_1="R-Car_Gen3_Series_Evaluation_Software_Package_for_Linux-20180326.zip"
-ZIP_2="R-Car_Gen3_Series_Evaluation_Software_Package_of_Linux_Drivers-20180409.zip"
+ZIP_1="R-Car_Gen3_Series_Evaluation_Software_Package_for_Linux-20180423.zip"
+ZIP_2="R-Car_Gen3_Series_Evaluation_Software_Package_of_Linux_Drivers-20180423.zip"
 
 COPY_SCRIPT="$METADIR/meta-renesas-rcar-gen3/meta-rcar-gen3/docs/sample/copyscript/copy_evaproprietary_softwares.sh"
 
