@@ -1,0 +1,34 @@
+From 8d12bbfc6179d7e9777e4663e10f1795de158b57 Mon Sep 17 00:00:00 2001
+From: Stephane Desneux <stephane.desneux@iot.bzh>
+Date: Tue, 5 Jun 2018 10:53:24 +0200
+Subject: [PATCH] tools/merge_config.sh: add CR after each fragment
+
+If a fragment file doesn't contain a CR at the end, two config options
+may be merged on the same line in the result file, leading to misconfiguration.
+
+This patch adds a CR after each fragment to ensure that config options
+are well separated in the result file.
+
+Bug-AGL: SPEC-1475
+
+Signed-off-by: Stephane Desneux <stephane.desneux@iot.bzh>
+---
+ tools/merge_config.sh | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/tools/merge_config.sh b/tools/merge_config.sh
+index 67d1314..296e759 100755
+--- a/tools/merge_config.sh
++++ b/tools/merge_config.sh
+@@ -129,6 +129,8 @@ for MERGE_FILE in $MERGE_LIST ; do
+ 		sed -i "/$CFG[ =]/d" $TMP_FILE
+ 	done
+ 	cat $MERGE_FILE >> $TMP_FILE
++	# workaround for fragments not ending with carriage return
++	echo >> $TMP_FILE
+ done
+ 
+ if [ "$RUNMAKE" = "false" ]; then
+-- 
+2.1.4
+
