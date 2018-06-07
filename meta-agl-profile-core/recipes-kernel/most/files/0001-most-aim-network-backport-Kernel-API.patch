@@ -1,0 +1,43 @@
+From 383ffadd33f484ab4aaeb14fa109b61143d27d58 Mon Sep 17 00:00:00 2001
+From: Christian Gromm <christian.gromm@microchip.com>
+Date: Thu, 7 Jun 2018 12:15:38 +0200
+Subject: [PATCH] most: aim-network: backport Kernel API
+
+This patch replaces the function calls skb_put_data with memcpy. It is
+needed to have the module compiled for kernels prior to 4.13.
+
+Signed-off-by: Christian Gromm <christian.gromm@microchip.com>
+---
+ aim-network/networking.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/aim-network/networking.c b/aim-network/networking.c
+index 936f013..4c259c2 100644
+--- a/aim-network/networking.c
++++ b/aim-network/networking.c
+@@ -470,11 +470,11 @@ static int aim_rx_data(struct mbo *mbo)
+ 		ether_addr_copy(skb_put(skb, ETH_ALEN), dev->dev_addr);
+ 
+ 		/* src */
+-		skb_put_data(skb, &zero, 4);
+-		skb_put_data(skb, buf + 5, 2);
++		memcpy(skb_put(skb, 4), &zero, 4);
++		memcpy(skb_put(skb, 2), buf + 5, 2);
+ 
+ 		/* eth type */
+-		skb_put_data(skb, buf + 10, 2);
++		memcpy(skb_put(skb, 2), buf + 10, 2);
+ 
+ 		buf += MDP_HDR_LEN;
+ 		len -= MDP_HDR_LEN;
+@@ -483,7 +483,7 @@ static int aim_rx_data(struct mbo *mbo)
+ 		len -= MEP_HDR_LEN;
+ 	}
+ 
+-	skb_put_data(skb, buf, len);
++	memcpy(skb_put(skb, len), buf, len);
+ 	skb->protocol = eth_type_trans(skb, dev);
+ 	skb_len = skb->len;
+ 	if (netif_rx(skb) == NET_RX_SUCCESS) {
+-- 
+2.11.0
