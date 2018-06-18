@@ -12,5 +12,6 @@ PACKAGES = "\
 
 RDEPENDS_${PN} += "\
     gpsd \
+    virtual/gpsd-conf \
     geoclue \
     "

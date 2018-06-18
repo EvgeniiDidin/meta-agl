@@ -1,5 +1,7 @@
 SYSTEMD_SERVICE_${PN} += " gpsdctl@.service"
 
+RPROVIDES_${PN}-conf += "virtual/gpsd-conf"
+
 do_install_append() {
     # use the systemd compatible gpsd.rules
     install -d ${D}/${sysconfdir}/udev/rules.d
