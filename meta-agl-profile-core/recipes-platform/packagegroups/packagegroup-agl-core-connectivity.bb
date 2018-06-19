@@ -10,6 +10,7 @@ PACKAGES = "\
 ALLOW_EMPTY_${PN} = "1"
 
 RDEPENDS_${PN} += "\
+    bluez5-obex \
     dhcp-server \
     ${@bb.utils.contains('VIRTUAL-RUNTIME_net_manager','connman','connman connman-client connman-tests connman-tools connman-ncurses','',d)} \
     rtl-sdr \
