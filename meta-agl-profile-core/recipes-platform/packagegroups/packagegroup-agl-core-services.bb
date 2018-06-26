@@ -18,6 +18,7 @@ agl-service-geoclue \
 agl-service-geofence \
 agl-service-gps \
 agl-service-identity-agent \
+agl-service-iiodevices \
 agl-service-mediascanner \
 agl-service-navigation \
 agl-service-nfc \
