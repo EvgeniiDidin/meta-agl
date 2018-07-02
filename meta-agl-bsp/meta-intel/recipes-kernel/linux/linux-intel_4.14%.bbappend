@@ -15,6 +15,9 @@ KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/net-devices.cfg"
 # Ensure we have a startup.nsh file
 SRC_URI_append = " file://startup.nsh"
 
+# SPEC-1553 fix for pn333_usb devices not being functional
+SRC_URI_append = " file://0001-NFC-pn533-don-t-send-USB-data-off-of-the-stack.patch"
+
 do_deploy_append() {
 	install -m 0755 ${WORKDIR}/startup.nsh ${DEPLOYDIR}/
 }
