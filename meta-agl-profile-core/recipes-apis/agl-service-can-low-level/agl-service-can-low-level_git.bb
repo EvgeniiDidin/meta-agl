@@ -6,8 +6,8 @@ SECTION     = "apps"
 LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/Apache-2.0;md5=89aea4e17d99a7cacdbeed46a0096b10"
 
-SRC_URI = "gitsm://gerrit.automotivelinux.org/gerrit/apps/low-level-can-service;protocol=https;branch=${AGL_BRANCH}"
-SRCREV = "d8d990528ea9746b21788f97be3fdbcc392c5d96"
+SRC_URI = "gitsm://gerrit.automotivelinux.org/gerrit/apps/agl-service-can-low-level;protocol=https;branch=${AGL_BRANCH}"
+SRCREV = "7c5d80deacad2a1f6943dd0b77449c3f6e20fdfc"
 
 PV = "5.0+git${SRCPV}"
 S  = "${WORKDIR}/git"
