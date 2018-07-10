@@ -18,6 +18,8 @@ DEPENDS_append = " af-binder"
 # for hal bindings genskel is required.
 DEPENDS_append = " af-binder-devtools-native"
 
+EXTRA_OECMAKE_append_agl-ptest = " -DBUILD_TEST_WGT=TRUE"
+
 do_aglwgt_package()  {
         cd ${B}
         ${S}/conf.d/autobuild/agl/autobuild package BUILD_DIR=${B} DEST=${B}/package VERBOSE=TRUE || \
@@ -41,6 +43,7 @@ POST_INSTALL_SCRIPT ?= "${POST_INSTALL_LEVEL}-${PN}.sh"
 EXTRA_WGT_POSTINSTALL ?= ""
 
 do_aglwgt_deploy() {
+    TEST_WGT="*-test.wgt"
     if [ "${AGLWGT_AUTOINSTALL_${PN}}" = "0" ]
     then
         install -d ${D}/usr/AGL/apps/manualinstall
@@ -48,6 +51,12 @@ do_aglwgt_deploy() {
     else
         install -d ${D}/usr/AGL/apps/autoinstall
         install -m 0644 ${B}/package/*.wgt ${D}/usr/AGL/apps/autoinstall
+
+	if [ "$(find ${D}/usr/AGL/apps/autoinstall -name ${TEST_WGT})" ]
+	then
+        	install -d ${D}/usr/AGL/apps/testwgt
+		mv ${D}/usr/AGL/apps/autoinstall/*-test.wgt ${D}/usr/AGL/apps/testwgt
+	fi
     fi
 
     APP_FILES=""
@@ -68,6 +77,7 @@ EOF
 
 FILES_${PN} += "/usr/AGL/apps/autoinstall/*.wgt \
     /usr/AGL/apps/manualinstall/*.wgt \
+    /usr/AGL/apps/testwgt/*.wgt \
     ${sysconfdir}/agl-postinsts/${POST_INSTALL_SCRIPT} \
     "
 
