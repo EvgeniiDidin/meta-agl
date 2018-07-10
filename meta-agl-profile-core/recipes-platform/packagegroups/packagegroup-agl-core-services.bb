@@ -21,6 +21,7 @@ agl-service-identity-agent \
 agl-service-iiodevices \
 agl-service-mediascanner \
 agl-service-navigation \
+agl-service-network \
 agl-service-nfc \
 agl-service-radio \
 agl-service-signal-composer \
