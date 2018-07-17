@@ -14,7 +14,7 @@ SRCREV  = "${AGL_APP_REVISION}"
 S  = "${WORKDIR}/git"
 
 # build-time dependencies
-DEPENDS = "rtl-sdr glib-2.0 gstreamer1.0"
+DEPENDS = "rtl-sdr glib-2.0 gstreamer1.0 libusb-compat"
 DEPENDS += "${@bb.utils.contains('DISTRO_FEATURES', 'agl-audio-4a-framework', '' , 'pulseaudio', d)}"
 
 inherit cmake aglwgt pkgconfig
