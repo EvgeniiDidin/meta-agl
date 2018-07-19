@@ -22,4 +22,6 @@ RDEPENDS_${PN} = "\
         tree \
         pstree \
         procps \
+        jq \
+        libxslt-bin \
         "
