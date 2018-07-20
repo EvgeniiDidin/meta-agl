@@ -13,9 +13,8 @@ PACKAGES = "\
 RDEPENDS_${PN} += "\
     ${@bb.utils.contains('DISTRO_FEATURES', 'agl-audio-4a-framework', '' , 'agl-audio-plugin', d)} \
     alsa-utils \
-    pulseaudio-server \
-    pulseaudio-misc \
-    ${@bb.utils.contains('DISTRO_FEATURES', 'bluetooth', '\
+    ${@bb.utils.contains('DISTRO_FEATURES', 'pulseaudio', 'pulseaudio-server pulseaudio-misc', '' , d)} \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'pulseaudio bluetooth', '\
         pulseaudio-module-bluetooth-discover \
         pulseaudio-module-bluetooth-policy \
         pulseaudio-module-bluez5-discover \
