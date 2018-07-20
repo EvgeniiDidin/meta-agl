@@ -37,7 +37,7 @@ EXTRA_OECMAKE = "\
 	-DUNITDIR_SYSTEM=${systemd_system_unitdir} \
 "
 
-EXTRA_OECMAKE_append_agl-devel = " -DAGL_DEVEL=1"
+EXTRA_OECMAKE_append_agl-devel = " -DAGL_DEVEL=1 -DALLOW_NO_SIGNATURE=ON"
 
 USERADD_PACKAGES = "${PN}"
 USERADD_PARAM_${PN} = "-g ${afm_name} -d ${afm_datadir} -r ${afm_name}"
