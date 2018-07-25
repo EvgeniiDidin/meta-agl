@@ -37,7 +37,27 @@ EXTRA_OECMAKE = "\
 	-DUNITDIR_SYSTEM=${systemd_system_unitdir} \
 "
 
-EXTRA_OECMAKE_append_agl-devel = " -DAGL_DEVEL=1 -DALLOW_NO_SIGNATURE=ON"
+# ------------------------ WARNING WARNING WARNNING ---------------------------
+#
+# ATM (FF.rc2), forcing all apps to be signed is an issue when building without
+# agl-devel feature. A workaround is to define ALLOW_NO_SIGNATURE=ON for all
+# builds but this must be removed later. See SPEC-1614 for more details.
+#
+# A variable AGL_FORBID_UNSIGNED_APPS is introduced to enable/disable this 
+# workaround in local.conf and allow transition to signed apps:
+# * forbid unsigned apps by setting: AGL_FORBID_UNSIGNED_APPS="1"
+# * [DEFAULT] allow unsigned apps: do nothing (or set: AGL_FORBID_UNSIGNED_APPS="0")
+AGL_FORBID_UNSIGNED_APPS ?= "0"
+#
+# WORKAROUND:
+EXTRA_OECMAKE_append_agl-devel = " -DAGL_DEVEL=1"
+EXTRA_OECMAKE_append = " ${@bb.utils.contains('AGL_FORBID_UNSIGNED_APPS','1','','-DALLOW_NO_SIGNATURE=ON', d)}"
+#
+# Correct version (IMPORTANT TODO: to be restored later):
+#EXTRA_OECMAKE_append_agl-devel = " -DAGL_DEVEL=1 -DALLOW_NO_SIGNATURE=ON"
+#
+# ------------------------ WARNING WARNING WARNNING ---------------------------
+
 
 USERADD_PACKAGES = "${PN}"
 USERADD_PARAM_${PN} = "-g ${afm_name} -d ${afm_datadir} -r ${afm_name}"
