@@ -1,10 +1,8 @@
-**README.md for the 'meta-agl' layer.**
+# **README.md for the 'meta-agl' layer**
 
 **See README-AGL.md for general information about Automotive Grade Linux.**
 
-
-meta-agl, the core layer for Automotive Grade Linux Distribution
-================================================================
+## meta-agl, the core layer for Automotive Grade Linux Distribution
 
 AGL is creating an automotive specific Linux distribution that unifies
 the software that has been written in a number of places already,
@@ -31,52 +29,47 @@ For information abount Getting started with AGL
 For information about contributing to the AGL Distro
     [here](https://wiki.automotivelinux.org/agl-distro/contributing)
 
-Quick start guide
------------------
+## Quick start guide
+
 See README-AGL.md
 
+## 'meta-agl' Layer Dependencies
 
-'meta-agl' Layer Dependencies
------------------------------
 * poky
-> URI: git://git.yoctoproject.org/poky
-> branch         : jethro
-> tested revision: 40376446904ae3529be41737fed9a0b650ed167d
+  > URI: git://git.yoctoproject.org/poky
+  > branch         : jethro
+  > tested revision: 40376446904ae3529be41737fed9a0b650ed167d
 
 * meta-openembedded
-> URI: git://git.openembedded.org/meta-openembedded
-> layer          : meta-openembedded
-> branch         : jethro
-> tested revision: 8ab04afbffb4bc5184cfe0655049de6f44269990
+  > URI: git://git.openembedded.org/meta-openembedded
+  > layer          : meta-openembedded
+  > branch         : jethro
+  > tested revision: 8ab04afbffb4bc5184cfe0655049de6f44269990
 
- Specifically out of meta-openembedded these sub-layers are used:
-	* meta-openembedded/meta-oe
-	* meta-openembedded/meta-multimedia
-	* meta-openembedded/meta-networking
-	* meta-openembedded/meta-python
+Specifically out of meta-openembedded these sub-layers are used:
 
-Layers
-------
+* meta-openembedded/meta-oe
+* meta-openembedded/meta-multimedia
+* meta-openembedded/meta-networking
+* meta-openembedded/meta-python
+
+## Layers
 
 There are 5 layers in top-level `meta-agl`.
 
-* `meta-agl/meta-ivi-common`
-`meta-ivi-common` is a layer which contains common packages to AGL
-Distribution and other platforms for In-Vehicle Infotainment system.
+* `meta-agl/meta-ivi-common`\
+  `meta-ivi-common` is a layer which contains common packages to AGL
+  Distribution and other platforms for In-Vehicle Infotainment system.
+* `meta-agl/meta-agl`\
+  `meta-agl` is a layer which contains AGL common and middleware packages.
+* `meta-agl/meta-agl-bsp`\
+  `meta-agl-bsp` is a layer which contains required packages to boot AGL
+  distribution on an emulated machine(QEMU).
+* `meta-agl/meta-netboot`\
+  `meta-netboot` contains the netboot initrd support recipes. This is needed
+  in case of booting over the network as NFS does not support the securitylabels.
 
-* `meta-agl/meta-agl`
-`meta-agl` is a layer which contains AGL common and middleware packages.
-
-* `meta-agl/meta-agl-bsp`
-`meta-agl-bsp` is a layer which contains required packages to boot AGL
-distribution on an emulated machine(QEMU).
-
-* `meta-agl/meta-netboot`
-`meta-netboot` contains the netboot initrd support recipes. This is needed
-in case of booting over the network as NFS does not support the securitylabels.
-
-Packagegroups
--------------
+## Packagegroups
 
 AGL package group design:
 
@@ -137,20 +130,6 @@ The layer of ``meta-ivi-common`` has no image to build, all packagegroups are
 aggregated to ``packagegroup-ivi-common-core' and it is included by images,
 ``agl-image-ivi.bb`` and ``agl-demo-platform.bb``.
 
+## Supported Machines
 
-Supported Machines
-------------------
-
-See README-AGL.md
-
-
-Supported Target for bitbake
-----------------------------
-
-meta-agl:
-
-* `agl-image-ivi` The baseline image of AGL Distributions (console only)
-* `agl-image-minimal` For internal use to develop distribution (experimental)
-* `agl-image-weston`  For internal use to develop distribution (experimental)
-
-
+See [docs.automotivelinux.org](http://docs.automotivelinux.org)

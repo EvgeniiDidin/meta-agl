@@ -96,10 +96,6 @@ do_install_append_class-target() {
     echo "QT_WAYLAND_SHELL_INTEGRATION=ivi-shell" > ${D}${afm_confdir}/unit.env.d/qt-for-ivi-shell
 }
 
-do_install_append_porter() {
-    echo "LD_PRELOAD=/usr/lib/libEGL.so" > ${D}${afm_confdir}/unit.env.d/preload-libEGL
-}
-
 pkg_postinst_${PN}() {
     if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
         chgrp ${afm_name} $D${systemd_units_root}/system
