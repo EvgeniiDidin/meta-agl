@@ -56,6 +56,3 @@ WKS_FILE = "sdimage-bootpart-uuid.wks"
 IMAGE_BOOT_FILES = "MLO u-boot.img uEnv.txt"
 
 AGL_EXTRA_IMAGE_FSTYPES = "wic.xz wic.bmap wic.xz.sha256sum"
-
-# re-add LG touchscreen
-KERNEL_DEVICETREE += "dra7-evm-lcd-lg.dtb"
