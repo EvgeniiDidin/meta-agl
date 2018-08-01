@@ -14,4 +14,12 @@ S  = "${WORKDIR}/git"
 
 DEPENDS = "glib-2.0 json-c"
 
+FILES_${PN}-tools = "${sbindir}/agl-service-network-ctl"
+PACKAGES = "${PN}-tools ${PN}-dbg ${PN}"
+
+do_install_append() {
+    install -d ${D}${sbindir}
+    install -m 755 ${B}/test/agl-service-network-ctl ${D}${sbindir}
+}
+
 inherit cmake aglwgt pkgconfig
