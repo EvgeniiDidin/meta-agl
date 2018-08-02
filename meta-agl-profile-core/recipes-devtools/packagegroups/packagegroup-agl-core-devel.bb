@@ -24,4 +24,5 @@ RDEPENDS_${PN} = "\
         procps \
         jq \
         libxslt-bin \
+        agl-service-network-tools \
         "
