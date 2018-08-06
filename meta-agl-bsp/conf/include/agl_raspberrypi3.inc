@@ -1,5 +1,5 @@
 # Maximum memory allowed to be assigned
-GPU_MEM = "448"
+GPU_MEM = "128"
 
 ENABLE_CMA = "1"
 CMA_LWM = "16"
