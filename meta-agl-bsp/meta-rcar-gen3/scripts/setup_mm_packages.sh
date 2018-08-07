@@ -12,18 +12,18 @@ EXTRACT_DIR=$METADIR/binary-tmp
 stdout_in_terminal=1
 [[ -t 1 ]] && stdout_in_terminal=1
 function color {
-	[[ $stdout_in_terminal == 0 ]] && return
-	for k in $*; do
-		case $k in
-			bold) tput bold;;
-			none) tput sgr0;;
-			*) tput setaf $k;;
-		esac
+    [[ $stdout_in_terminal == 0 ]] && return
+    for k in $*; do
+        case $k in
+            bold) tput bold;;
+            none) tput sgr0;;
+            *) tput setaf $k;;
+        esac
         if [[ $? != 0 ]]; then
             echo "tput: terminal doesn't support color settings, continuing" >&2
             true
         fi
-	done
+    done
 }
 color_green=$(color bold 2)
 color_yellow=$(color bold 3)
@@ -31,11 +31,11 @@ color_red=$(color bold 1)
 color_none=$(color none)
 
 function error() {
-	echo "${color_red}$@${color_none}" >&2
+    echo "${color_red}$@${color_none}" >&2
 }
 
 function log() {
-	echo "$@" >&2
+    echo "$@" >&2
 }
 
 function copy_mm_packages() {
@@ -48,7 +48,7 @@ function copy_mm_packages() {
         error "ERROR: FILES \""+$DOWNLOAD_DIR/$ZIP_2+"\" NOT EXTRACTING CORRECTLY"
         log   "The graphics and multimedia acceleration packages for "
         log   "the R-Car Gen3 board BSP can be downloaded from:"
-        log   "<https://www.renesas.com/en-us/solutions/automotive/rcar-demoboard-2.html>"
+        log   "<https://www.renesas.com/us/en/solutions/automotive/rcar-download/rcar-demoboard-2.html>"
         log
         error  "These 2 files from there should be stored in your"
         error  "'$DOWNLOAD_DIR' directory."
