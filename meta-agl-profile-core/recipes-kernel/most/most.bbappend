@@ -25,4 +25,4 @@ SRC_URI_append = " \
 	    file://0009-dim2-use-device-for-coherent-memory-allocation.patch \
 	   "
 # Make sure we can expose KERNEL_VERSION ...
-do_patch[depends] = "virtual/kernel:do_populate_sysroot"
+do_patch[depends] += "virtual/kernel:do_populate_sysroot"
