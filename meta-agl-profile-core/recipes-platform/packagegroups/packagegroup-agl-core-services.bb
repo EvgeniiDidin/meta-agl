@@ -28,6 +28,5 @@ agl-service-signal-composer \
 agl-service-steering-wheel \
 agl-service-unicens \
 agl-service-weather \
-agl-service-wifi \
 high-level-viwi-service \
     "
