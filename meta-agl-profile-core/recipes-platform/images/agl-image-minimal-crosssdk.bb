@@ -11,6 +11,19 @@ LICENSE = "MIT"
 IMAGE_FEATURES_append = " dev-pkgs"
 IMAGE_INSTALL_append = " kernel-dev kernel-devsrc"
 
+# required dependencies for app and test builds
+# also in the minimal image (SPEC-1678)
+TOOLCHAIN_HOST_TASK += " \
+    nativesdk-lua \
+    "
+
+# required dependencies for app and test builds
+# also in the minimal image (SPEC-1678)
+TOOLCHAIN_TARGET_TASK += " \
+    lua-dev \
+    lua-staticdev \
+    "
+
 inherit populate_sdk
 
 # Task do_populate_sdk and do_rootfs can't be exec simultaneously.
