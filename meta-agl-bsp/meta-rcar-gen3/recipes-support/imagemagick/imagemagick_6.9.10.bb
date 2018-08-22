@@ -1,20 +1,17 @@
 SUMMARY = "ImageMagick is an image convertion tools"
 SECTION = "console/utils"
 LICENSE = "ImageMagick"
-LIC_FILES_CHKSUM = "file://LICENSE;md5=0887b670be7ef0c3cb37092b64d57514"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=4c223567f4c3b26a08c56aa59b346ca5"
 # FIXME: There are many more checked libraries. All should be added or explicitly disabled to get consistent results.
 DEPENDS = "lcms bzip2 jpeg libpng librsvg tiff zlib fftw freetype"
 
 # Important note: tarballs for all patchsets within a version are deleted when
 # a new pachset is created. To avoid multiple patches for each patchset, try to
 # update to the last pachset of a version
-PATCHSET = "0"
-SRC_URI = "http://www.imagemagick.org/download/releases/ImageMagick-${PV}-${PATCHSET}.tar.xz \
+PATCHSET = "10"
+SRC_URI = "git://github.com/ImageMagick/ImageMagick6.git;protocol=https;tag=${PV}-${PATCHSET} \
 "
-SRC_URI[md5sum] = "99471c8c3f38c9264faf5c4ca7a31287"
-SRC_URI[sha256sum] = "07a2de28f7f9ab888ef47c02eb7e10cc3e0dd0e9797c5d71d6e71d19f842399e"
-
-S = "${WORKDIR}/ImageMagick-${PV}-${PATCHSET}"
+S = "${WORKDIR}/git"
 
 inherit autotools pkgconfig update-alternatives
 
