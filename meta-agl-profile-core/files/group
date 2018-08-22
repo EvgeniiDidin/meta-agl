@@ -52,6 +52,7 @@ weston-launch::986:
 lock::990:
 systemd-journal::989:
 systemd-timesync::988:
+systemd-coredump::888:
 pulse::991:
 bind::987:
 trinity::985:

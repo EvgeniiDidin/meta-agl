@@ -24,3 +24,6 @@ FILES_${PN} += "${sysconfdir}/e2fsck.conf "
 
 # SPEC-737: connmand also has a NTP client which races with systemd-timesyncd
 PACKAGECONFIG_remove = "timesyncd"
+
+# Enable systemd-coredump when agl-devel is set on
+PACKAGECONFIG_append_agl-devel = " coredump"
