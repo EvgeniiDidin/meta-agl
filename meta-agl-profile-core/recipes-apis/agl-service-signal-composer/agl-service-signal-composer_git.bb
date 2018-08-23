@@ -6,14 +6,14 @@ SECTION     = "apps"
 LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/Apache-2.0;md5=89aea4e17d99a7cacdbeed46a0096b10"
 
-inherit cmake pkgconfig aglwgt
+inherit cmake pkgconfig aglwgt ptest
 
 DEPENDS += "lua lua-native"
 RDEPENDS_${PN} += "lua"
 
 SRC_URI = "gitsm://git.automotivelinux.org/apps/agl-service-signal-composer;protocol=https;branch=${AGL_BRANCH}"
-SRCREV = "7f15ef65f420179b606f136ed805fae9d320b321"
+SRCREV = "fbdf29b8af47f567f472a459842d262e8abf5b9c"
 
-PV = "5.99.2+git${SRCPV}"
+PV = "5.99.4+git${SRCPV}"
 S  = "${WORKDIR}/git"
 
