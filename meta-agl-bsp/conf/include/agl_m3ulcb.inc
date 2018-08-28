@@ -1,3 +1,4 @@
+require conf/include/agl_ulcb-nogfx.inc
 SOC_FAMILY = "r8a7796"
 
 # Enable AGL virtualization features
