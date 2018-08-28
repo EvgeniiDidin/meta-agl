@@ -6,3 +6,5 @@ OSTREE_BOOTLOADER ?= "u-boot"
 
 WKS_FILE = "singlepart-noloader.wks"
 AGL_EXTRA_IMAGE_FSTYPES = "wic.xz wic.bmap wic.xz.sha256sum"
+
+RENESAS_DATADIR = "/usr"
