@@ -7,13 +7,13 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/Apache-2.0;md5=89aea4e17d99a7ca
 SECTION = "apps"
 
 SRC_URI = "gitsm://gerrit.automotivelinux.org/gerrit/apps/app-afb-test;protocol=https;branch=${AGL_BRANCH}"
-SRCREV = "bc634e0d890f8f3f51205f95187f639f73e864a7"
+SRCREV = "3c1dab4cb0457a97d71365e58c5ea033c1f0a42c"
 
 DEPENDS += "lua"
 RDEPENDS_${PN} += "lua bash"
 RDEPENDS_${PN}-ptest += "af-binder"
 
-PV = "5.99-FF.RC4.0+git${SRCPV}"
+PV = "5.99-FF.RC5.0+git${SRCPV}"
 S  = "${WORKDIR}/git"
 
 inherit cmake aglwgt pkgconfig ptest
