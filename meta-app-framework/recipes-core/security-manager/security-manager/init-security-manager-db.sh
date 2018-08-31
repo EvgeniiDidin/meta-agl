@@ -1,6 +1,6 @@
 #!/bin/sh
 
-if [ ! -e "/var/db/security-manager" ]; then
-	mkdir -p /var/db
-	cp -ra /usr/dbspace/ /var/db/security-manager
+if [ ! -e "/var/local/db/security-manager" ]; then
+	mkdir -p /var/local/db
+	cp -ra /usr/dbspace/ /var/local/db/security-manager
 fi

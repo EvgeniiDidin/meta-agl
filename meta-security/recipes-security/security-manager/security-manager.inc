@@ -22,7 +22,7 @@ systemd \
 PACKAGECONFIG ??= ""
 PACKAGECONFIG[debug] = "-DCMAKE_BUILD_TYPE=DEBUG,-DCMAKE_BUILD_TYPE=RELEASE"
 
-TZ_SYS_DB = "/var/db/security-manager"
+TZ_SYS_DB = "/var/local/db/security-manager"
 
 EXTRA_OECMAKE = " \
 -DCMAKE_VERBOSE_MAKEFILE=ON \

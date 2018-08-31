@@ -22,7 +22,7 @@ index 6f211c6..ed8047a 100755
  POLICY_PATH=/usr/share/security-manager/policy
  PRIVILEGE_GROUP_MAPPING=$POLICY_PATH/privilege-group.list
 -DB_FILE=`tzplatform-get TZ_SYS_DB | cut -d= -f2`/.security-manager.db
-+DB_FILE=/var/db/security-manager/.security-manager.db
++DB_FILE=/var/local/db/security-manager/.security-manager.db
  
  # Create default buckets
  while read bucket default_policy
@@ -69,7 +69,7 @@ index 4d73d90..03c6680 100644
  namespace SecurityManager {
  
 -const char *const PRIVILEGE_DB_PATH = tzplatform_mkpath(TZ_SYS_DB, ".security-manager.db");
-+const char *const PRIVILEGE_DB_PATH = "/var/db/security-manager/.security-manager.db";
++const char *const PRIVILEGE_DB_PATH = "/var/local/db/security-manager/.security-manager.db";
  
  enum class QueryType {
      EGetPkgPrivileges,
