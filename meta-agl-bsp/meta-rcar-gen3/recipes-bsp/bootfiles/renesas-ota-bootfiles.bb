@@ -4,18 +4,19 @@ LIC_FILES_CHKSUM = "file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384
 
 inherit deploy
 
-COMPATIBLE_MACHINE = "m3ulcb"
+COMPATIBLE_MACHINE = "(m3ulcb|h3ulcb)"
 
 S = "${WORKDIR}"
 
-SRC_URI_append_sota = "file://uEnv-ota.txt"
+SRC_URI_append_sota = "file://uEnv-ota-m3ulcb.txt \
+                       file://uEnv-ota-h3ulcb.txt"
 
 do_deploy() {
     install -d ${DEPLOYDIR}/${PN}
 }
 
 do_deploy_append_sota() {
-    install -m 0755 ${WORKDIR}/uEnv-ota.txt ${DEPLOYDIR}/${PN}/uEnv.txt
+    install -m 0755 ${WORKDIR}/uEnv-ota-${BOARD_NAME}.txt ${DEPLOYDIR}/${PN}/uEnv.txt
 }
 
 addtask deploy before do_package after do_install
