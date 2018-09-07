@@ -14,6 +14,6 @@ RDEPENDS_${PN} += "lua"
 SRC_URI = "gitsm://git.automotivelinux.org/apps/agl-service-signal-composer;protocol=https;branch=${AGL_BRANCH}"
 SRCREV = "fbdf29b8af47f567f472a459842d262e8abf5b9c"
 
-PV = "5.99.4+git${SRCPV}"
+PV = "5.99.6+git${SRCPV}"
 S  = "${WORKDIR}/git"
 

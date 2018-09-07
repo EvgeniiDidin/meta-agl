@@ -9,7 +9,7 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/Apache-2.0;md5=89aea4e17d99a7ca
 SRC_URI = "gitsm://gerrit.automotivelinux.org/gerrit/apps/agl-service-can-low-level;protocol=https;branch=${AGL_BRANCH}"
 SRCREV = "01715613f16113017529c51703f3e5d90918c4c5"
 
-PV = "5.99.4+git${SRCPV}"
+PV = "5.99.6+git${SRCPV}"
 S  = "${WORKDIR}/git"
 
 RDEPENDS_${PN} = "dev-mapping"
