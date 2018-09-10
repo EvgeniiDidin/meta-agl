@@ -15,3 +15,8 @@ PV = "${AGL_BRANCH}+git${SRCPV}"
 S = "${WORKDIR}/git"
 
 CFLAGS_append_agl-devel = " -DAGL_DEVEL"
+
+EXTRA_OECMAKE_append = "\
+	-DAGLVERSION=${AGLVERSION} \
+"
+
