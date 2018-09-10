@@ -10,6 +10,7 @@ EXTRA_OECMAKE = "\
 	-DUSE_LIBZIP=1 \
 	-DUSE_SIMULATION=1 \
 	-DUSE_SDK=1 \
+	-DAGLVERSION=${AGLVERSION} \
 	-Dafm_name=${afm_name} \
 	-Dafm_confdir=${afm_confdir} \
 	-Dafm_datadir=${afm_datadir} \

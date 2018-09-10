@@ -9,9 +9,14 @@ LIC_FILES_CHKSUM = "file://LICENSE-2.0.txt;md5=3b83ef96387f14655fc854ddc3c6bd57"
 
 SRC_URI = "git://gerrit.automotivelinux.org/gerrit/src/app-framework-binder;protocol=https;branch=${AGL_BRANCH}"
 
-SRCREV = "29f544ba5fa53407575b549c1d3b0a4e2619af8f"
+SRCREV = "${AGL_APP_REVISION}"
 PV = "${AGL_BRANCH}+git${SRCPV}"
 
 S = "${WORKDIR}/git"
 
 CFLAGS_append_agl-devel = " -DAGL_DEVEL"
+
+EXTRA_OECMAKE_append = "\
+	-DAGLVERSION=${AGLVERSION} \
+"
+
