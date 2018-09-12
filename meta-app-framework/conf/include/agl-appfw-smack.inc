@@ -1,4 +1,4 @@
-# enable security features (smack, cynara) - required by Application Framework
+# enable security features (smack, cynagora) - required by Application Framework
 OVERRIDES .= ":with-lsm-smack"
 DISTRO_FEATURES_append = " smack xattr"
 

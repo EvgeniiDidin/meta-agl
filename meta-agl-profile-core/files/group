@@ -39,7 +39,7 @@ games::60:
 shutdown::70:
 users::100:
 nogroup::65534:
-cynara::999:
+cynagora::999:
 dhcp::998:
 avahi::997:
 tracing::1000:

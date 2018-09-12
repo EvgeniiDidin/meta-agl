@@ -13,7 +13,7 @@ inherit allarch systemd
 
 SYSTEMD_SERVICE_${PN} = "run-agl-postinsts.service"
 
-SYSTEMD_SERVICE_AFTER ?= "dbus.service cynara.service"
+SYSTEMD_SERVICE_AFTER ?= "dbus.service cynagora.service"
 
 SYSTEMD_SERVICE_BEFORE ?= "systemd-user-sessions.service"
 

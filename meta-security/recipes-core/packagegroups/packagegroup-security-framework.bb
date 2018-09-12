@@ -15,7 +15,7 @@ inherit packagegroup
 # the policy packaged from the upstream source code here. Adapting
 # it for the distro can be done by patching that source.
 RDEPENDS_${PN}_append_with-lsm-smack = " \
-    cynara \
+    cynagora \
     security-manager \
     security-manager-policy \
     smacknet \

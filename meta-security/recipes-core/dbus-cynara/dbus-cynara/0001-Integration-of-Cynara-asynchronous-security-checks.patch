@@ -1197,7 +1197,7 @@ index 0000000..57a4c45
 +
 +#define USE_CYNARA_CACHE 1
 +#ifdef USE_CYNARA_CACHE
-+#define CYNARA_CACHE_SIZE 1000
++#define CYNARA_CACHE_SIZE 7000
 +#endif
 +
 +static dbus_bool_t bus_cynara_watch_callback(DBusWatch *watch,
