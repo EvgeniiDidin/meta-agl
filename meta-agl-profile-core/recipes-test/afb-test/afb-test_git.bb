@@ -13,7 +13,7 @@ DEPENDS += "lua"
 RDEPENDS_${PN} += "lua bash"
 RDEPENDS_${PN}-ptest += "af-binder"
 
-PV = "5.99-FF.RC6.0+git${SRCPV}"
+PV = "${AGLVERSION}"
 S  = "${WORKDIR}/git"
 
 inherit cmake aglwgt pkgconfig ptest
