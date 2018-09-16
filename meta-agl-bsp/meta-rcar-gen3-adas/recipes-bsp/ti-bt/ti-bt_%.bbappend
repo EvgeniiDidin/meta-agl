@@ -6,6 +6,9 @@ SRC_URI += "file://ti-uim.service"
 
 SYSTEMD_SERVICE_${PN} = "ti-uim.service"
 
+PR = "r0"
+PV = "0.1+git${SRCPV}"
+
 do_install_append() {
     # We do not want the blacklist
     rm -f ${D}/${sysconfdir}/modprobe.d/ti_bt.conf
