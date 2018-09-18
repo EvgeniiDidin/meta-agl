@@ -27,8 +27,8 @@
 #
 ################################################################################
 
-# this script shouldn't be called directly, but through aglsetup.sh that will in 
-# turn execute (source) generated instructions back in the parent shell, 
+# this script shouldn't be called directly, but through aglsetup.sh that will in
+# turn execute (source) generated instructions back in the parent shell,
 # whether it's bash, zsh, or any other supported shell
 
 VERSION=1.1.0
@@ -150,6 +150,15 @@ Options:
    -f|--force
       flag to force overwriting any existing configuration
       default: false
+   -r|--rpm-revision <schema>
+      Specify how to handle RPM packages revisions
+      <schema> can be:
+          'prservice[:<address>]' : Use a PR service daemon.
+              if <address> is not specified, the default value 'localhost:0'
+              is used (shortcut for a PR service started by bitbake)
+          'timestamp' : Use a generated time stamp (UTC).
+          'value:<revision>' : Use <revision> explicitly.
+          'none' : Do nothing.
    -v|--verbose
       verbose mode
       default: false
@@ -161,13 +170,13 @@ Options:
 
 EOF
 	local buf
-	
+
 	echo "Available machines:" >&2
 	for x in $AGL_REPOSITORIES; do
 		buf=$(list_machines $x)
 		[[ -z "$buf" ]] && continue
 		echo "   [$x]"
-		for y in $buf; do 
+		for y in $buf; do
 			[[ $y == $DEFAULT_MACHINE ]] && def="* " || def="  "
 			echo "     $def$y"
 		done
@@ -281,7 +290,7 @@ function find_feature_dependency() {
 
 GLOBAL_ARGS=( "$@" )
 debug "Parsing arguments: $@"
-TEMP=$(getopt -o m:b:s:fvdh --long machine:,builddir:,script:,force,verbose,debug,help -n $SCRIPT -- "$@")
+TEMP=$(getopt -o m:b:r:s:fvdh --long machine:,builddir:,rpm-revision:,script:,force,verbose,debug,help -n $SCRIPT -- "$@")
 [[ $? != 0 ]] && { usage; exit 1; }
 eval set -- "$TEMP"
 
@@ -292,17 +301,18 @@ MACHINE=$DEFAULT_MACHINE
 BUILDDIR=$DEFAULT_BUILDDIR
 SETUPSCRIPT=
 FORCE=
-
+RPMREVISION=
 while true; do
 	case "$1" in
-		-m|--machine)  MACHINE=$2; shift 2;;
-		-b|--builddir) BUILDDIR=$2; shift 2;;
-		-s|--setupscript) SETUPSCRIPT=$2; shift 2;;
-		-f|--force) FORCE=1; shift;;
-		-v|--verbose) VERBOSE=1; shift;;
-		-d|--debug) VERBOSE=1; DEBUG=1; shift;;
-		-h|--help)     HELP=1; shift;;
-		--)            shift; break;;
+		-m|--machine)      MACHINE=$2; shift 2;;
+		-b|--builddir)     BUILDDIR=$2; shift 2;;
+		-s|--setupscript)  SETUPSCRIPT=$2; shift 2;;
+		-f|--force)        FORCE=1; shift;;
+		-r|--rpm-revision) RPMREVISION=$2; shift 2;;
+		-v|--verbose)      VERBOSE=1; shift;;
+		-d|--debug)        VERBOSE=1; DEBUG=1; shift;;
+		-h|--help)         HELP=1; shift;;
+		--)                shift; break;;
 		*) error "Arguments parsing error"; exit 1;;
 	esac
 done
@@ -409,6 +419,8 @@ export MACHINE="$MACHINE"
 export FEATURES="$FEATURES"
 export BUILDDIR="$BUILDDIR"
 export METADIR="$METADIR"
+export RPMREVISION="$RPMREVISION"
+export LOCALCONF="$BUILDDIR/conf/local.conf"
 
 echo "--- beginning of setup script"
 EOF
@@ -432,7 +444,6 @@ EOF
 		dump_log $BUILDDIR/conf/setup.log
 		return 1
 	}
-	# NOTE: the setup.sh script is removed if execution succeeded (only the log remains)
 }
 
 ###########################################################################################
@@ -447,7 +458,7 @@ EOF
 if [[ -f $BUILDDIR/conf/local.conf || -f $BUILDDIR/conf/bblayers.conf ]]; then
 	info "Configuration files already exist:"
 	for x in $BUILDDIR/conf/local.conf $BUILDDIR/conf/bblayers.conf; do
-		[[ -f $x ]] && info "   - $x" 
+		[[ -f $x ]] && info "   - $x"
 	done
 	info "Skipping configuration files generation."
 	info "Use option -f|--force to overwrite existing configuration."
@@ -457,13 +468,14 @@ fi
 
 # always generate setup script in builddir: it can be sourced later manually without re-running the setup
 infon "Generating setup file: $BUILDDIR/agl-init-build-env ... "
+
 cat <<EOF >$BUILDDIR/agl-init-build-env
 . $METADIR/poky/oe-init-build-env $BUILDDIR
 if [ -n "\$DL_DIR" ]; then
 	BB_ENV_EXTRAWHITE="\$BB_ENV_EXTRAWHITE DL_DIR"
 fi
 if [ -n "\$SSTATE_DIR" ]; then
-	 BB_ENV_EXTRAWHITE="\$BB_ENV_EXTRAWHITE SSTATE_DIR" 
+	BB_ENV_EXTRAWHITE="\$BB_ENV_EXTRAWHITE SSTATE_DIR"
 fi
 export BB_ENV_EXTRAWHITE
 unset TEMPLATECONF
