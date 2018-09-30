@@ -21,7 +21,7 @@ RDEPENDS_${PN} += "\
     ffsb \
     interbench \
     iozone3 \
-    iperf \
+    iperf3 \
     ipv6connect \
     linpack \
     linus-stress \
