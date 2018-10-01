@@ -34,7 +34,7 @@ EOF
 EOF
             echo "AGL_PR ?= \"${AGL_PR}\"" >> $LOCALCONF;
             cat <<'EOF' >> $LOCALCONF
-PKGR_append = ".${AGL_PR}"
+PKGR = "${PR}${EXTENDPRAUTO}.${AGL_PR}"
 PKGV = "${@ '${PV}'.replace('AUTOINC','${AGL_PR}')}"
 BB_HASHBASE_WHITELIST_append = " PKGR PKGV"
 EOF
@@ -42,7 +42,7 @@ EOF
         value:*)
             echo "AGL_PR ?= \"${RPMREVISION#value:}\"" >> $LOCALCONF;
             cat <<'EOF' >> $LOCALCONF
-PKGR_append = ".${AGL_PR}"
+PKGR = "${PR}${EXTENDPRAUTO}.${AGL_PR}"
 PKGV = "${@ '${PV}'.replace('AUTOINC','${AGL_PR}')}"
 BB_HASHBASE_WHITELIST_append = " PKGR PKGV"
 EOF
