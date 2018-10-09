@@ -6,8 +6,10 @@ LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/Apache-2.0;md5=89aea4e17d99a7cacdbeed46a0096b10"
 SECTION = "apps"
 
-SRC_URI = "gitsm://gerrit.automotivelinux.org/gerrit/apps/app-afb-test;protocol=https;branch=${AGL_BRANCH}"
-SRCREV = "bba4befcc57ff4eb106a01b416119da01accfcd1"
+SRC_URI = "gitsm://gerrit.automotivelinux.org/gerrit/apps/app-afb-test;protocol=https;branch=${AGL_BRANCH} \
+	   file://run-ptest \
+	  "
+SRCREV = "7b69512a0d4ed9b994ec02ed7f9ae004e9533d1f"
 
 DEPENDS += "lua"
 RDEPENDS_${PN} += "lua bash"
@@ -19,7 +21,7 @@ S  = "${WORKDIR}/git"
 inherit cmake aglwgt pkgconfig ptest
 
 do_install_append() {
-	install -d ${D}${bindir}
-	install -m 775 ${B}/afm-test ${D}${bindir}/afm-test
+       install -d ${D}${bindir}
+       install -m 775 ${S}/afm-test.target.sh ${D}${bindir}/afm-test
 }
 
