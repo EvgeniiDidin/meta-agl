@@ -26,7 +26,7 @@
 
 # detect if this script is sourced: see http://stackoverflow.com/a/38128348/6255594
 SOURCED=0
-if [ -n "$ZSH_EVAL_CONTEXT" ]; then 
+if [ -n "$ZSH_EVAL_CONTEXT" ]; then
 	[[ $ZSH_EVAL_CONTEXT =~ :file$ ]] && { SOURCED=1; SOURCEDIR=$(cd $(dirname -- $0) && pwd -P); }
 elif [ -n "$KSH_VERSION" ]; then
 	[[ "$(cd $(dirname -- $0) && pwd -P)/$(basename -- $0)" != "$(cd $(dirname -- ${.sh.file}) && pwd -P)/$(basename -- ${.sh.file})" ]] && { SOURCED=1; SOURCEDIR=$(cd $(dirname -- ${.sh.file}) && pwd -P); }
@@ -37,9 +37,9 @@ fi
 if [ $SOURCED -ne 1 ]; then
 	unset SOURCED
 	unset SOURCEDIR
-    echo "Error: this script needs to be sourced in a supported shell" >&2
-    echo "Please check that the current shell is bash, zsh or ksh and run this script as '. $0 <args>'" >&2
-    return 1
+	echo "Error: this script needs to be sourced in a supported shell" >&2
+	echo "Please check that the current shell is bash, zsh or ksh and run this script as '. $0 <args>'" >&2
+	return 1
 else
 	unset SOURCED
 	tmpfile=$(mktemp /tmp/aglsetup.XXXXXXXX)
