@@ -14,7 +14,7 @@ do_compile[nostamp] = "1"
 do_compilestep1 () {
     rc=99
     outfile=${B}/platform-build-info
-    if [ -f "${DISTRO_MANIFEST_GENERATOR}" -a -f "${DISTRO_SETUP_MANIFEST}" ]; then
+    if [ -x "${DISTRO_MANIFEST_GENERATOR}" -a -f "${DISTRO_SETUP_MANIFEST}" ]; then
         ${DISTRO_MANIFEST_GENERATOR} ${DISTRO_SETUP_MANIFEST} deploy >${outfile}-deploy
         rc1=$?
         ${DISTRO_MANIFEST_GENERATOR} ${DISTRO_SETUP_MANIFEST} target >${outfile}-target
@@ -25,6 +25,21 @@ do_compilestep1 () {
         if [ "$rc1" -ne 0 -o "$rc2" -ne 0 -o "$rc3" -ne 0 ]; then
             rc=98
         fi
+    else
+        if [ -z "${DISTRO_MANIFEST_GENERATOR}" ]; then
+            echo "The name of the generation script is not defined."
+        elif [ ! -f "${DISTRO_MANIFEST_GENERATOR}" ]; then
+            echo "Generation script ${DISTRO_MANIFEST_GENERATOR} is missing."
+        elif [ ! -x "${DISTRO_MANIFEST_GENERATOR}" ]; then
+            echo "Generation script ${DISTRO_MANIFEST_GENERATOR} isn't executable."
+        fi
+        if [ -z "${DISTRO_SETUP_MANIFEST}" ]; then
+            echo "The name of the data file is not defined."
+        elif [ ! -f "${DISTRO_SETUP_MANIFEST}" ]; then
+            echo "Data file ${DISTRO_SETUP_MANIFEST} is missing."
+        fi
+	echo "You can try to rerun aglsetup.sh to solve that issue."
+	echo "You can also try to source agl-init-build-env instead of oe-init-build-env."
     fi
 
     if [ "$rc" -ne  0 ]; then
