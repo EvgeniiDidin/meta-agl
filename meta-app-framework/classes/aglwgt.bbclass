@@ -15,6 +15,9 @@ DEPENDS_append = " af-main-native"
 # for bindings  af-binder is required.
 DEPENDS_append = " af-binder"
 
+# for bindings  that use the cmake-apps-module
+DEPENDS_append = " cmake-apps-module-native"
+
 # for hal bindings genskel is required.
 DEPENDS_append = " af-binder-devtools-native"
 
