@@ -12,7 +12,7 @@ SRCREV  = "${AGL_APP_REVISION}"
 PV = "1.0+git${SRCPV}"
 S  = "${WORKDIR}/git"
 
-DEPENDS = "json-c"
+DEPENDS = "json-c glib-2.0"
 RDEPENDS_${PN} = "ofono agl-service-bluetooth-pbap"
 
 inherit cmake aglwgt pkgconfig
