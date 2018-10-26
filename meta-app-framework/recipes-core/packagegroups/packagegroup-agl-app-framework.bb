@@ -14,5 +14,6 @@ RDEPENDS_${PN} += "\
 	af-binder \
 	libafbwsc \
 	af-main \
+	nss-localuser \
 	systemd-agl-sync \
 	"
