@@ -10,7 +10,7 @@ do_install_append() {
     else
         install -m 0755 -d ${D}/var/local
     fi
-    ln -s ../../var/local ${D}/usr/local
+    ln -s ../var/local ${D}/usr/local
 }
 
 do_install_append_with-lsm-smack () {
