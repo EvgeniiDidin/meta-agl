@@ -1,0 +1,31 @@
+From 5a410caefa1cb0337c8c1457a7619549829fe129 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Jos=C3=A9=20Bollo?= <jose.bollo@iot.bzh>
+Date: Mon, 5 Nov 2018 15:37:53 +0100
+Subject: [PATCH] Enable using epoll() without listen socket.
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Change-Id: Iadcb7fa936bf193987f098e6d8b5815456765a85
+Signed-off-by: José Bollo <jose.bollo@iot.bzh>
+---
+ src/microhttpd/daemon.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/src/microhttpd/daemon.c b/src/microhttpd/daemon.c
+index 71a0ce0b..018e7289 100644
+--- a/src/microhttpd/daemon.c
++++ b/src/microhttpd/daemon.c
+@@ -5914,8 +5914,7 @@ MHD_start_daemon_va (unsigned int flags,
+ 
+ #ifdef EPOLL_SUPPORT
+   if ( (0 != (*pflags & MHD_USE_EPOLL)) &&
+-       (0 == daemon->worker_pool_size) &&
+-       (0 == (*pflags & MHD_USE_NO_LISTEN_SOCKET)) )
++       (0 == daemon->worker_pool_size) )
+     {
+       if (0 != (*pflags & MHD_USE_THREAD_PER_CONNECTION))
+ 	{
+-- 
+2.17.2
+
