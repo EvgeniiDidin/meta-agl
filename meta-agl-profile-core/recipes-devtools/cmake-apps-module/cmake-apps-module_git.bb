@@ -7,16 +7,14 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/Apache-2.0;md5=89aea4e17d99a7ca
 SECTION = "apps"
 
 SRC_URI = "git://gerrit.automotivelinux.org/gerrit/src/cmake-apps-module;protocol=https;branch=${AGL_BRANCH}"
-SRCREV = "2beffef345c6bf96078aae711d78dec973a93ef6"
+SRCREV = "742695d0946e0bf755204a5503603fd5285aa770"
 
 PV = "${AGL_BRANCH}+git${SRCPV}"
 S  = "${WORKDIR}/git"
 
-inherit nativesdk cmake
+inherit cmake
 
-FILES_${PN}_append = " ${datadir}/*/Modules/CMakeAfbTemplates.cmake \
-	${datadir}/*/Modules/CMakeAfbTemplates/* \
-	"
+FILES_${PN} += " ${datadir}/*/Modules/CMakeAfbTemplates*"
 
 BBCLASSEXTEND = "native nativesdk"
 
