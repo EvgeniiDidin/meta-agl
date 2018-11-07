@@ -57,6 +57,10 @@ SRC_URI_append_netboot = " file://nbd.cfg \
 	file://ramdisk.cfg"
 KERNEL_CONFIG_FRAGMENTS_append_netboot = " ${WORKDIR}/nbd.cfg ${WORKDIR}/ramdisk.cfg"
 
+# Enable required features for the agl-sota feature
+SRC_URI_append_sota = " file://ramdisk.cfg"
+KERNEL_CONFIG_FRAGMENTS_append_sota = " ${WORKDIR}/ramdisk.cfg"
+
 # Enable support for TP-Link TL-W722N USB Wifi adapter
 SRC_URI_append = " file://ath9k_htc.cfg"
 KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/ath9k_htc.cfg"
