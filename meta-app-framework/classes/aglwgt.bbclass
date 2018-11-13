@@ -25,14 +25,25 @@ EXTRA_OECMAKE_append_agl-ptest = " -DBUILD_TEST_WGT=TRUE"
 
 do_aglwgt_package()  {
         cd ${B}
-        ${S}/conf.d/autobuild/agl/autobuild package BUILD_DIR=${B} DEST=${B}/package VERBOSE=TRUE || \
-        make package || \
-        ( bbwarn "Your makefile must support the 'make package' target" ; \
-          bbwarn "and generate a .wgt file using wgtpack in the"; \
-          bbwarn "subfolder ./package/ !" ; \
+        ${S}/autobuild/agl/autobuild package BUILD_DIR=${B} DEST=${B} VERBOSE=TRUE || \
+	( ${S}/conf.d/autobuild/agl/autobuild package BUILD_DIR=${B} DEST=${B}/package VERBOSE=TRUE && \
+          ( bbwarn "OBSOLETE: Your autobuild script should be located in :" ; \
+            bbwarn "autobuild/agl/ from the project root source folder"; \
+            bbwarn "and generate a .wgt file using wgtpack in the build"; \
+            bbwarn "root folder calling:" ; \
+            bbwarn "./autobuild/agl/autobuild package DEST=<BUILDDIR>" ; \
+            bbwarn "See: https://wiki.automotivelinux.org/troubleshooting/app-recipes" \
+          )
+	) ||
+        ( bbwarn "OBSOLETE: You must have an autobuild script located in:" ; \
+          bbwarn "autobuild/agl/ from the project root source folder"; \
+          bbwarn "with filename autobuild which should generate"; \
+          bbwarn "a .wgt file using wgtpack in the build"; \
+          bbwarn "root folder calling:" ; \
+          bbwarn "./autobuild/agl/autobuild package DEST=<BUILDDIR>" ; \
           bbwarn "Fix your package as it will not work within the SDK" ; \
-          bbwarn "See: https://wiki.automotivelinux.org/troubleshooting/app-recipes" \
-        )
+          bbwarn "See: https://wiki.automotivelinux.org/troubleshooting/app-recipes"; \
+          make package)
 }
 
 python () {
@@ -50,9 +61,11 @@ do_aglwgt_deploy() {
     if [ "${AGLWGT_AUTOINSTALL_${PN}}" = "0" ]
     then
         install -d ${D}/usr/AGL/apps/manualinstall
+        install -m 0644 ${B}/*.wgt ${D}/usr/AGL/apps/manualinstall || \
         install -m 0644 ${B}/package/*.wgt ${D}/usr/AGL/apps/manualinstall
     else
         install -d ${D}/usr/AGL/apps/autoinstall
+        install -m 0644 ${B}/*.wgt ${D}/usr/AGL/apps/autoinstall || \
         install -m 0644 ${B}/package/*.wgt ${D}/usr/AGL/apps/autoinstall
 
 	if [ "$(find ${D}/usr/AGL/apps/autoinstall -name ${TEST_WGT})" ]
@@ -89,3 +102,5 @@ do_install() {
 
 addtask aglwgt_deploy  before do_package after do_install
 addtask aglwgt_package before do_aglwgt_deploy after do_compile
+
+
