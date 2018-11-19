@@ -1,0 +1,144 @@
+From 11b29ce444610a07067a89b38e9e85c2162bbf67 Mon Sep 17 00:00:00 2001
+From: Tim Orling <timothy.t.orling@linux.intel.com>
+Date: Mon, 15 Oct 2018 18:30:42 -0700
+Subject: [PATCH 7/7] [WIP] Initial LAVA support
+
+Linaro Automated Validation Architecture (LAVA) launches a test suite
+on the target but thereafter only observes stdout.
+
+LAVA knows that a test case has started or ended based on signals
+emitted to stdout:
+(setup)
+<LAVA_SIGNAL_STARTTC test_case_name>
+(teardown)
+<LAVA_SIGNAL_ENDTC test_case_name>
+<LAVA_SIGNAL_TESTCASE TEST_CASE_ID=test_case_name RESULT=pass|fail \
+  [[ MEASUREMENT=numeric_measurement ][ UNITS=units_string]]>
+
+It is valid to have a measurement without units, but not units without a measurement.
+
+Signed-off-by: Tim Orling <timothy.t.orling@linux.intel.com>
+---
+ flags.h | 10 ++++++++++
+ main.c  |  9 ++++++++-
+ utils.c | 15 +++++++++++++++
+ utils.h |  2 +-
+ 4 files changed, 34 insertions(+), 2 deletions(-)
+ create mode 100644 flags.h
+
+diff --git a/flags.h b/flags.h
+new file mode 100644
+index 000000000000..0dac2234e0b4
+--- /dev/null
++++ b/flags.h
+@@ -0,0 +1,10 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++
++/* Flag bit definitions */
++
++#ifndef __FLAGS_H__
++#define __FLAGS_H__
++
++#define LAVA_SIGNAL_ENABLE	(0x0001)
++
++#endif				/* __FLAGS_H__ */
+diff --git a/main.c b/main.c
+index 83600b7d1b31..92ced6926c3d 100644
+--- a/main.c
++++ b/main.c
+@@ -36,6 +36,7 @@
+ #endif
+ 
+ #include "utils.h"
++#include "flags.h"
+ 
+ #define DEFAULT_DIRECTORY "/usr/lib"
+ #define DEFAULT_TIMEOUT 300
+@@ -70,8 +71,9 @@ main(int argc, char *argv[])
+ 	opts.timeout = DEFAULT_TIMEOUT;
+ 	opts.ptests = NULL;
+ 	opts.xml_filename = NULL;
++	opts.flags = 0;
+ 
+-	while ((opt = getopt(argc, argv, "d:e:lt:x:h")) != -1) {
++	while ((opt = getopt(argc, argv, "d:e:lt:x:Lh")) != -1) {
+ 		switch (opt) {
+ 			case 'd':
+ 				free(opts.directory);
+@@ -118,6 +120,11 @@ main(int argc, char *argv[])
+ 				opts.xml_filename = strdup(optarg);
+ 				CHECK_ALLOCATION(opts.xml_filename, 1, 1);
+ 			break;
++			case 'L':
++				// set LAVA signal mode
++				opts.flags |= LAVA_SIGNAL_ENABLE;
++				fprintf(stdout, "LAVA_SIGNAL_ENABLE == %d\n", opts.flags);
++			break;
+ 			default:
+ 				print_usage(stdout, argv[0]);
+ 				exit(1);
+diff --git a/utils.c b/utils.c
+index ed2eff7900c1..0fd1da6aec92 100644
+--- a/utils.c
++++ b/utils.c
+@@ -39,6 +39,7 @@
+ 
+ #include "ptest_list.h"
+ #include "utils.h"
++#include "flags.h"
+ 
+ #define GET_STIME_BUF_SIZE 1024
+ #define WAIT_CHILD_POLL_TIMEOUT_MS 200
+@@ -358,6 +359,7 @@ run_ptests(struct ptest_list *head, const struct ptest_options opts,
+ 		fprintf(fp, "START: %s\n", progname);
+ 		PTEST_LIST_ITERATE_START(head, p);
+ 			char *ptest_dir = strdup(p->run_ptest);
++			char *ptest = strdup(p->ptest);
+ 			if (ptest_dir == NULL) {
+ 				rc = -1;
+ 				break;
+@@ -376,6 +378,11 @@ run_ptests(struct ptest_list *head, const struct ptest_options opts,
+ 				int fds[2]; fds[0] = pipefd_stdout[0]; fds[1] = pipefd_stderr[0];
+ 				FILE *fps[2]; fps[0] = fp; fps[1] = fp_stderr;
+ 
++				char result[5]; // pass\0, fail\0, skip\0
++
++				if (opts.flags & LAVA_SIGNAL_ENABLE) {
++					fprintf(stdout, "<LAVA_SIGNAL_STARTTC %s>\n", ptest);
++				}
+ 				fprintf(fp, "%s\n", get_stime(stime, GET_STIME_BUF_SIZE));
+ 				fprintf(fp, "BEGIN: %s\n", ptest_dir);
+ 
+@@ -389,6 +396,14 @@ run_ptests(struct ptest_list *head, const struct ptest_options opts,
+ 
+ 				fprintf(fp, "END: %s\n", ptest_dir);
+ 				fprintf(fp, "%s\n", get_stime(stime, GET_STIME_BUF_SIZE));
++				if (opts.flags & LAVA_SIGNAL_ENABLE) {
++					if (status)
++						sprintf(result, "fail");
++					else
++						sprintf(result, "pass");
++					fprintf(stdout, "<LAVA_SIGNAL_ENDTC %s>\n", ptest);
++					fprintf(stdout, "<LAVA_SIGNAL_TESTCASE TEST_CASE_ID=%s RESULT=%s>\n", ptest, result);
++				}
+ 			}
+ 		PTEST_LIST_ITERATE_END;
+ 		fprintf(fp, "STOP: %s\n", progname);
+diff --git a/utils.h b/utils.h
+index ee85163ddfff..06d4c100d151 100644
+--- a/utils.h
++++ b/utils.h
+@@ -37,9 +37,9 @@ struct ptest_options {
+ 	int timeout;
+ 	char **ptests;
+ 	char *xml_filename;
++	unsigned int flags;
+ };
+ 
+-
+ extern void check_allocation1(void *, size_t, char *, int, int);
+ extern struct ptest_list *get_available_ptests(const char *);
+ extern int print_ptests(struct ptest_list *, FILE *);
+-- 
+2.11.0
+
