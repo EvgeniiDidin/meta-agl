@@ -1,10 +1,10 @@
-DESCRIPTION = "The minimal set of packages required for basic Wayland image"
+DESCRIPTION = "The minimal set of packages required for Wayland support"
 LICENSE = "MIT"
 
 inherit packagegroup
 
 PACKAGES = "\
-    packagegroup-agl-image-weston \
+    packagegroup-agl-graphical-weston \
     "
 
 ALLOW_EMPTY_${PN} = "1"
@@ -16,7 +16,5 @@ RDEPENDS_${PN} += " \
                   weston-examples \
                   agl-login-manager \
                   agl-desktop-config \
-                  packagegroup-agl-graphical-services \
-                  profile-agl-minimal \
                   "
 
