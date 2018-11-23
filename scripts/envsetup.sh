@@ -37,11 +37,11 @@
 # detect if this script is sourced: see http://stackoverflow.com/a/38128348/6255594
 SOURCED=0
 if [ -n "$ZSH_EVAL_CONTEXT" ]; then 
-	[[ $ZSH_EVAL_CONTEXT =~ :file$ ]] && { SOURCED=1; SOURCEDIR=$(cd $(dirname -- $0) && pwd -P); }
+	[[ $ZSH_EVAL_CONTEXT =~ :file$ ]] && { SOURCED=1; SOURCEDIR=$(cd $(dirname -- $0) > /dev/null && pwd -P); }
 elif [ -n "$KSH_VERSION" ]; then
-	[[ "$(cd $(dirname -- $0) && pwd -P)/$(basename -- $0)" != "$(cd $(dirname -- ${.sh.file}) && pwd -P)/$(basename -- ${.sh.file})" ]] && { SOURCED=1; SOURCEDIR=$(cd $(dirname -- ${.sh.file}) && pwd -P); }
+	[[ "$(cd $(dirname -- $0) > /dev/null && pwd -P)/$(basename -- $0)" != "$(cd $(dirname -- ${.sh.file}) > /dev/null && pwd -P)/$(basename -- ${.sh.file})" ]] && { SOURCED=1; SOURCEDIR=$(cd $(dirname -- ${.sh.file}) > /dev/null && pwd -P); }
 elif [ -n "$BASH_VERSION" ]; then
-	[[ $0 != "$BASH_SOURCE" ]] && { SOURCED=1; SOURCEDIR=$(cd $(dirname -- $BASH_SOURCE) && pwd -P); }
+	[[ $0 != "$BASH_SOURCE" ]] && { SOURCED=1; SOURCEDIR=$(cd $(dirname -- $BASH_SOURCE) > /dev/null && pwd -P); }
 fi
 
 if [ $SOURCED -ne 1 ]; then

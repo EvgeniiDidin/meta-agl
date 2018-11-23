@@ -39,8 +39,8 @@ DEBUG=0
 
 #SCRIPT=$(basename $BASH_SOURCE)
 SCRIPT=aglsetup.sh
-SCRIPTDIR=$(cd $(dirname $BASH_SOURCE) && pwd -P)
-METADIR=$(cd $(dirname $BASH_SOURCE)/../.. && pwd -P)
+SCRIPTDIR=$(cd $(dirname $BASH_SOURCE) > /dev/null && pwd -P)
+METADIR=$(cd $(dirname $BASH_SOURCE)/../.. > /dev/null && pwd -P)
 
 function info() { echo "$@" >&2; }
 function infon() { echo -n "$@" >&2; }
@@ -342,7 +342,7 @@ done
 
 # validate build dir
 debug "validating builddir $BUILDDIR"
-BUILDDIR=$(mkdir -p "$BUILDDIR" && cd "$BUILDDIR" && pwd -P)
+BUILDDIR=$(mkdir -p "$BUILDDIR" && cd "$BUILDDIR" > /dev/null && pwd -P)
 validate_builddir
 
 ###########################################################################################
@@ -359,7 +359,7 @@ function genconfig() {
 	info "   Features: $FEATURES"
 
 	# step 1: run usual OE setup to generate conf dir
-	export TEMPLATECONF=$(cd $SCRIPTDIR/../templates/base && pwd -P)
+	export TEMPLATECONF=$(cd $SCRIPTDIR/../templates/base > /dev/null && pwd -P)
 	debug "running oe-init-build-env with TEMPLATECONF=$TEMPLATECONF"
 	info "   Running $METADIR/poky/oe-init-build-env"
 	info "   Templates dir: $TEMPLATECONF"
