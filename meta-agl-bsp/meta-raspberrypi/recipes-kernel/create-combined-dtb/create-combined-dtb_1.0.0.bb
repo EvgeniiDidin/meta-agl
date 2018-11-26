@@ -12,6 +12,8 @@ FILES_${PN} = ""
 
 S = "${WORKDIR}"
 
+do_compile[depends] += "virtual/kernel:do_deploy"
+
 do_compile () {
 	# Official touchscreen setup (rpi3b/rpi3b dtb, vc4-kms-v3d and ft5406)
 	fdtoverlay -v -i ${DEPLOY_DIR_IMAGE}/uImage-bcm2710-rpi-3-b-plus.dtb -o uImage-bcm2710-rpi-3-b+vc4+ft5406.dtb ${DEPLOY_DIR_IMAGE}/rpi-ft5406.dtbo ${DEPLOY_DIR_IMAGE}/uImage-vc4-kms-v3d.dtbo
