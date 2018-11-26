@@ -7,7 +7,7 @@ LIC_FILES_CHKSUM = "file://waltham-transmitter/COPYING;md5=f21c9af4de068fb53b83f
 DEPENDS += "libdrm virtual/kernel wayland waltham weston gstreamer1.0 gstreamer gstreamer1.0-plugins-base gstreamer1.0-plugins-good"
 
 SRC_URI = "git://gerrit.automotivelinux.org/gerrit/p/src/weston-ivi-plugins.git;protocol=https"
-SRCREV = "a1974a6a8cf8ed073b08bc65b01a6a6e99251723"
+SRCREV = "b84f9487a32e5b94c93d34a984858a93d0cefc57"
 
 S = "${WORKDIR}/git/"
 
