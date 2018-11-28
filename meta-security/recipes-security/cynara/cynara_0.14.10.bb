@@ -29,7 +29,8 @@ PACKAGECONFIG ??= ""
 PACKAGECONFIG[debug] = "-DCMAKE_BUILD_TYPE=DEBUG,-DCMAKE_BUILD_TYPE=RELEASE,libunwind elfutils"
 
 inherit cmake
-TARGET_CFLAGS += "-O1"
+#TARGET_CFLAGS += "-O1"
+TARGET_CFLAGS += "-Wno-error=implicit-fallthrough"
 
 EXTRA_OECMAKE += " \
   -DCMAKE_VERBOSE_MAKEFILE=ON \
