@@ -14,6 +14,7 @@ file://c-11-replace-depracated-auto_ptr.patch \
 file://socket-manager-removes-tizen-specific-call.patch \
 file://Removing-tizen-platform-config.patch \
 file://removes-dependency-to-libslp-db-utils.patch \
+file://0001-Disable-some-warnings-errors-due-gcc8.patch \
 "
 
 ##########################################

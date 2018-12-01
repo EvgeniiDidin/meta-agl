@@ -1,0 +1,26 @@
+From 79014100a0373b1506c909a6edd89bac67a9e8a0 Mon Sep 17 00:00:00 2001
+From: Evgeniy Didin <Evgeniy.Didin@synopsys.com>
+Date: Thu, 29 Nov 2018 16:13:12 +0300
+Subject: [PATCH] Disable some warnings-errors due gcc8
+
+Signed-off-by: Evgeniy Didin <Evgeniy.Didin@synopsys.com>
+---
+ CMakeLists.txt | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 28790d8..5db3ee8 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -47,6 +47,8 @@ ADD_DEFINITIONS("-fPIC")
+ ADD_DEFINITIONS("-Werror")                      # Make all warnings into errors.
+ ADD_DEFINITIONS("-Wall")                        # Generate all warnings
+ ADD_DEFINITIONS("-Wextra")                      # Generate even more extra warnings
++ADD_DEFINITIONS("-Wno-error=catch-value")
++ADD_DEFINITIONS("-Wno-error=cast-function-type")
+ 
+ STRING(REGEX MATCH "([^.]*)" API_VERSION "${VERSION}")
+ ADD_DEFINITIONS("-DAPI_VERSION=\"$(API_VERSION)\"")
+-- 
+2.16.2
+
