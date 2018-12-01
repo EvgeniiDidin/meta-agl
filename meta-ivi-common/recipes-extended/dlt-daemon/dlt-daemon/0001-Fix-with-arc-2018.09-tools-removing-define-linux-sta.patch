@@ -1,0 +1,57 @@
+From 674073e8401490d15bfdb3587351ae6f6e647abb Mon Sep 17 00:00:00 2001
+From: Evgeniy Didin <Evgeniy.Didin@synopsys.com>
+Date: Thu, 29 Nov 2018 15:40:05 +0300
+Subject: [PATCH] Fix with arc-2018.09 tools - removing #define linux/stat.h
+
+Signed-off-by: Evgeniy Didin <Evgeniy.Didin@synopsys.com>
+---
+ src/daemon/dlt-daemon.c        | 3 ---
+ src/daemon/dlt_daemon_client.c | 3 ---
+ src/daemon/dlt_daemon_socket.c | 3 ---
+ 3 files changed, 9 deletions(-)
+
+diff --git a/src/daemon/dlt-daemon.c b/src/daemon/dlt-daemon.c
+index 804b36b..3dab8e9 100644
+--- a/src/daemon/dlt-daemon.c
++++ b/src/daemon/dlt-daemon.c
+@@ -47,9 +47,6 @@
+ #endif
+ #include <sys/stat.h>
+ #include <sys/time.h>
+-#ifdef linux
+-#include <linux/stat.h>
+-#endif
+ 
+ #include "dlt_types.h"
+ #include "dlt-daemon.h"
+diff --git a/src/daemon/dlt_daemon_client.c b/src/daemon/dlt_daemon_client.c
+index c92601e..89dd0b8 100644
+--- a/src/daemon/dlt_daemon_client.c
++++ b/src/daemon/dlt_daemon_client.c
+@@ -46,9 +46,6 @@
+ #endif
+ #include <sys/stat.h>
+ #include <sys/time.h>
+-#ifdef linux
+-#include <linux/stat.h>
+-#endif
+ 
+ #ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
+ #include <systemd/sd-daemon.h>
+diff --git a/src/daemon/dlt_daemon_socket.c b/src/daemon/dlt_daemon_socket.c
+index 686f4d6..472cc11 100644
+--- a/src/daemon/dlt_daemon_socket.c
++++ b/src/daemon/dlt_daemon_socket.c
+@@ -49,9 +49,6 @@
+ #endif
+ #include <sys/stat.h>
+ #include <sys/time.h>
+-#ifdef linux
+-#include <linux/stat.h>
+-#endif
+ 
+ #include "dlt_types.h"
+ #include "dlt-daemon.h"
+-- 
+2.16.2
+

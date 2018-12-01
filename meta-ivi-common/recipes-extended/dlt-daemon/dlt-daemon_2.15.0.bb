@@ -19,6 +19,7 @@ SRCREV = "e9a486a08fff6d3cc7133a350cec3ee10f463207"
 SRC_URI = "git://git.projects.genivi.org/${BPN}.git;protocol=http \
     file://0002-Don-t-execute-processes-as-a-specific-user.patch \
     file://0004-Modify-systemd-config-directory.patch \
+    file://0001-Fix-with-arc-2018.09-tools-removing-define-linux-sta.patch \
     "
 S = "${WORKDIR}/git"
 
