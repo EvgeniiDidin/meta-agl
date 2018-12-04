@@ -7,7 +7,10 @@ HOMEPAGE = "https://gerrit.automotivelinux.org/gerrit/#/admin/projects/src/app-f
 LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://LICENSE-2.0.txt;md5=3b83ef96387f14655fc854ddc3c6bd57"
 
-SRC_URI = "git://gerrit.automotivelinux.org/gerrit/src/app-framework-binder;protocol=https;branch=${AGL_BRANCH}"
+SRC_URI = "git://gerrit.automotivelinux.org/gerrit/src/app-framework-binder;protocol=https;branch=${AGL_BRANCH} \
+	file://0001-Remove-signal-handling-for-debug-purpose.patch \
+"
+
 
 SRCREV = "5b26086e8e634d1fcd2e65dc164fd3453f43942b"
 PV = "${AGL_BRANCH}+git${SRCPV}"
