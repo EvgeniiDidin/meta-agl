@@ -6,7 +6,7 @@ SRC_URI = "file://core.cfg \
            file://ivishell.cfg \
            file://id-agent.cfg \
            file://shell.cfg \
-           file://hdmi-a-1-270.cfg \
+	   file://dvi-i-1-270.cfg \
           "
 
 S = "${WORKDIR}"
