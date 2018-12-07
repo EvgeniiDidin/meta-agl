@@ -14,6 +14,7 @@ RDEPENDS_${PN} += " \
                   weston-init \
                   weston-ini-conf \
                   weston-examples \
+                  weston-ready \
                   agl-login-manager \
                   agl-desktop-config \
                   "
