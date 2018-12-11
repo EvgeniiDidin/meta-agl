@@ -3,10 +3,10 @@ HOMEPAGE = "https://github.com/Arkq/bluez-alsa"
 SECTION = "libs"
 
 LICENSE = "MIT"
-LIC_FILES_CHKSUM = "file://LICENSE.txt;md5=bb3e99e80c5d718213f35ae1def4c106"
+LIC_FILES_CHKSUM = "file://LICENSE.txt;md5=88dc1c98120259ae67b82222d7aff5c1"
 
 SRC_URI = "git://github.com/Arkq/bluez-alsa.git;protocol=https;branch=master"
-SRCREV = "9045edb436ea755f395a2e09e4525b5defad286a"
+SRCREV = "56fcc3215e9a7e0a4576c1bcc544ec9aad2d937f"
 
 SRC_URI += "file://bluez-alsa.service"
 
@@ -16,7 +16,7 @@ DEPENDS += "alsa-lib bluez5 systemd glib-2.0 sbc"
 
 PACKAGECONFIG[aac]  = "--enable-aac, --disable-aac, "
 PACKAGECONFIG[aptx] = "--enable-aptx,--disable-aptx,"
-PACKAGECONFIG[hcitop]   = "--enable-hcitop,  --disable-hcitop,  libbsd ncurses"
+PACKAGECONFIG[ofono] = "--enable-ofono, --disable-ofono,"
 
 inherit autotools pkgconfig
 inherit systemd
@@ -24,7 +24,12 @@ inherit systemd
 SYSTEMD_AUTO_ENABLE = "enable"
 SYSTEMD_SERVICE_${PN} = "bluez-alsa.service"
 
-PACKAGECONFIG += "hcitop"
+PACKAGECONFIG += "ofono"
+
+# enable debug tools in devel images
+PACKAGECONFIG[hcitop] = "--enable-hcitop, --disable-hcitop, libbsd ncurses"
+PACKAGECONFIG[rfcomm] = "--enable-rfcomm, --disable-rfcomm,"
+PACKAGECONFIG_append_agl-devel = " hcitop rfcomm"
 
 do_install_append () {
     install -d ${D}${base_libdir}/systemd/system
