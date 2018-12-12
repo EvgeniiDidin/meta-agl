@@ -19,14 +19,16 @@
 # in which connmand runs, this change is not submitted upstream
 # and it can be overridden by a distro via FIX_CONNMAN_CAPABILITIES.
 
-FIX_CONNMAN_CAPABILITIES ??= ""
-FIX_CONNMAN_CAPABILITIES_with-lsm-smack ??= "fix_connman_capabilities"
-do_install[postfuncs] += "${FIX_CONNMAN_CAPABILITIES}"
+FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
 
-fix_connman_capabilities () {
-    service="${D}/${systemd_unitdir}/system/connman.service"
-    if [ -f "$service" ] &&
-        grep -q '^CapabilityBoundingSet=' "$service"; then
-        sed -i -e 's/^CapabilityBoundingSet=/CapabilityBoundingSet=CAP_MAC_OVERRIDE /' "$service"
-    fi
+SRC_URI_append_with-lsm-smack = "\
+  file://connman.service.conf \
+"
+
+RDEPENDS_${PN}_append_with-lsm-smack = " smack"
+
+FILES_${PN} += "${systemd_unitdir}"
+
+do_install_append_with-lsm-smack() {
+  install -Dm0644 ${WORKDIR}/connman.service.conf ${D}${systemd_unitdir}/system/connman.service.d/smack.conf
 }

@@ -42,14 +42,14 @@
 # The related patch has been submitted to upstream too.
 # upstream link: http://permalink.gmane.org/gmane.linux.bluez.kernel/67993
 
-FIX_BLUEZ5_CAPABILITIES ??= ""
-FIX_BLUEZ5_CAPABILITIES_with-lsm-smack ??= "fix_bluez5_capabilities"
-do_install[postfuncs] += "${FIX_BLUEZ5_CAPABILITIES}"
+FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
 
-fix_bluez5_capabilities () {
-    service="${D}/${systemd_unitdir}/system/bluetooth.service"
-    if [ -f "$service" ] &&
-        grep -q '^CapabilityBoundingSet=' "$service"; then
-        sed -i -e 's/^CapabilityBoundingSet=/CapabilityBoundingSet=CAP_MAC_OVERRIDE /' "$service"
-    fi
+SRC_URI_append_with-lsm-smack = "\
+  file://bluetooth.service.conf \
+"
+
+FILES_${PN} += "${systemd_unitdir}"
+
+do_install_append_with-lsm-smack() {
+  install -Dm0644 ${WORKDIR}/bluetooth.service.conf ${D}${systemd_unitdir}/system/bluetooth.service.d/smack.conf
 }
