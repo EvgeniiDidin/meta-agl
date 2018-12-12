@@ -19,4 +19,5 @@ RDEPENDS_${PN}_append_with-lsm-smack = " \
     security-manager \
     security-manager-policy \
     smacknet \
+    smack-system-setup \
 "
