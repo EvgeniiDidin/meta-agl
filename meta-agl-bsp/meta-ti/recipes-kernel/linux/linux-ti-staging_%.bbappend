@@ -8,6 +8,5 @@ FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
 
 SRC_URI += " \
        file://dcan2_pinmux_enable.patch \
-       file://fix_dcan_addresses.patch \
 	"
 
