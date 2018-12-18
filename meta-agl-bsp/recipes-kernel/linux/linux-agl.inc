@@ -86,3 +86,7 @@ KERNEL_CONFIG_FRAGMENTS_append_with-lsm-smack = "\
 # snd-aloop support for 4a
 SRC_URI_append = " file://4a-sound.cfg"
 KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/4a-sound.cfg"
+
+# external rtc support via e.g. http://wiki.seeedstudio.com/Grove-RTC/
+SRC_URI_append = " file://rtc.cfg"
+KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/rtc.cfg"
