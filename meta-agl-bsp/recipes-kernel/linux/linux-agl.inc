@@ -86,3 +86,8 @@ KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/4a-sound.cfg"
 # iio-dummy-device support for test iiodevice
 SRC_URI_append = " file://iiodevice.cfg"
 KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/iiodevice.cfg"
+
+# external rtc support via e.g. http://wiki.seeedstudio.com/Grove-RTC/
+SRC_URI_append = " file://rtc.cfg"
+KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/rtc.cfg"
+
