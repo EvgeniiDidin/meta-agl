@@ -12,7 +12,7 @@ DEPENDS += "lua lua-native"
 RDEPENDS_${PN} += "lua"
 
 SRC_URI = "gitsm://git.automotivelinux.org/apps/agl-service-signal-composer;protocol=https;branch=${AGL_BRANCH}"
-SRCREV = "fbdf29b8af47f567f472a459842d262e8abf5b9c"
+SRCREV = "74c0e1f8e2a6dbc5b7485c3b06e12d4ad7f43c6b"
 
 PV = "${AGLVERSION}"
 S  = "${WORKDIR}/git"
