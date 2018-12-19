@@ -7,7 +7,7 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/Apache-2.0;md5=89aea4e17d99a7ca
 SECTION = "apps"
 
 SRC_URI = "gitsm://gerrit.automotivelinux.org/gerrit/apps/app-afb-test;protocol=https;branch=${AGL_BRANCH}"
-SRCREV = "afa8decdbbc2959a413c1d9d7cd054df4ea4e4ff"
+SRCREV = "cdaad5dbef30d989fab207324ec3c37d6e50c5a0"
 
 DEPENDS += "lua"
 RDEPENDS_${PN} += "lua bash"
