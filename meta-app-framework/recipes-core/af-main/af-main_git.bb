@@ -79,6 +79,7 @@ SRC_URI += "\
 do_install_append_class-target() {
     install -d ${D}${bindir}
     install -d -m 0775 ${D}${systemd_units_root}/system
+    install -d -m 0775 "${D}${systemd_units_root}/system/multi-user.target.wants"
     install -d -m 0775 "${D}${systemd_units_root}/system/afm-user-session@.target.wants"
     install -d -m 0775 ${D}${systemd_units_root}/user
     install -d -m 0775 ${D}${systemd_units_root}/user/default.target.wants
