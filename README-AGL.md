@@ -1,31 +1,34 @@
-?README-AGL.md: The Automotive Grade Linux Distribution
-======================================================
+Overview
+========
 
-[AGL](https://www.automotivelinux.org/) is creating an automotive specific Linux distribution (AGL UCB)
-that unifies the software that has been written in a number of places already,
-such as GENIVI and Tizen IVI.
+The
+[AGL Project](https://www.automotivelinux.org/) is an automotive-specific
+development environment that provides a Linux distribution
+[AGL UCB](https://www.automotivelinux.org/software/unified-code-base).
 
-The layer 'meta-agl' provides a minimal set of software
-to boot system of AGL Distribution. 'meta-agl' is the minimal
-core which is used build AGL profiles on top of it.
+AGL uses layers designed to be compatible with the
+[Yocto Project](https://www.yoctoproject.org) and the
+[OpenEmbedded Project (OE)](https://www.openembedded.org/wiki/Main_Page).
 
-The reference UI is part of 'meta-agl-demo'.
+This section provides information about the layers used by the AGL Project:
 
-Additional components like the security framework are part of 'meta-agl-extra'.
+* **`meta-agl`**: Minimal set of software needed to create an AGL distribution
+  used to boot a system.
+  AGL profiles are built on top of this minimal set of software.
 
-The AGL community appreciates feedback, ideas, suggestion, bugs and
-documentation just as much as code. Please join the irc conversation
-at the #automotive channel on irc.freenode.net and our mailing list.
+* **`meta-agl-demo`**: Provides a reference or demo platform and applications
+  for the AGL Distribution.
+  The reference UI is part of the `meta-agl-demo` layer.
 
-For infomation for subscribing to the mailing list
-    [automotive-discussions](http://lists.linuxfoundation.org/mailman/listinfo/automotive-discussions)
-For information about AGL Distribution, see the
-    [AGL Distribution](https://wiki.automotivelinux.org/agl-distro)
-For information abount Getting started with AGL
-    [here](https://wiki.automotivelinux.org/start/getting-started)
-For information about contributing to the AGL Distro
-    [here](https://wiki.automotivelinux.org/agl-distro/contributing)
+* **`meta-agl-devel`**: Contains components under development or being tested.
+  This layer also contains software packages that OEMs need but do not exist
+  in AGL.
 
-For more documentation about AGL:
 
-* [docs.automotivelinux.org](http://docs.automotivelinux.org)
+**WRITER NOTES:** The content for this section is the `README-AGL.md`
+  file that is in the `meta-agl` layer, which is a Gerrit layer.
+  You can clone the layer using this command:
+
+    ```
+    $ git clone https://gerrit.automotivelinux.org/gerrit/AGL/meta-agl
+
