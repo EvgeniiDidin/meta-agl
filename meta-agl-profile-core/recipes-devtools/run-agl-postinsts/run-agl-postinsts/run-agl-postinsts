@@ -45,4 +45,6 @@ systemctl daemon-reload
 # since all postinstalls executed successfully, remove the postinstalls directory
 if [ $remove_agl_pi_dir = 1 ]; then
     rm -rf $agl_pi_dir
+    exit 0
 fi
+exit 1
