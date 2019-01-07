@@ -23,6 +23,8 @@
 usage="Usage: weston-ready [-t timeout]" 
 timeout=0
 
+function info() { echo "$@" >&2; }
+
 if [ $# -eq 2 ]; then
 	if [ $1 = "-t" ]; then
 		timeout=$(($2 * 10))
@@ -32,15 +34,20 @@ if [ $# -eq 2 ]; then
 	fi
 fi
 
+info "using timeout $timeout"
+
 time=0
 rc=1
 while true; do
 	if [ $time -gt $timeout ]; then
+		info "Timeout reached"
 		break
 	elif LayerManagerControl get screens >/dev/null 2>&1; then
+		info "Weston is now ready"
 		rc=0
 		break
 	fi
+	info "waiting..."
 	if [ $timeout -gt 0 ]; then
 		usleep 500000
 	fi
