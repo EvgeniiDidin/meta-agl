@@ -1,0 +1,15 @@
+type: books
+books:
+-
+    id: meta-agl
+    title: Meta AGL
+    description: Meta AGL documentation
+    keywords:
+    author: "AGL"
+    version: flounder
+    chapters:
+    - url: ../README-AGL.md
+      name: AGL Overview
+    - url: ../README.md
+      destination: meta-agl.md
+      name: meta-agl
