@@ -10,10 +10,10 @@ inherit update-alternatives
 
 RPROVIDES_${PN} += "virtual/gpsd-conf"
 
-ALTERNATIVE_${PN} = "gspd-defaults"
-ALTERNATIVE_LINK_NAME[gspd-defaults] = "${sysconfdir}/default/gpsd"
-ALTERNATIVE_TARGET[gspd-defaults] = "${sysconfdir}/default/gpsd.kingfisher"
-ALTERNATIVE_PRIORITY[gspd-defaults] = "20"
+ALTERNATIVE_${PN} = "gpsd-defaults"
+ALTERNATIVE_LINK_NAME[gpsd-defaults] = "${sysconfdir}/default/gpsd"
+ALTERNATIVE_TARGET[gpsd-defaults] = "${sysconfdir}/default/gpsd.kingfisher"
+ALTERNATIVE_PRIORITY[gpsd-defaults] = "20"
 
 COMPATIBLE_MACHINE = "ulcb"
 PACKAGE_ARCH = "${MACHINE_ARCH}"
