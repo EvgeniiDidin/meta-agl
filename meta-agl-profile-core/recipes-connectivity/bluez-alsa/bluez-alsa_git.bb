@@ -6,7 +6,7 @@ LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://LICENSE.txt;md5=88dc1c98120259ae67b82222d7aff5c1"
 
 SRC_URI = "git://github.com/Arkq/bluez-alsa.git;protocol=https;branch=master"
-SRCREV = "56fcc3215e9a7e0a4576c1bcc544ec9aad2d937f"
+SRCREV = "862a4b2cfd432444d62c00ee1394f6abd1433063"
 
 SRC_URI += "file://bluez-alsa.service"
 
@@ -36,8 +36,3 @@ do_install_append () {
     install -m 0644 ${WORKDIR}/bluez-alsa.service ${D}${base_libdir}/systemd/system
 }
 
-FILES_${PN} += "\
-  ${datadir}/alsa/alsa.conf.d/20-bluealsa.conf\
-  ${libdir}/alsa-lib/libasound_module_ctl_bluealsa.so\
-  ${libdir}/alsa-lib/libasound_module_pcm_bluealsa.so\
-"
