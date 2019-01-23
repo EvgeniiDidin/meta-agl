@@ -30,6 +30,7 @@ SRC_URI_append = "\
             file://drm.cfg \
             file://btusb.cfg \
             file://usbaudio.cfg \
+	    file://usbmodem.cfg \
 	    file://i2c-led.cfg \
 	    file://nfc.cfg \
             "
