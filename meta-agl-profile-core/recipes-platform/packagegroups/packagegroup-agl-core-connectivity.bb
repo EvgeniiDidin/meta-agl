@@ -13,6 +13,7 @@ RDEPENDS_${PN} += "\
     bluez5-obex \
     dhcp-server \
     ${@bb.utils.contains('VIRTUAL-RUNTIME_net_manager','connman','connman connman-client connman-tests connman-tools connman-ncurses','',d)} \
+    ${@bb.utils.contains("DISTRO_FEATURES", "3g", "libqmi", "", d)} \
     neard \
     neardal-tools \
     rtl-sdr \
