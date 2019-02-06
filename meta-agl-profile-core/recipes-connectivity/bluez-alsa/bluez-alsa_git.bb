@@ -36,3 +36,8 @@ do_install_append () {
     install -m 0644 ${WORKDIR}/bluez-alsa.service ${D}${base_libdir}/systemd/system
 }
 
+FILES_${PN} += "\
+   ${datadir}/alsa/alsa.conf.d/20-bluealsa.conf\
+   ${libdir}/alsa-lib/libasound_module_ctl_bluealsa.so\
+   ${libdir}/alsa-lib/libasound_module_pcm_bluealsa.so\
+"
