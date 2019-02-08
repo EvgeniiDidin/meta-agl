@@ -1,4 +1,5 @@
 FILESEXTRAPATHS_prepend := "${THISDIR}/dbus-cynara:"
+
 SRC_URI_append = "\
    file://0001-Integration-of-Cynara-asynchronous-security-checks.patch \
    file://0002-Disable-message-dispatching-when-send-rule-result-is.patch \

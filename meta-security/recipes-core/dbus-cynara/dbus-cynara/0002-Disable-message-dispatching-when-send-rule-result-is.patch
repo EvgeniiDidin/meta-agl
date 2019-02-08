@@ -22,27 +22,16 @@ Change-Id: I57eccbf973525fd51369c7d4e58908292f44da80
 Cherry-picked from b1b87ad9f20b2052c28431b48e81073078a745ce
 by Jose Bollo.
 
+Updated for dbus 1.12.10 by Scott Murray.
+
 Signed-off-by: José Bollo <jose.bollo@iot.bzh>
----
- bus/activation.c                |  78 +++++++++++++++--
- bus/check.c                     | 109 ++++++++++++++++++++++--
- bus/check.h                     |  10 +++
- bus/cynara.c                    |   1 -
- bus/dispatch.c                  | 184 ++++++++++++++++++++++++++++++++++++----
- bus/dispatch.h                  |   2 +-
- bus/driver.c                    |  12 ++-
- dbus/dbus-connection-internal.h |  15 ++++
- dbus/dbus-connection.c          | 125 +++++++++++++++++++++++++--
- dbus/dbus-list.c                |  29 +++++++
- dbus/dbus-list.h                |   3 +
- dbus/dbus-shared.h              |   3 +-
- 12 files changed, 528 insertions(+), 43 deletions(-)
+Signed-off-by: Scott Murray <scott.murray@konsulko.com>
 
 diff --git a/bus/activation.c b/bus/activation.c
-index 1a98af6d..343d3f22 100644
+index 451179d..5f02153 100644
 --- a/bus/activation.c
 +++ b/bus/activation.c
-@@ -31,6 +31,7 @@
+@@ -32,6 +32,7 @@
  #include "services.h"
  #include "test.h"
  #include "utils.h"
@@ -50,7 +39,7 @@ index 1a98af6d..343d3f22 100644
  #include <dbus/dbus-internals.h>
  #include <dbus/dbus-hash.h>
  #include <dbus/dbus-list.h>
-@@ -91,6 +92,8 @@ struct BusPendingActivationEntry
+@@ -94,6 +95,8 @@ struct BusPendingActivationEntry
    DBusConnection *connection;
  
    dbus_bool_t auto_activation;
@@ -59,7 +48,7 @@ index 1a98af6d..343d3f22 100644
  };
  
  typedef struct
-@@ -1180,20 +1183,23 @@ bus_activation_send_pending_auto_activation_messages (BusActivation  *activation
+@@ -1241,20 +1244,23 @@ bus_activation_send_pending_auto_activation_messages (BusActivation  *activation
        BusPendingActivationEntry *entry = link->data;
        DBusList *next = _dbus_list_get_next_link (&pending_activation->entries, link);
  
@@ -88,7 +77,7 @@ index 1a98af6d..343d3f22 100644
              {
                /* If permission is denied, we just want to return the error
                 * to the original method invoker; in particular, we don't
-@@ -1205,9 +1211,40 @@ bus_activation_send_pending_auto_activation_messages (BusActivation  *activation
+@@ -1266,9 +1272,40 @@ bus_activation_send_pending_auto_activation_messages (BusActivation  *activation
                    bus_connection_send_oom_error (entry->connection,
                                                   entry->activation_message);
                  }
@@ -131,7 +120,7 @@ index 1a98af6d..343d3f22 100644
              }
          }
  
-@@ -1225,6 +1262,19 @@ bus_activation_send_pending_auto_activation_messages (BusActivation  *activation
+@@ -1286,6 +1323,19 @@ bus_activation_send_pending_auto_activation_messages (BusActivation  *activation
    return TRUE;
  
   error:
@@ -151,20 +140,22 @@ index 1a98af6d..343d3f22 100644
    return FALSE;
  }
  
-@@ -2028,13 +2078,23 @@ bus_activation_activate_service (BusActivation  *activation,
+@@ -2078,6 +2128,7 @@ bus_activation_activate_service (BusActivation  *activation,
  
            if (service != NULL)
              {
 +              BusResult res;
                bus_context_log (activation->context,
-                                DBUS_SYSTEM_LOG_INFO, "Activating via systemd: service name='%s' unit='%s'",
+                                DBUS_SYSTEM_LOG_INFO, "Activating via systemd: service name='%s' unit='%s' requested by '%s' (%s)",
                                 service_name,
-                                entry->systemd_service);
+@@ -2085,8 +2136,17 @@ bus_activation_activate_service (BusActivation  *activation,
+                                bus_connection_get_name (connection),
+                                bus_connection_get_loginfo (connection));
                /* Wonderful, systemd is connected, let's just send the msg */
--              retval = bus_dispatch_matches (activation_transaction, NULL, bus_service_get_primary_owners_connection (service),
--                                             message, error);
-+              res = bus_dispatch_matches (activation_transaction, NULL, bus_service_get_primary_owners_connection (service),
-+                                            message, error);
+-              retval = bus_dispatch_matches (activation_transaction, NULL,
+-                                             systemd, message, error);
++              res = bus_dispatch_matches (activation_transaction, NULL,
++                                          systemd, message, error);
 +
 +              if (res == BUS_RESULT_TRUE)
 +                retval = TRUE;
@@ -178,7 +169,7 @@ index 1a98af6d..343d3f22 100644
            else
              {
 diff --git a/bus/check.c b/bus/check.c
-index 5b72d31c..4b8a6994 100644
+index 5b72d31..4b8a699 100644
 --- a/bus/check.c
 +++ b/bus/check.c
 @@ -55,6 +55,8 @@ typedef struct BusDeferredMessage
@@ -348,7 +339,7 @@ index 5b72d31c..4b8a6994 100644
  bus_deferred_message_response_received (BusDeferredMessage *deferred_message,
                                          BusResult result)
 diff --git a/bus/check.h b/bus/check.h
-index c3fcaf90..d1775497 100644
+index c3fcaf9..d177549 100644
 --- a/bus/check.h
 +++ b/bus/check.h
 @@ -55,6 +55,7 @@ BusResult   bus_check_privilege   (BusCheck *check,
@@ -374,7 +365,7 @@ index c3fcaf90..d1775497 100644
 +
  #endif /* BUS_CHECK_H */
 diff --git a/bus/cynara.c b/bus/cynara.c
-index 57a4c45c..77aed623 100644
+index 57a4c45..77aed62 100644
 --- a/bus/cynara.c
 +++ b/bus/cynara.c
 @@ -36,7 +36,6 @@
@@ -386,7 +377,7 @@ index 57a4c45c..77aed623 100644
  typedef struct BusCynara
  {
 diff --git a/bus/dispatch.c b/bus/dispatch.c
-index 05be3bdf..7353501b 100644
+index 7e51bc1..0250b53 100644
 --- a/bus/dispatch.c
 +++ b/bus/dispatch.c
 @@ -35,6 +35,7 @@
@@ -397,7 +388,7 @@ index 05be3bdf..7353501b 100644
  #include <dbus/dbus-misc.h>
  #include <string.h>
  
-@@ -121,7 +122,7 @@ send_one_message (DBusConnection *connection,
+@@ -122,7 +123,7 @@ send_one_message (DBusConnection *connection,
    return TRUE;
  }
  
@@ -406,8 +397,8 @@ index 05be3bdf..7353501b 100644
  bus_dispatch_matches (BusTransaction *transaction,
                        DBusConnection *sender,
                        DBusConnection *addressed_recipient,
-@@ -157,13 +158,29 @@ bus_dispatch_matches (BusTransaction *transaction,
-                                                message, error,
+@@ -158,13 +159,29 @@ bus_dispatch_matches (BusTransaction *transaction,
+                                                message, NULL, error,
                                                 &deferred_message);
        if (res == BUS_RESULT_FALSE)
 -        return FALSE;
@@ -441,7 +432,7 @@ index 05be3bdf..7353501b 100644
          }
  
        if (dbus_message_contains_unix_fds (message) &&
-@@ -174,14 +191,14 @@ bus_dispatch_matches (BusTransaction *transaction,
+@@ -175,14 +192,14 @@ bus_dispatch_matches (BusTransaction *transaction,
                            DBUS_ERROR_NOT_SUPPORTED,
                            "Tried to send message with Unix file descriptors"
                            "to a client that doesn't support that.");
@@ -459,7 +450,7 @@ index 05be3bdf..7353501b 100644
          }
      }
  
-@@ -196,7 +213,7 @@ bus_dispatch_matches (BusTransaction *transaction,
+@@ -197,7 +214,7 @@ bus_dispatch_matches (BusTransaction *transaction,
                                        &recipients))
      {
        BUS_SET_OOM (error);
@@ -468,7 +459,7 @@ index 05be3bdf..7353501b 100644
      }
  
    link = _dbus_list_get_first_link (&recipients);
-@@ -218,10 +235,10 @@ bus_dispatch_matches (BusTransaction *transaction,
+@@ -219,10 +236,10 @@ bus_dispatch_matches (BusTransaction *transaction,
    if (dbus_error_is_set (&tmp_error))
      {
        dbus_move_error (&tmp_error, error);
@@ -481,7 +472,7 @@ index 05be3bdf..7353501b 100644
  }
  
  static DBusHandlerResult
-@@ -407,10 +424,12 @@ bus_dispatch (DBusConnection *connection,
+@@ -410,10 +427,12 @@ bus_dispatch (DBusConnection *connection,
          }
        else if (res == BUS_RESULT_LATER)
          {
@@ -498,7 +489,7 @@ index 05be3bdf..7353501b 100644
            goto out;
          }
  
-@@ -475,8 +494,14 @@ bus_dispatch (DBusConnection *connection,
+@@ -515,8 +534,14 @@ bus_dispatch (DBusConnection *connection,
     * addressed_recipient == NULL), and match it against other connections'
     * match rules.
     */
@@ -515,9 +506,9 @@ index 05be3bdf..7353501b 100644
  
   out:
    if (dbus_error_is_set (&error))
-@@ -5001,9 +5026,132 @@ bus_dispatch_test_conf_fail (const DBusString *test_data_dir,
-   return TRUE;
+@@ -5061,9 +5086,132 @@ bus_dispatch_test_conf_fail (const DBusString *test_data_dir,
  }
+ #endif
  
 +typedef struct {
 +  DBusTimeout *timeout;
@@ -649,7 +640,7 @@ index 05be3bdf..7353501b 100644
    _dbus_verbose ("Normal activation tests\n");
    if (!bus_dispatch_test_conf (test_data_dir,
 diff --git a/bus/dispatch.h b/bus/dispatch.h
-index fb5ba7a5..afba6a24 100644
+index fb5ba7a..afba6a2 100644
 --- a/bus/dispatch.h
 +++ b/bus/dispatch.h
 @@ -29,7 +29,7 @@
@@ -662,10 +653,10 @@ index fb5ba7a5..afba6a24 100644
                                              DBusConnection *recipient,
                                              DBusMessage    *message,
 diff --git a/bus/driver.c b/bus/driver.c
-index b7e1a0a0..a5823d4d 100644
+index cd0a714..f414f64 100644
 --- a/bus/driver.c
 +++ b/bus/driver.c
-@@ -225,6 +225,7 @@ bus_driver_send_service_owner_changed (const char     *service_name,
+@@ -218,6 +218,7 @@ bus_driver_send_service_owner_changed (const char     *service_name,
  {
    DBusMessage *message;
    dbus_bool_t retval;
@@ -673,8 +664,8 @@ index b7e1a0a0..a5823d4d 100644
    const char *null_service;
  
    _DBUS_ASSERT_ERROR_IS_CLEAR (error);
-@@ -260,7 +261,16 @@ bus_driver_send_service_owner_changed (const char     *service_name,
-   if (!bus_transaction_capture (transaction, NULL, message))
+@@ -253,7 +254,16 @@ bus_driver_send_service_owner_changed (const char     *service_name,
+   if (!bus_transaction_capture (transaction, NULL, NULL, message))
      goto oom;
  
 -  retval = bus_dispatch_matches (transaction, NULL, NULL, message, error);
@@ -692,7 +683,7 @@ index b7e1a0a0..a5823d4d 100644
  
    return retval;
 diff --git a/dbus/dbus-connection-internal.h b/dbus/dbus-connection-internal.h
-index 48357321..94b1c951 100644
+index 4835732..94b1c95 100644
 --- a/dbus/dbus-connection-internal.h
 +++ b/dbus/dbus-connection-internal.h
 @@ -118,6 +118,21 @@ DBUS_PRIVATE_EXPORT
@@ -718,7 +709,7 @@ index 48357321..94b1c951 100644
  DBUS_PRIVATE_EXPORT
  void _dbus_connection_get_stats (DBusConnection *connection,
 diff --git a/dbus/dbus-connection.c b/dbus/dbus-connection.c
-index 7f5b3292..ed0be70d 100644
+index c525b6d..f1b0ea0 100644
 --- a/dbus/dbus-connection.c
 +++ b/dbus/dbus-connection.c
 @@ -311,7 +311,8 @@ struct DBusConnection
@@ -771,7 +762,7 @@ index 7f5b3292..ed0be70d 100644
  #ifdef DBUS_ENABLE_EMBEDDED_TESTS
  /**
   * Gets the locks so we can examine them
-@@ -4070,6 +4104,82 @@ _dbus_connection_putback_message_link_unlocked (DBusConnection *connection,
+@@ -4069,6 +4103,82 @@ _dbus_connection_putback_message_link_unlocked (DBusConnection *connection,
        "_dbus_connection_putback_message_link_unlocked");
  }
  
@@ -854,7 +845,7 @@ index 7f5b3292..ed0be70d 100644
  /**
   * Returns the first-received message from the incoming message queue,
   * removing it from the queue. The caller owns a reference to the
-@@ -4253,8 +4363,9 @@ static DBusDispatchStatus
+@@ -4252,8 +4362,9 @@ static DBusDispatchStatus
  _dbus_connection_get_dispatch_status_unlocked (DBusConnection *connection)
  {
    HAVE_LOCK_CHECK (connection);
@@ -866,7 +857,7 @@ index 7f5b3292..ed0be70d 100644
      return DBUS_DISPATCH_DATA_REMAINS;
    else if (!_dbus_transport_queue_messages (connection->transport))
      return DBUS_DISPATCH_NEED_MEMORY;
-@@ -4717,6 +4828,8 @@ dbus_connection_dispatch (DBusConnection *connection)
+@@ -4716,6 +4827,8 @@ dbus_connection_dispatch (DBusConnection *connection)
    
    CONNECTION_LOCK (connection);
  
@@ -875,7 +866,7 @@ index 7f5b3292..ed0be70d 100644
    if (result == DBUS_HANDLER_RESULT_NEED_MEMORY)
      {
        _dbus_verbose ("No memory\n");
-@@ -4839,9 +4952,11 @@ dbus_connection_dispatch (DBusConnection *connection)
+@@ -4838,9 +4951,11 @@ dbus_connection_dispatch (DBusConnection *connection)
                   connection);
    
   out:
@@ -890,7 +881,7 @@ index 7f5b3292..ed0be70d 100644
        /* Put message back, and we'll start over.
         * Yes this means handlers must be idempotent if they
 diff --git a/dbus/dbus-list.c b/dbus/dbus-list.c
-index c4c1856f..f84918b1 100644
+index 8e713c0..32ea871 100644
 --- a/dbus/dbus-list.c
 +++ b/dbus/dbus-list.c
 @@ -458,6 +458,35 @@ _dbus_list_remove_last (DBusList **list,
@@ -930,7 +921,7 @@ index c4c1856f..f84918b1 100644
   * Finds a value in the list. Returns the last link
   * with value equal to the given data pointer.
 diff --git a/dbus/dbus-list.h b/dbus/dbus-list.h
-index 9350a0da..fee9f1bc 100644
+index 9350a0d..fee9f1b 100644
 --- a/dbus/dbus-list.h
 +++ b/dbus/dbus-list.h
 @@ -68,6 +68,9 @@ DBUS_PRIVATE_EXPORT
@@ -944,7 +935,7 @@ index 9350a0da..fee9f1bc 100644
                                             void      *data);
  DBUS_PRIVATE_EXPORT
 diff --git a/dbus/dbus-shared.h b/dbus/dbus-shared.h
-index 7ab91035..e5bfbed6 100644
+index 7ab9103..e5bfbed 100644
 --- a/dbus/dbus-shared.h
 +++ b/dbus/dbus-shared.h
 @@ -67,7 +67,8 @@ typedef enum
@@ -957,6 +948,3 @@ index 7ab91035..e5bfbed6 100644
  } DBusHandlerResult;
  
  /* Bus names */
--- 
-2.14.3
-

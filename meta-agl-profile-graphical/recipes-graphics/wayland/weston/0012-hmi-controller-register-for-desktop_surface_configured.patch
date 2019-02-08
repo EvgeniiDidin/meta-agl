@@ -1,4 +1,5 @@
-index d5403e06..7b2f2707 100644
+diff --git a/ivi-shell/hmi-controller.c b/ivi-shell/hmi-controller.c
+index a0e49ba0..340d1915 100644
 --- a/ivi-shell/hmi-controller.c
 +++ b/ivi-shell/hmi-controller.c
 @@ -129,9 +129,9 @@ struct hmi_controller {
@@ -12,7 +13,7 @@ index d5403e06..7b2f2707 100644
  
  	struct wl_client                   *user_interface;
  	struct ui_setting                   ui_setting;
-@@ -581,28 +581,6 @@ create_layer(struct weston_output *output,
+@@ -576,28 +576,6 @@ create_layer(struct weston_output *output,
  /**
   * Internal set notification
   */
@@ -34,14 +35,14 @@ index d5403e06..7b2f2707 100644
 -	if (is_surf_in_ui_widget(hmi_ctrl, ivisurf))
 -		return;
 -
--	ret = ivi_layout_interface->layer_add_surface(application_layer, ivisurf);
+-	ret = hmi_ctrl->interface->layer_add_surface(application_layer, ivisurf);
 -	assert(!ret);
 -}
 -
  static void
  set_notification_remove_surface(struct wl_listener *listener, void *data)
  {
-@@ -670,6 +648,42 @@ set_notification_configure_surface(struct wl_listener *listener, void *data)
+@@ -665,6 +643,42 @@ set_notification_configure_surface(struct wl_listener *listener, void *data)
  	switch_mode(hmi_ctrl, hmi_ctrl->layout_mode);
  }
  
@@ -64,55 +65,54 @@ index d5403e06..7b2f2707 100644
 +	if (is_surf_in_ui_widget(hmi_ctrl, ivisurf))
 +		return;
 +
-+	ret = ivi_layout_interface->layer_add_surface(application_layer, ivisurf);
++	ret = hmi_ctrl->interface->layer_add_surface(application_layer, ivisurf);
 +	assert(!ret);
 +
 +	/*
 +	 * if application changes size of wl_buffer. The source rectangle shall be
 +	 * fit to the size.
 +	 */
-+	surface = ivi_layout_interface->surface_get_weston_surface(ivisurf);
++	surface = hmi_ctrl->interface->surface_get_weston_surface(ivisurf);
 +	if (surface) {
-+		ivi_layout_interface->surface_set_source_rectangle(ivisurf, 0,
++		hmi_ctrl->interface->surface_set_source_rectangle(ivisurf, 0,
 +				0, surface->width, surface->height);
 +	}
 +
-+	ivi_layout_interface->commit_changes();
++	hmi_ctrl->interface->commit_changes();
 +	switch_mode(hmi_ctrl, hmi_ctrl->layout_mode);
 +}
 +
  /**
   * A hmi_controller used 4 ivi_layers to manage ivi_surfaces. The IDs of
   * corresponding ivi_layer are defined in weston.ini. Default scene graph
-@@ -852,6 +866,9 @@ hmi_controller_create(struct weston_compositor *ec)
+@@ -868,6 +882,9 @@ hmi_controller_create(struct weston_compositor *ec)
  	hmi_ctrl->surface_configured.notify = set_notification_configure_surface;
- 	ivi_layout_interface->add_listener_configure_surface(&hmi_ctrl->surface_configured);
+ 	hmi_ctrl->interface->add_listener_configure_surface(&hmi_ctrl->surface_configured);
  
 +	hmi_ctrl->desktop_surface_configured.notify = set_notification_configure_desktop_surface;
-+	ivi_layout_interface->add_listener_configure_desktop_surface(&hmi_ctrl->desktop_surface_configured);
++	hmi_ctrl->interface->add_listener_configure_desktop_surface(&hmi_ctrl->desktop_surface_configured);
 +
  	hmi_ctrl->destroy_listener.notify = hmi_controller_destroy;
  	wl_signal_add(&hmi_ctrl->compositor->destroy_signal,
  		      &hmi_ctrl->destroy_listener);
-@@ -1275,13 +1292,6 @@ ivi_hmi_controller_UI_ready(struct wl_client *client,
- 	ivi_layout_interface->commit_changes();
+@@ -1289,12 +1306,6 @@ ivi_hmi_controller_UI_ready(struct wl_client *client,
  
  	ivi_hmi_controller_add_launchers(hmi_ctrl, 256);
--
+ 
 -	/* Add surface_created listener after the initialization of launchers.
 -	 * Otherwise, surfaces of the launchers will be added to application
 -	 * layer too.*/
 -	hmi_ctrl->surface_created.notify = set_notification_create_surface;
--	ivi_layout_interface->add_listener_create_surface(&hmi_ctrl->surface_created);
+-	hmi_ctrl->interface->add_listener_create_surface(&hmi_ctrl->surface_created);
 -
  	hmi_ctrl->is_initialized = 1;
  }
  
 diff --git a/ivi-shell/ivi-layout.c b/ivi-shell/ivi-layout.c
-index 6b854503..22d63708 100644
+index b06bf309..ef354d49 100644
 --- a/ivi-shell/ivi-layout.c
 +++ b/ivi-shell/ivi-layout.c
-@@ -787,9 +787,15 @@ commit_surface_list(struct ivi_layout *layout)
+@@ -715,9 +715,15 @@ commit_surface_list(struct ivi_layout *layout)
  			ivisurf->pending.prop.transition_type = IVI_LAYOUT_TRANSITION_NONE;
  
  			if (configured && !is_surface_transition(ivisurf)) {

@@ -1,7 +1,6 @@
 FILESEXTRAPATHS_append := ":${THISDIR}/files"
 
 SRC_URI_append_class-nativesdk = " \
-    file://0001-CMakeDetermineSystem-use-oe-environment-vars-to-load.patch \
     file://environment.d-cmake-agl.sh \
 "
 

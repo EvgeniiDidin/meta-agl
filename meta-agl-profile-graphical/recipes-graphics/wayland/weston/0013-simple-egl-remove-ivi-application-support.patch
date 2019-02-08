@@ -1,7 +1,8 @@
-index 23f79dfe..f9c8010b 100644
+diff --git a/Makefile.am b/Makefile.am
+index 17c053e6..e0d3cb78 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -616,9 +616,7 @@ demo_clients += weston-simple-egl
+@@ -609,9 +609,7 @@ demo_clients += weston-simple-egl
  weston_simple_egl_SOURCES = clients/simple-egl.c
  nodist_weston_simple_egl_SOURCES =		\
  	protocol/xdg-shell-unstable-v6-protocol.c		\
@@ -13,7 +14,7 @@ index 23f79dfe..f9c8010b 100644
  weston_simple_egl_LDADD = $(SIMPLE_EGL_CLIENT_LIBS) -lm
  endif
 diff --git a/clients/simple-egl.c b/clients/simple-egl.c
-index dad0f09b..07e7e785 100644
+index a1e57aef..936e015e 100644
 --- a/clients/simple-egl.c
 +++ b/clients/simple-egl.c
 @@ -45,8 +45,6 @@
@@ -40,8 +41,8 @@ index dad0f09b..07e7e785 100644
 -	struct ivi_surface *ivi_surface;
  	EGLSurface egl_surface;
  	struct wl_callback *callback;
- 	int fullscreen, opaque, buffer_size, frame_sync, delay;
-@@ -355,27 +351,22 @@ static const struct zxdg_toplevel_v6_listener xdg_toplevel_listener = {
+ 	int fullscreen, maximized, opaque, buffer_size, frame_sync, delay;
+@@ -359,27 +355,22 @@ static const struct zxdg_toplevel_v6_listener xdg_toplevel_listener = {
  };
  
  static void
@@ -81,7 +82,7 @@ index dad0f09b..07e7e785 100644
  	window->xdg_surface = zxdg_shell_v6_get_xdg_surface(display->shell,
  							    window->surface);
  	zxdg_surface_v6_add_listener(window->xdg_surface,
-@@ -390,50 +381,6 @@ create_xdg_surface(struct window *window, struct display *display)
+@@ -394,50 +385,6 @@ create_xdg_surface(struct window *window, struct display *display)
  
  	window->wait_for_configure = true;
  	wl_surface_commit(window->surface);
@@ -132,7 +133,7 @@ index dad0f09b..07e7e785 100644
  
  	ret = eglMakeCurrent(window->display->egl.dpy, window->egl_surface,
  			     window->egl_surface, window->display->egl.ctx);
-@@ -465,8 +412,6 @@ destroy_surface(struct window *window)
+@@ -469,8 +416,6 @@ destroy_surface(struct window *window)
  		zxdg_toplevel_v6_destroy(window->xdg_toplevel);
  	if (window->xdg_surface)
  		zxdg_surface_v6_destroy(window->xdg_surface);
@@ -141,7 +142,7 @@ index dad0f09b..07e7e785 100644
  	wl_surface_destroy(window->surface);
  
  	if (window->callback)
-@@ -821,10 +766,6 @@ registry_handle_global(void *data, struct wl_registry *registry,
+@@ -825,10 +770,6 @@ registry_handle_global(void *data, struct wl_registry *registry,
  			fprintf(stderr, "unable to load default left pointer\n");
  			// TODO: abort ?
  		}
@@ -152,7 +153,7 @@ index dad0f09b..07e7e785 100644
  	}
  }
  
-@@ -939,9 +880,6 @@ main(int argc, char **argv)
+@@ -943,9 +884,6 @@ main(int argc, char **argv)
  	if (display.shell)
  		zxdg_shell_v6_destroy(display.shell);
  

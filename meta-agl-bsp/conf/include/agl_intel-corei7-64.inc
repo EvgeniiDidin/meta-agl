@@ -2,7 +2,7 @@
 #
 IMAGE_INSTALL_append = " \
         libva \
-        va-intel \
+        intel-vaapi-driver \
         gstreamer1.0-vaapi"
 
 AGL_EXTRA_IMAGE_FSTYPES = "wic.xz wic.bmap wic.xz.sha256sum"
@@ -12,5 +12,5 @@ INITRD_LIVE = "${DEPLOY_DIR_IMAGE}/${INITRD_IMAGE_LIVE}-${MACHINE}.ext4.gz"
 # kernel command line, including to change the screen resolution.
 WKS_FILE = "systemd-intel-corei7-64-bootdisk.wks"
 
-PREFERRED_VERSION_linux-intel ?= "4.14%"
-PREFERRED_VERSION_linux-intel-rt ?= "4.14%"
+PREFERRED_VERSION_linux-intel ?= "4.19%"
+PREFERRED_VERSION_linux-intel-rt ?= "4.19%"

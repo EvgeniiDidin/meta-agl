@@ -1,5 +1,5 @@
 diff --git a/tests/auto/compositor/compositor/compositor.pro b/tests/auto/compositor/compositor/compositor.pro
-index f0cdaf32..64b60218 100644
+index 2919fa4..d9acac3 100644
 --- a/tests/auto/compositor/compositor/compositor.pro
 +++ b/tests/auto/compositor/compositor/compositor.pro
 @@ -7,9 +7,6 @@ QT += core-private gui-private waylandcompositor waylandcompositor-private

@@ -3,16 +3,16 @@ From: Michael Teyfel <mteyfel@de.adit-jv.com>
 Date: Fri, 12 Oct 2018 16:57:24 +0200
 Subject: [PATCH 3/3] ivi-controller: load id-agent module
 
+Reworked for wayland-ivi-extension 2.2.0 by Scott Murray.
+
 Signed-off-by: Michael Teyfel <mteyfel@de.adit-jv.com>
----
- weston-ivi-shell/src/ivi-controller.c | 39 +++++++++++++++++++++++++++++++++++
- 1 file changed, 39 insertions(+)
+Signed-off-by: Scott Murray <scott.murray@konsulko.com>
 
 diff --git a/weston-ivi-shell/src/ivi-controller.c b/weston-ivi-shell/src/ivi-controller.c
-index 6d95c88..f6ac174 100644
+index 8faec2a..8fa51f4 100644
 --- a/weston-ivi-shell/src/ivi-controller.c
 +++ b/weston-ivi-shell/src/ivi-controller.c
-@@ -2164,6 +2164,41 @@ load_input_module(struct ivishell *shell)
+@@ -2154,6 +2154,41 @@ load_input_module(struct ivishell *shell)
      return 0;
  }
  
@@ -54,9 +54,9 @@ index 6d95c88..f6ac174 100644
  static void
  launch_client_process(void *data)
  {
-@@ -2229,6 +2264,10 @@ controller_module_init(struct weston_compositor *compositor,
-         return -1;
-     }
+@@ -2221,6 +2256,10 @@ wet_module_init(struct weston_compositor *compositor,
+     shell->destroy_listener.notify = ivi_shell_destroy;
+     wl_signal_add(&compositor->destroy_signal, &shell->destroy_listener);
  
 +    if (load_id_agent_module(shell) < 0) {
 +        weston_log("ivi-controller: id-agent module not loaded\n");
@@ -65,6 +65,3 @@ index 6d95c88..f6ac174 100644
      if (shell->bkgnd_surface_id && shell->ivi_client_name) {
          loop = wl_display_get_event_loop(compositor->wl_display);
          wl_event_loop_add_idle(loop, launch_client_process, shell);
--- 
-2.7.4
-

@@ -11,10 +11,10 @@ index a88f2b0..12a2017 100644
  } t_ilm_notification_mask;
  
 diff --git a/ivi-layermanagement-api/ilmControl/src/ilm_control_wayland_platform.c b/ivi-layermanagement-api/ilmControl/src/ilm_control_wayland_platform.c
-index 9b4762b..5104459 100644
+index a912e50..5166839 100644
 --- a/ivi-layermanagement-api/ilmControl/src/ilm_control_wayland_platform.c
 +++ b/ivi-layermanagement-api/ilmControl/src/ilm_control_wayland_platform.c
-@@ -779,6 +779,12 @@ input_listener_input_focus(void *data,
+@@ -819,6 +819,12 @@ input_listener_input_focus(void *data,
              surf_ctx->prop.focus |= device;
          else
              surf_ctx->prop.focus &= ~device;
@@ -26,3 +26,4 @@ index 9b4762b..5104459 100644
 +        }
      }
  }
+ 

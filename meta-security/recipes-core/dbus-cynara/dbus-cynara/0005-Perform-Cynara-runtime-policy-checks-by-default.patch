@@ -26,14 +26,14 @@ Change-Id: Ifb4a160bf6e0638404e0295a2e4fa3077efd881c
 Signed-off-by: Jacek Bukarewicz <j.bukarewicz@samsung.com>
 
 Cherry picked from e8610297cf7031e94eb314a2e8c11246f4405403 by Jose Bollo
+
+Updated for dbus 1.12.10 by Scott Murray.
+
 Signed-off-by: José Bollo <jose.bollo@iot.bzh>
----
- bus/session.conf.in | 32 ++++++++++++++++++++++++++------
- bus/system.conf.in  | 19 +++++++++++++++----
- 2 files changed, 41 insertions(+), 10 deletions(-)
+Signed-off-by: Scott Murray <scott.murray@konsulko.com>
 
 diff --git a/bus/session.conf.in b/bus/session.conf.in
-index affa7f1d..157dfb4d 100644
+index affa7f1..157dfb4 100644
 --- a/bus/session.conf.in
 +++ b/bus/session.conf.in
 @@ -27,12 +27,32 @@
@@ -76,10 +76,10 @@ index affa7f1d..157dfb4d 100644
  
    <!-- Include legacy configuration location -->
 diff --git a/bus/system.conf.in b/bus/system.conf.in
-index 014f67ee..ebbd468a 100644
+index f139b55..19d0c04 100644
 --- a/bus/system.conf.in
 +++ b/bus/system.conf.in
-@@ -50,23 +50,34 @@
+@@ -50,17 +50,20 @@
      <deny own="*"/>
      <deny send_type="method_call"/>
  
@@ -104,9 +104,10 @@ index 014f67ee..ebbd468a 100644
  
      <!-- Allow anyone to talk to the message bus -->
      <allow send_destination="org.freedesktop.DBus"
-            send_interface="org.freedesktop.DBus" />
-     <allow send_destination="org.freedesktop.DBus"
+@@ -69,6 +72,14 @@
             send_interface="org.freedesktop.DBus.Introspectable"/>
+     <allow send_destination="org.freedesktop.DBus"
+            send_interface="org.freedesktop.DBus.Properties"/>
 +    <!-- If there is a need specific bus services could be protected by Cynara as well.
 +         However, this can lead to deadlock during the boot process when such check is made and
 +         Cynara is not yet activated (systemd calls protected method synchronously,
@@ -118,6 +119,3 @@ index 014f67ee..ebbd468a 100644
      <!-- But disallow some specific bus services -->
      <deny send_destination="org.freedesktop.DBus"
            send_interface="org.freedesktop.DBus"
--- 
-2.14.3
-

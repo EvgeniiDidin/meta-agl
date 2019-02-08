@@ -35,19 +35,14 @@ weston: https://github.com/mtey/weston/tree/xdg_support_ivi_id_agent
 Since libweston-desktop is used to introduce desktop-surface support,
 xdg-protocol is supported.
 
+Reworked for wayland-ivi-extension 2.2.0 by Scott Murray.
+
 Signed-off-by: Michael Teyfel <mteyfel@de.adit-jv.com>
----
- ivi-id-agent-modules/ivi-id-agent/CMakeLists.txt   |  69 ++++
- .../ivi-id-agent/src/ivi-id-agent.c                | 381 +++++++++++++++++++++
- ivi-id-agent-modules/ivi-id-agent/weston.ini.in    |  20 ++
- 3 files changed, 470 insertions(+)
- create mode 100644 ivi-id-agent-modules/ivi-id-agent/CMakeLists.txt
- create mode 100644 ivi-id-agent-modules/ivi-id-agent/src/ivi-id-agent.c
- create mode 100644 ivi-id-agent-modules/ivi-id-agent/weston.ini.in
+Signed-off-by: Scott Murray <scott.murray@konsulko.com>
 
 diff --git a/ivi-id-agent-modules/ivi-id-agent/CMakeLists.txt b/ivi-id-agent-modules/ivi-id-agent/CMakeLists.txt
 new file mode 100644
-index 0000000..2def105
+index 0000000..7354a7e
 --- /dev/null
 +++ b/ivi-id-agent-modules/ivi-id-agent/CMakeLists.txt
 @@ -0,0 +1,69 @@
@@ -76,9 +71,9 @@ index 0000000..2def105
 +
 +find_package(PkgConfig REQUIRED)
 +pkg_check_modules(WAYLAND_SERVER wayland-server REQUIRED)
-+pkg_check_modules(WESTON weston>=2.0.0 REQUIRED)
++pkg_check_modules(WESTON weston>=5.0.0 REQUIRED)
 +pkg_check_modules(PIXMAN pixman-1 REQUIRED)
-+pkg_check_modules(LIBWESTON_DESKTOP libweston-desktop-2 REQUIRED)
++pkg_check_modules(LIBWESTON_DESKTOP libweston-desktop-5 REQUIRED)
 +
 +find_package(Threads REQUIRED)
 +
@@ -533,6 +528,3 @@ index 0000000..48a196c
 +[desktop-app-default]
 +default-surface-id=2000000
 +default-surface-id-max=2001000
--- 
-2.7.4
-
