@@ -11,6 +11,7 @@ SRC_URI = "git://github.com/GENIVI/${BPN}.git;branch=2.0;protocol=http \
         file://0002-ivi-id-agent-added-ivi-id-agent.patch \
         file://0003-ivi-controller-load-id-agent-module.patch \
         file://0002-add-LayerManagerControl-error-status.patch \
+        file://0004-ivi-ilmcontrol-added-focus-notification.patch \
 "
 SRC_URI_append_wandboard = " file://wandboard_fix_build.patch"
 
