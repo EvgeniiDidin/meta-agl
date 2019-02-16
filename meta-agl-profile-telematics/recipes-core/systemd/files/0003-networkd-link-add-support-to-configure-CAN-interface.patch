@@ -1,0 +1,305 @@
+From c855f0b6042516632e4ad2020f8576de54366593 Mon Sep 17 00:00:00 2001
+From: Hiram van Paassen <hiram.van.paassen@mastervolt.com>
+Date: Tue, 10 Apr 2018 17:26:20 +0200
+Subject: [PATCH 3/3] networkd-link: add support to configure CAN interfaces
+
+This patch adds support for kind "can". Fixes: #4042.
+---
+ man/systemd.network.xml                   |  33 ++++++
+ src/libsystemd/sd-netlink/netlink-types.c |  10 ++
+ src/libsystemd/sd-netlink/netlink-types.h |   1 +
+ src/network/networkd-link.c               | 122 +++++++++++++++++++++-
+ src/network/networkd-network-gperf.gperf  |   3 +
+ src/network/networkd-network.c            |   3 +-
+ src/network/networkd-network.h            |   5 +
+ 7 files changed, 175 insertions(+), 2 deletions(-)
+
+diff --git a/man/systemd.network.xml b/man/systemd.network.xml
+index 6b83a5b851..99ef84ac3d 100644
+--- a/man/systemd.network.xml
++++ b/man/systemd.network.xml
+@@ -1361,6 +1361,32 @@
+         </varlistentry>
+       </variablelist>
+   </refsect1>
++
++  <refsect1>
++    <title>[CAN] Section Options</title>
++      <para>The <literal>[CAN]</literal> section manages the Controller Area Network (CAN bus) and accepts the
++      following keys.</para>
++      <variablelist class='network-directives'>
++        <varlistentry>
++          <term><varname>BitRate=</varname></term>
++          <listitem>
++            <para>The bitrate of CAN device in bits per second. The usual SI prefixes (K, M) with the base of 1000 can
++            be used here.</para>
++          </listitem>
++        </varlistentry>
++        <varlistentry>
++          <term><varname>RestartSec=</varname></term>
++          <listitem>
++            <para>Automatic restart delay time. If set to a non-zero value, a restart of the CAN controller will be
++            triggered automatically in case of a bus-off condition after the specified delay time. Subsecond delays can
++            be specified using decimals (e.g. <literal>0.1s</literal>) or a <literal>ms</literal> or
++            <literal>us</literal> postfix. Using <literal>infinity</literal> or <literal>0</literal> will turn the
++            automatic restart off. By default automatic restart is disabled.</para>
++          </listitem>
++        </varlistentry>
++      </variablelist>
++  </refsect1>
++
+   <refsect1>
+     <title>[BridgeVLAN] Section Options</title>
+       <para>The <literal>[BridgeVLAN]</literal> section manages the VLAN ID configuration of a bridge port and accepts
+diff --git a/src/libsystemd/sd-netlink/netlink-types.c b/src/libsystemd/sd-netlink/netlink-types.c
+index 923f7dd10c..978277a2b9 100644
+--- a/src/libsystemd/sd-netlink/netlink-types.c
++++ b/src/libsystemd/sd-netlink/netlink-types.c
+@@ -300,6 +300,11 @@ static const NLType rtnl_link_info_data_geneve_types[] = {
+         [IFLA_GENEVE_LABEL]             = { .type = NETLINK_TYPE_U32 },
+ };
+ 
++static const NLType rtnl_link_info_data_can_types[] = {
++        [IFLA_CAN_BITTIMING]            = { .size = sizeof(struct can_bittiming) },
++        [IFLA_CAN_RESTART_MS]           = { .type = NETLINK_TYPE_U32 },
++};
++
+ /* these strings must match the .kind entries in the kernel */
+ static const char* const nl_union_link_info_data_table[] = {
+         [NL_UNION_LINK_INFO_DATA_BOND] = "bond",
+@@ -323,6 +328,7 @@ static const char* const nl_union_link_info_data_table[] = {
+         [NL_UNION_LINK_INFO_DATA_VRF] = "vrf",
+         [NL_UNION_LINK_INFO_DATA_VCAN] = "vcan",
+         [NL_UNION_LINK_INFO_DATA_GENEVE] = "geneve",
++        [NL_UNION_LINK_INFO_DATA_CAN] = "can",
+ };
+ 
+ DEFINE_STRING_TABLE_LOOKUP(nl_union_link_info_data, NLUnionLinkInfoData);
+@@ -366,6 +372,8 @@ static const NLTypeSystem rtnl_link_info_data_type_systems[] = {
+                                                        .types = rtnl_link_info_data_vrf_types },
+         [NL_UNION_LINK_INFO_DATA_GENEVE] =           { .count = ELEMENTSOF(rtnl_link_info_data_geneve_types),
+                                                        .types = rtnl_link_info_data_geneve_types },
++        [NL_UNION_LINK_INFO_DATA_CAN] =              { .count = ELEMENTSOF(rtnl_link_info_data_can_types),
++                                                       .types = rtnl_link_info_data_can_types },
+ };
+ 
+ static const NLTypeSystemUnion rtnl_link_info_data_type_system_union = {
+diff --git a/src/libsystemd/sd-netlink/netlink-types.h b/src/libsystemd/sd-netlink/netlink-types.h
+index ae65c1d8e4..e7b8a292c2 100644
+--- a/src/libsystemd/sd-netlink/netlink-types.h
++++ b/src/libsystemd/sd-netlink/netlink-types.h
+@@ -89,6 +89,7 @@ typedef enum NLUnionLinkInfoData {
+         NL_UNION_LINK_INFO_DATA_VRF,
+         NL_UNION_LINK_INFO_DATA_VCAN,
+         NL_UNION_LINK_INFO_DATA_GENEVE,
++        NL_UNION_LINK_INFO_DATA_CAN,
+         _NL_UNION_LINK_INFO_DATA_MAX,
+         _NL_UNION_LINK_INFO_DATA_INVALID = -1
+ } NLUnionLinkInfoData;
+diff --git a/src/network/networkd-link.c b/src/network/networkd-link.c
+index a736dc1a74..73602d60a7 100644
+--- a/src/network/networkd-link.c
++++ b/src/network/networkd-link.c
+@@ -19,6 +19,7 @@
+ 
+ #include <netinet/ether.h>
+ #include <linux/if.h>
++#include <linux/can/netlink.h>
+ #include <unistd.h>
+ 
+ #include "alloc-util.h"
+@@ -1805,6 +1806,105 @@ static int link_up_can(Link *link) {
+         return 0;
+ }
+ 
++static int link_set_can(Link *link) {
++        _cleanup_(sd_netlink_message_unrefp) sd_netlink_message *m = NULL;
++        int r;
++
++        assert(link);
++        assert(link->network);
++        assert(link->manager);
++        assert(link->manager->rtnl);
++
++        log_link_debug(link, "link_set_can");
++
++        r = sd_rtnl_message_new_link(link->manager->rtnl, &m, RTM_NEWLINK, link->ifindex);
++        if (r < 0)
++                return log_link_error_errno(link, r, "Failed to allocate netlink message: %m");
++
++        r = sd_netlink_message_set_flags(m, NLM_F_REQUEST | NLM_F_ACK);
++        if (r < 0)
++                return log_link_error_errno(link, r, "Could not set netlink flags: %m");
++
++        r = sd_netlink_message_open_container(m, IFLA_LINKINFO);
++        if (r < 0)
++                return log_link_error_errno(link, r, "Failed to open netlink container: %m");
++
++        r = sd_netlink_message_open_container_union(m, IFLA_INFO_DATA, link->kind);
++        if (r < 0)
++                return log_link_error_errno(link, r, "Could not append IFLA_INFO_DATA attribute: %m");
++
++        if (link->network->can_bitrate > 0 || link->network->can_sample_point > 0) {
++                struct can_bittiming bt = {
++                        .bitrate = link->network->can_bitrate,
++                        .sample_point = link->network->can_sample_point,
++                };
++
++                if (link->network->can_bitrate > UINT32_MAX) {
++                        log_link_error(link, "bitrate (%zu) too big.", link->network->can_bitrate);
++                        return -ERANGE;
++                }
++
++                log_link_debug(link, "Setting bitrate = %d bit/s", bt.bitrate);
++                if (link->network->can_sample_point > 0)
++                        log_link_debug(link, "Setting sample point = %d.%d%%", bt.sample_point / 10, bt.sample_point % 10);
++                else
++                        log_link_debug(link, "Using default sample point");
++
++                r = sd_netlink_message_append_data(m, IFLA_CAN_BITTIMING, &bt, sizeof(bt));
++                if (r < 0)
++                        return log_link_error_errno(link, r, "Could not append IFLA_CAN_BITTIMING attribute: %m");
++        }
++
++        if (link->network->can_restart_us > 0) {
++                char time_string[FORMAT_TIMESPAN_MAX];
++                uint64_t restart_ms;
++
++                if (link->network->can_restart_us == USEC_INFINITY)
++                        restart_ms = 0;
++                else
++                        restart_ms = DIV_ROUND_UP(link->network->can_restart_us, USEC_PER_MSEC);
++
++                format_timespan(time_string, FORMAT_TIMESPAN_MAX, restart_ms * 1000, MSEC_PER_SEC);
++
++                if (restart_ms > UINT32_MAX) {
++                        log_link_error(link, "restart timeout (%s) too big.", time_string);
++                        return -ERANGE;
++                }
++
++                log_link_debug(link, "Setting restart = %s", time_string);
++
++                r = sd_netlink_message_append_u32(m, IFLA_CAN_RESTART_MS, restart_ms);
++                if (r < 0)
++                        return log_link_error_errno(link, r, "Could not append IFLA_CAN_RESTART_MS attribute: %m");
++        }
++
++        r = sd_netlink_message_close_container(m);
++        if (r < 0)
++                return log_link_error_errno(link, r, "Failed to close netlink container: %m");
++
++        r = sd_netlink_message_close_container(m);
++        if (r < 0)
++                return log_link_error_errno(link, r, "Failed to close netlink container: %m");
++
++        r = sd_netlink_call_async(link->manager->rtnl, m, link_set_handler, link,  0, NULL);
++        if (r < 0)
++                return log_link_error_errno(link, r, "Could not send rtnetlink message: %m");
++
++        link_ref(link);
++
++        if (!(link->flags & IFF_UP)) {
++                r = link_up_can(link);
++                if (r < 0) {
++                        link_enter_failed(link);
++                        return r;
++                }
++        }
++
++        log_link_debug(link, "link_set_can done");
++
++        return r;
++}
++
+ static int link_down_handler(sd_netlink *rtnl, sd_netlink_message *m, void *userdata) {
+         _cleanup_link_unref_ Link *link = userdata;
+         int r;
+@@ -1818,6 +1918,11 @@ static int link_down_handler(sd_netlink *rtnl, sd_netlink_message *m, void *user
+         if (r < 0)
+                 log_link_warning_errno(link, r, "Could not bring down interface: %m");
+ 
++        if (streq_ptr(link->kind, "can")) {
++                link_ref(link);
++                link_set_can(link);
++        }
++
+         return 1;
+ }
+ 
+@@ -2512,6 +2617,21 @@ static int link_update_lldp(Link *link) {
+ static int link_configure_can(Link *link) {
+         int r;
+ 
++        if (streq_ptr(link->kind, "can")) {
++                /* The CAN interface must be down to configure bitrate, etc... */
++                if ((link->flags & IFF_UP)) {
++                        r = link_down(link);
++                        if (r < 0) {
++                                link_enter_failed(link);
++                                return r;
++                        }
++
++                        return 0;
++                }
++
++                return link_set_can(link);
++        }
++
+         if (!(link->flags & IFF_UP)) {
+                 r = link_up_can(link);
+                 if (r < 0) {
+@@ -2530,7 +2650,7 @@ static int link_configure(Link *link) {
+         assert(link->network);
+         assert(link->state == LINK_STATE_PENDING);
+ 
+-        if (streq_ptr(link->kind, "vcan"))
++        if (STRPTR_IN_SET(link->kind, "can", "vcan"))
+                 return link_configure_can(link);
+ 
+         /* Drop foreign config, but ignore loopback or critical devices.
+diff --git a/src/network/networkd-network-gperf.gperf b/src/network/networkd-network-gperf.gperf
+index a2d38501a5..95301f16e3 100644
+--- a/src/network/networkd-network-gperf.gperf
++++ b/src/network/networkd-network-gperf.gperf
+@@ -147,6 +147,8 @@ IPv6Prefix.OnLink,                      config_parse_prefix_flags,
+ IPv6Prefix.AddressAutoconfiguration,    config_parse_prefix_flags,                      0,                             0
+ IPv6Prefix.ValidLifetimeSec,            config_parse_prefix_lifetime,                   0,                             0
+ IPv6Prefix.PreferredLifetimeSec,        config_parse_prefix_lifetime,                   0,                             0
++CAN.BitRate,                            config_parse_si_size,                           0,                             offsetof(Network, can_bitrate)
++CAN.RestartSec,                         config_parse_sec,                               0,                             offsetof(Network, can_restart_us)
+ /* backwards compatibility: do not add new entries to this section */
+ Network.IPv4LL,                         config_parse_ipv4ll,                            0,                             offsetof(Network, link_local)
+ DHCPv4.UseDNS,                          config_parse_bool,                              0,                             offsetof(Network, dhcp_use_dns)
+diff --git a/src/network/networkd-network.c b/src/network/networkd-network.c
+index 6f2ae66d40..65684e7915 100644
+--- a/src/network/networkd-network.c
++++ b/src/network/networkd-network.c
+@@ -214,7 +214,8 @@ static int network_load_one(Manager *manager, const char *filename) {
+                               "BridgeFDB\0"
+                               "BridgeVLAN\0"
+                               "IPv6PrefixDelegation\0"
+-                              "IPv6Prefix\0",
++                              "IPv6Prefix\0"
++                              "CAN\0",
+                               config_item_perf_lookup, network_network_gperf_lookup,
+                               false, network);
+         if (r < 0)
+diff --git a/src/network/networkd-network.h b/src/network/networkd-network.h
+index b31921947d..c4e1192cbe 100644
+--- a/src/network/networkd-network.h
++++ b/src/network/networkd-network.h
+@@ -179,6 +179,11 @@ struct Network {
+         uint32_t br_vid_bitmap[BRIDGE_VLAN_BITMAP_LEN];
+         uint32_t br_untagged_bitmap[BRIDGE_VLAN_BITMAP_LEN];
+ 
++        /* CAN support */
++        size_t can_bitrate;
++        unsigned can_sample_point;
++        usec_t can_restart_us;
++
+         AddressFamilyBoolean ip_forward;
+         bool ip_masquerade;
+ 
+-- 
+2.17.1
+
