@@ -9,16 +9,17 @@ single binaries to be used between the two boards.
 Future work will incorporate the h3ulcb and Salvator boards into the
 abstraction.
 
+Signed-off-by: Ronan Le Martret <ronan.lemartret@iot.bzh>
 Signed-off-by: Mark Farrugia <mark.farrugia@fiberdyne.com.au>
 ---
 diff --git a/arch/arm64/boot/dts/renesas/r8a7796-m3ulcb-kf.dts b/arch/arm64/boot/dts/renesas/r8a7796-m3ulcb-kf.dts
 index de2390f009e7..4ccfa8315d17 100644
 --- a/arch/arm64/boot/dts/renesas/r8a7796-m3ulcb-kf.dts
 +++ b/arch/arm64/boot/dts/renesas/r8a7796-m3ulcb-kf.dts
-@@ -17,3 +17,35 @@
- 	compatible = "shimafuji,kingfisher", "renesas,m3ulcb",
- 		     "renesas,r8a7796";
+@@ -15,6 +15,39 @@
+                     "renesas,r8a7796";
  };
+ 
 +
 +&adsp {
 +
@@ -43,7 +44,7 @@ index de2390f009e7..4ccfa8315d17 100644
 +		channels = <8>;
 +		pin-share-ssi = <3>;
 +	};
-+	
++
 +	adsp,ports {
 +		port@0 {
 +			playback = <&adsp_playback0>;
@@ -51,12 +52,15 @@ index de2390f009e7..4ccfa8315d17 100644
 +		};
 +	};
 +};
-\ No newline at end of file
++
+ &du {
+        ports {
+                port@0 {
 diff --git a/arch/arm64/boot/dts/renesas/r8a7796-m3ulcb.dts b/arch/arm64/boot/dts/renesas/r8a7796-m3ulcb.dts
 index 1cd64c1b3b31..71e59da3528d 100644
 --- a/arch/arm64/boot/dts/renesas/r8a7796-m3ulcb.dts
 +++ b/arch/arm64/boot/dts/renesas/r8a7796-m3ulcb.dts
-@@ -45,11 +45,18 @@
+@@ -42,11 +42,18 @@
  			reg = <0x00000000 0x54000000 0x0 0x03000000>;
  		};
  
@@ -66,9 +70,9 @@ index 1cd64c1b3b31..71e59da3528d 100644
 +			reusable;
 +			reg = <0x00000000 0x57000000 0x0 0x01000000>;
 +		};
-+		
++
  		/* global autoconfigured region for contiguous allocations */
- 		linux,cma {
+ 		linux,cma@57000000 {
  			compatible = "shared-dma-pool";
  			reusable;
 -			reg = <0x00000000 0x57000000 0x0 0x19000000>;
