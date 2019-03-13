@@ -1,6 +1,6 @@
 SUMMARY     = "Platform info provider binding"
 DESCRIPTION = "AGL Platform info provider binding"
-HOMEPAGE    = "https://github.com/iotbzh/agl-service-platform-info.git"
+HOMEPAGE    = "https://git.automotivelinux.org/apps/agl-service-platform-info/"
 SECTION     = "apps"
 
 LICENSE     = "Apache-2.0"
