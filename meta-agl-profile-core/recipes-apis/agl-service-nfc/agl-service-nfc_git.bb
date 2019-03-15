@@ -1,8 +1,8 @@
-SUMMARY     = "agl-service-nfc"
+SUMMARY = "agl-service-nfc"
 DESCRIPTION = ""
-HOMEPAGE    = "https://www.github.com/iotbzh/nfc-binding"
-SECTION     = "apps"
-DEPENDS     = "af-binder json-c glib-2.0 neardal"
+HOMEPAGE = "https://git.automotivelinux.org/apps/agl-service-nfc/"
+SECTION = "apps"
+DEPENDS = "af-binder json-c glib-2.0 neardal"
 
 LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/Apache-2.0;md5=89aea4e17d99a7cacdbeed46a0096b10"

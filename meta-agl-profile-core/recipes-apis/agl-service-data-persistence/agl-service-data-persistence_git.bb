@@ -1,5 +1,5 @@
 DESCRIPTION = "AGL low level user database binding"
-HOMEPAGE = "https://github.com/iotbzh/agl-identity"
+HOMEPAGE = "https://git.automotivelinux.org/apps/agl-service-data-persistence/"
 SECTION = "base"
 
 LICENSE = "MIT"
