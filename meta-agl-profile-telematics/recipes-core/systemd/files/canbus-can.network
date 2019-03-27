@@ -1,5 +1,5 @@
 [Match]
-Name=can0
+Name=can*
 
 [CAN]
 BitRate=500K
