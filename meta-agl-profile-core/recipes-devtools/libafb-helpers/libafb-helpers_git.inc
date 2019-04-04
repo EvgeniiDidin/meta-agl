@@ -10,5 +10,5 @@ SRCREV = "f430407fd34ec2897359245a6e1ff951e5da5bc6"
 PV = "${AGLVERSION}"
 S  = "${WORKDIR}/git"
 
-DEPENDS_append = " af-binder"
+DEPENDS_append = " af-binder jq"
 
