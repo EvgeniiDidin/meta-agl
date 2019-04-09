@@ -14,6 +14,8 @@ file://c-11-replace-depracated-auto_ptr.patch \
 file://socket-manager-removes-tizen-specific-call.patch \
 file://Removing-tizen-platform-config.patch \
 file://removes-dependency-to-libslp-db-utils.patch \
+file://0001-Fix-gcc8-warning-error-Werror-catch-value.patch \
+file://0001-Avoid-casting-from-const-T-to-void.patch \
 "
 
 ##########################################
@@ -32,3 +34,5 @@ SRC_URI += "\
   file://include-linux-xattr.patch;apply=${APPLY} \
 "
 
+# Use make with cmake and not ninja
+OECMAKE_GENERATOR = "Unix Makefiles"

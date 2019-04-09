@@ -15,6 +15,7 @@ SRC_URI += " \
   file://0004-Fix-mode-of-sockets.patch \
   file://0005-Allow-to-tune-sockets.patch \
   file://0006-Install-socket-activation-by-default.patch \
+  file://0001-fix-fallthrough-in-cmdlineparser.patch \
 "
 
 DEPENDS = " \
@@ -84,6 +85,12 @@ USERADD_PARAM_${PN} = "\
 #   ln -s ../cynara-agent.socket ${D}${systemd_system_unitdir}/sockets.target.wants/cynara-agent.socket
 #}
 
+# We want the post-install logic to create and label /var/cynara, so
+# it should not be in the package.
+do_install_append () {
+    rmdir ${D}${localstatedir}/cynara
+}
+
 FILES_${PN} += "${systemd_system_unitdir}"
 
 # Cynara itself has no dependency on Smack. Only its installation
@@ -101,18 +108,7 @@ DEPENDS_append_with-lsm-smack = " smack smack-native"
 EXTRA_OECMAKE_append_with-lsm-smack = " -DDB_FILES_SMACK_LABEL=System"
 CHSMACK_with-lsm-smack = "chsmack"
 CHSMACK = "true"
-pkg_postinst_${PN} () {
-   # Fail on error.
-   set -e
-
-   # It would be nice to run the code below while building an image,
-   # but currently the calls to cynara-db-chsgen (a binary) in
-   # cynara-db-migration (a script) prevent that. Rely instead
-   # on OE's support for running failed postinst scripts at first boot.
-   if [ x"$D" != "x" ]; then
-      exit 1
-   fi
-
+pkg_postinst_ontarget_${PN} () {
    mkdir -p $D${sysconfdir}/cynara
    ${CHSMACK} -a System $D${sysconfdir}/cynara
 

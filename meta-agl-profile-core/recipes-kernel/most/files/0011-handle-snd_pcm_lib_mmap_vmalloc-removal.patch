@@ -1,0 +1,18 @@
+Handle snd_pcm_lib_mmap_vmalloc removal in 4.19
+
+Upstream-Status: Pending
+
+Signed-off-by: Scott Murray <scott.murray@konsulko.com>
+
+diff --git a/driver/aim-sound/sound.c b/driver/aim-sound/sound.c
+index 6a290ff..4b3329b 100644
+--- a/aim-sound/sound.c
++++ b/aim-sound/sound.c
+@@ -463,7 +463,6 @@ static const struct snd_pcm_ops pcm_ops = {
+ 	.trigger    = pcm_trigger,
+ 	.pointer    = pcm_pointer,
+ 	.page       = snd_pcm_lib_get_vmalloc_page,
+-	.mmap       = snd_pcm_lib_mmap_vmalloc,
+ };
+ 
+ static int split_arg_list(char *buf, char **card_name, u16 *ch_num,

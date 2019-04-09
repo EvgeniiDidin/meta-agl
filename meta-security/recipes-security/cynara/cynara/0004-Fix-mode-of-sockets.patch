@@ -1,7 +1,7 @@
-From 2bd62bca98a8a8cf194fb2b68aed68d982f58520 Mon Sep 17 00:00:00 2001
+From 233fb8a93343c3c9c04914e1148ef5ab87a808a1 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Jos=C3=A9=20Bollo?= <jose.bollo@iot.bzh>
 Date: Thu, 25 Jan 2018 12:52:39 +0100
-Subject: [PATCH 4/6] Fix mode of sockets
+Subject: [PATCH] Fix mode of sockets
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -10,6 +10,7 @@ Setting execution bit on the socket serves nothing.
 
 Change-Id: I2ca1ea8e0c369ee5517878e92073ace0e50f9f10
 Signed-off-by: José Bollo <jose.bollo@iot.bzh>
+
 ---
  systemd/cynara-admin.socket | 2 +-
  systemd/cynara.socket       | 2 +-
@@ -39,6 +40,3 @@ index 9f2a870..fad2745 100644
  SmackLabelIPIn=*
  SmackLabelIPOut=@
  
--- 
-2.14.3
-

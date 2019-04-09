@@ -9,7 +9,8 @@ DEPENDS = "dbus ncurses connman json-c"
 LICENSE = "GPLv2"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=8c16666ae6c159876a0ba63099614381"
 
-SRC_URI = "git://gitlab.com/iotbzh/connman-json-client.git;protocol=https;rev=ad4261a2f87c914667b1f6841c913f6b08d373e2"
+SRC_URI = "git://gitlab.com/iotbzh/connman-json-client.git;protocol=https"
+SRCREV = "2b0f93ec9518c978c04807fe52e95315d6d80e6b"
 
 inherit autotools pkgconfig
 

@@ -17,7 +17,7 @@ MACHINE_FEATURES += "vc4graphics"
 # For libomxil
 #LICENSE_FLAGS_WHITELIST = "commercial"
 
-IMAGE_INSTALL_append = " kernel-modules linux-firmware-raspbian-bcm43430 linux-firmware-raspbian-bcm43455 create-combined-dtb "
+IMAGE_INSTALL_append = " kernel-modules linux-firmware-rpidistro-bcm43430 linux-firmware-rpidistro-bcm43455 create-combined-dtb "
 
 # Psplash causes crash on first boot on RPi
 IMAGE_FEATURES_remove = "splash"

@@ -1,13 +1,14 @@
-From d54e425b0685c9e3e06f5b4efcbd206950d14f3c Mon Sep 17 00:00:00 2001
+From 23f1a7cb34dd4ef88bac5a43057feaf7f50559aa Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Jos=C3=A9=20Bollo?= <jose.bollo@iot.bzh>
 Date: Thu, 25 Jan 2018 14:09:23 +0100
-Subject: [PATCH 6/6] Install socket activation by default
+Subject: [PATCH] Install socket activation by default
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
 Change-Id: Ifd10c3800486689ed0ed6271df59760ccfbf6caf
 Signed-off-by: José Bollo <jose.bollo@iot.bzh>
+
 ---
  packaging/cynara.spec                            | 5 -----
  systemd/CMakeLists.txt                           | 7 +++++++
@@ -75,6 +76,3 @@ index 0000000..c0e5a5b
 @@ -0,0 +1 @@
 +../cynara.socket
 \ No newline at end of file
--- 
-2.14.3
-

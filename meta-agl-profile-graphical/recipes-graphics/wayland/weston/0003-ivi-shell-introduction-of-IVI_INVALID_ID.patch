@@ -1,7 +1,8 @@
-index 2317d6e9..e1e897ed 100644
+diff --git a/ivi-shell/ivi-layout-export.h b/ivi-shell/ivi-layout-export.h
+index 016d8b5c..02bfb2cb 100644
 --- a/ivi-shell/ivi-layout-export.h
 +++ b/ivi-shell/ivi-layout-export.h
-@@ -56,12 +56,14 @@ extern "C" {
+@@ -56,6 +56,7 @@ extern "C" {
  #endif /* __cplusplus */
  
  #include <stdint.h>
@@ -9,6 +10,7 @@ index 2317d6e9..e1e897ed 100644
  
  #include "stdbool.h"
  #include "compositor.h"
+@@ -63,6 +64,7 @@ extern "C" {
  
  #define IVI_SUCCEEDED (0)
  #define IVI_FAILED (-1)

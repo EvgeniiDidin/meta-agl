@@ -12,6 +12,7 @@ ORIG_KERN_VER = "${@prep_version(d)}"
 VANILLA_KERNEL_VERSION = "${@str(ORIG_KERN_VER.split("-")[0].split(".")[0]+ORIG_KERN_VER.split("-")[0].split(".")[1])}"
 
 APPLY = "${@str('no' if ${VANILLA_KERNEL_VERSION} > 412 else 'yes')}"
+APPLY_419 = "${@str('no' if ${VANILLA_KERNEL_VERSION} < 419 else 'yes')}"
 
 SRC_URI_append = " \
 	    file://0001-most-aim-network-backport-Kernel-API.patch;apply=${APPLY} \
@@ -23,6 +24,8 @@ SRC_URI_append = " \
 	    file://0007-dim2-use-device-tree.patch \
 	    file://0008-dim2-read-clock-speed-from-the-device-tree.patch \
 	    file://0009-dim2-use-device-for-coherent-memory-allocation.patch \
+	    file://0010-backport-usb-setup-timer.patch \
+	    file://0011-handle-snd_pcm_lib_mmap_vmalloc-removal.patch;apply=${APPLY_419} \
 	   "
 # Make sure we can expose KERNEL_VERSION ...
 do_patch[depends] += "virtual/kernel:do_populate_sysroot"

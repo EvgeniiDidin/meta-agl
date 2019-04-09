@@ -1,7 +1,7 @@
-From 6ad54c5e732e7cf0a29f29f48fa757e3e56d6860 Mon Sep 17 00:00:00 2001
+From fdcf2a68a4bfec588b1c6c969caa0be20961b807 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Jos=C3=A9=20Bollo?= <jose.bollo@iot.bzh>
 Date: Thu, 25 Jan 2018 11:38:16 +0100
-Subject: [PATCH 3/6] Avoid warning when compiling without smack
+Subject: [PATCH] Avoid warning when compiling without smack
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -14,6 +14,7 @@ with the following message:
 
 Change-Id: Ie837cae81114d096f951ec0ee4ada4173fb60190
 Signed-off-by: José Bollo <jose.bollo@iot.bzh>
+
 ---
  src/admin/CMakeLists.txt | 10 +++++-----
  1 file changed, 5 insertions(+), 5 deletions(-)
@@ -40,6 +41,3 @@ index e4f354a..38b8669 100644
  
  SET(CYNARA_LIB_CYNARA_ADMIN_PATH ${CYNARA_PATH}/admin)
  
--- 
-2.14.3
-

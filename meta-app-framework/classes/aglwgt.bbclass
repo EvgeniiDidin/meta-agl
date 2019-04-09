@@ -23,6 +23,9 @@ DEPENDS_append = " af-binder-devtools-native"
 
 EXTRA_OECMAKE_append_agl-ptest = " -DBUILD_TEST_WGT=TRUE"
 
+# FIXME: Remove once CMake+ninja issues are resolved
+OECMAKE_GENERATOR = "Unix Makefiles"
+
 do_aglwgt_package()  {
         cd ${B}
         ${S}/autobuild/agl/autobuild package BUILD_DIR=${B} DEST=${B} VERBOSE=TRUE || \

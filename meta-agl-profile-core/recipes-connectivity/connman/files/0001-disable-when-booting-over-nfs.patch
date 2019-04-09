@@ -1,7 +1,6 @@
---- a/src/connman.service.in	2016-08-15 13:51:03.479478140 +0200
-+++ b/src/connman.service.in	2016-08-15 13:51:33.469478267 +0200
-@@ -7,6 +7,7 @@ RequiresMountsFor=@localstatedir@/lib/co
- After=dbus.service network-pre.target systemd-sysusers.service
+--- connman-1.36.orig/src/connman.service.in	2019-02-18 18:02:07.034947373 -0500
++++ connman-1.36/src/connman.service.in	2019-02-18 18:07:24.689959219 -0500
+@@ -7,6 +7,7 @@
  Before=network.target multi-user.target shutdown.target
  Wants=network.target
  Conflicts=systemd-resolved.service

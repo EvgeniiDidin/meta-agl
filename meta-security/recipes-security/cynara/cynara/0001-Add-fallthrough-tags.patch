@@ -1,7 +1,7 @@
-From 3d387993b5a4283e8aebd8e777b2ccd45d233959 Mon Sep 17 00:00:00 2001
+From 8bf90bf3e7a821dbd3b7029d87aa592eec6f1754 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Jos=C3=A9=20Bollo?= <jose.bollo@iot.bzh>
 Date: Thu, 25 Jan 2018 12:00:18 +0100
-Subject: [PATCH 1/6] Add fallthrough tags
+Subject: [PATCH] Add fallthrough tags
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -12,6 +12,7 @@ to the next after some processing.
 
 Change-Id: I420e3788a4c0a6d910a1214964c5480bbd12708c
 Signed-off-by: José Bollo <jose.bollo@iot.bzh>
+
 ---
  src/admin/api/admin-api.cpp         | 1 +
  src/client-async/logic/Logic.cpp    | 1 +
@@ -54,6 +55,3 @@ index b1ca4f7..f4394e5 100644
          default:
              return true;
      }
--- 
-2.14.3
-

@@ -1,9 +1,10 @@
-From b18e66ce7f81c56e3a97ed075cb60d5a43b2e57c Mon Sep 17 00:00:00 2001
+From e2d8414b0d1c6c59baf1bb73e856e93aaabaf955 Mon Sep 17 00:00:00 2001
 From: Changhyeok Bae <changhyeok.bae@gmail.com>
 Date: Sun, 17 Dec 2017 15:28:28 +0000
-Subject: [PATCH 2/6] gcc-7 requires include <functional> for std::function
+Subject: [PATCH] gcc-7 requires include <functional> for std::function
 
 Signed-off-by: Changhyeok Bae <changhyeok.bae@gmail.com>
+
 ---
  src/common/types/PolicyBucket.h | 1 +
  src/cyad/AdminPolicyParser.h    | 1 +
@@ -33,6 +34,3 @@ index 53dde23..f38c194 100644
  
  #include <cyad/CynaraAdminPolicies.h>
  
--- 
-2.14.3
-

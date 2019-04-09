@@ -1,9 +1,10 @@
-index 5f64e72d..dc8e6f1d 100644
+diff --git a/ivi-shell/ivi-shell.c b/ivi-shell/ivi-shell.c
+index b0a2a2b9..a889afdb 100644
 --- a/ivi-shell/ivi-shell.c
 +++ b/ivi-shell/ivi-shell.c
-@@ -677,10 +677,14 @@ wet_shell_init(struct weston_compositor *compositor,
+@@ -664,10 +664,14 @@ wet_shell_init(struct weston_compositor *compositor,
  	if (!shell->text_backend)
- 		goto err_settings;
+ 		goto err_shell;
  
 +	shell->desktop = weston_desktop_create(compositor, &shell_desktop_api, shell);
 +	if (!shell->desktop)
@@ -17,12 +18,7 @@ index 5f64e72d..dc8e6f1d 100644
  
  	ivi_layout_init_with_compositor(compositor);
  	/* TODO ivi_layout_destroy should be implemented, since multiple lists
-@@ -690,10 +694,13 @@ wet_shell_init(struct weston_compositor *compositor,
- 	/* Call module_init of ivi-modules which are defined in weston.ini */
- 	if (load_controller_modules(compositor, setting.ivi_module,
- 				    argc, argv) < 0)
--		goto err_text_backend;
-+		goto err_desktop;
+@@ -676,6 +680,9 @@ wet_shell_init(struct weston_compositor *compositor,
  
  	return IVI_SUCCEEDED;
  

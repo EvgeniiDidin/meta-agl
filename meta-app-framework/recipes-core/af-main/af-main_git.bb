@@ -98,7 +98,7 @@ do_install_append_class-target() {
     echo "QT_WAYLAND_SHELL_INTEGRATION=ivi-shell" > ${D}${afm_confdir}/unit.env.d/qt-for-ivi-shell
 }
 
-pkg_postinst_${PN}() {
+pkg_postinst_ontarget_${PN}() {
     if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
         chgrp ${afm_name} $D${systemd_units_root}/system
         chgrp ${afm_name} $D${systemd_units_root}/system/afm-user-session@.target.wants
@@ -110,7 +110,7 @@ pkg_postinst_${PN}() {
     chown ${afm_name}:${afm_name} $D${afm_datadir}/icons
 }
 
-pkg_postinst_${PN}_append_with-lsm-smack() {
+pkg_postinst_ontarget_${PN}_append_with-lsm-smack() {
     if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
         chsmack -a 'System::Shared' -t $D${systemd_units_root}/system
         chsmack -a 'System::Shared' -t $D${systemd_units_root}/system/afm-user-session@.target.wants

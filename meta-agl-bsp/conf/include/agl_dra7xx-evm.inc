@@ -24,21 +24,10 @@ PREFERRED_VERSION_libgbm            = "10.0.0"
 ## Multimedia section ##
 #-------------------------------------------------
 
-# FIXME
-GSTREAMER_PLUGINS = ""
-DISABLED_ROCKO_GSTREAMER_PLUGINS = " \
-     gstreamer1.0-plugins-bad-meta \
-     gstreamer1.0-plugins-ducati \
-     gstreamer1.0-plugins-vpe \
-"
-
 PACKAGES_MULTIMEDIA   = " \
     ipumm-fw \
     pulseaudio-misc      \
-    ${GSTREAMER_PLUGINS} \
 "
-
-PREFERRED_VERSION_ipumm-fw          = "3.00.13.00"
 
 PREFERRED_PROVIDER_virtual/kernel  = "linux-ti-staging"
 PREFERRED_VERSION_virtual/kernel  = "4.9"

@@ -29,15 +29,12 @@ remain maintained locally out of mainstream in the wait
 of further investigations.
 
 Signed-off-by: José Bollo <jose.bollo@iot.bzh>
----
- shared/os-compatibility.c | 1 +
- 1 file changed, 1 insertion(+)
 
 diff --git a/shared/os-compatibility.c b/shared/os-compatibility.c
-index e19fb61b..7e93e818 100644
+index e19fb61b..826e48b8 100644
 --- a/shared/os-compatibility.c
 +++ b/shared/os-compatibility.c
-@@ -157,6 +157,8 @@ os_create_anonymous_file(off_t size)
+@@ -157,7 +157,9 @@ os_create_anonymous_file(off_t size)
  	int fd;
  	int ret;
  
@@ -47,6 +44,4 @@ index e19fb61b..7e93e818 100644
 +		path = getenv("XDG_RUNTIME_DIR");
  	if (!path) {
  		errno = ENOENT;
--- 
-2.13.6
-
+ 		return -1;

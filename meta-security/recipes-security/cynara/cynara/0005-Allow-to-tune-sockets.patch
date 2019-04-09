@@ -1,7 +1,7 @@
-From d919b110a2fbccdce084c651f4d7d7de66f2f869 Mon Sep 17 00:00:00 2001
+From ebde8e9fdba7bc1c8152f7e45c551030a36ece82 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Jos=C3=A9=20Bollo?= <jose.bollo@iot.bzh>
 Date: Thu, 25 Jan 2018 13:47:37 +0100
-Subject: [PATCH 5/6] Allow to tune sockets
+Subject: [PATCH] Allow to tune sockets
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -17,17 +17,26 @@ through the newly defined variable CYNARA_ADMIN_SOCKET_GROUP
 
 Change-Id: I7d58854c328e948e3d6d7fa3fc00569fd08f8aef
 Signed-off-by: José Bollo <jose.bollo@iot.bzh>
+
 ---
- systemd/CMakeLists.txt                                | 19 +++++++++++++++----
- .../{cynara-admin.socket => cynara-admin.socket.in}   |  2 +-
- .../{cynara-agent.socket => cynara-agent.socket.in}   |  4 ++--
- ...onitor-get.socket => cynara-monitor-get.socket.in} |  4 ++--
- systemd/{cynara.socket => cynara.socket.in}           |  2 +-
- 5 files changed, 21 insertions(+), 10 deletions(-)
- rename systemd/{cynara-admin.socket => cynara-admin.socket.in} (78%)
- rename systemd/{cynara-agent.socket => cynara-agent.socket.in} (66%)
- rename systemd/{cynara-monitor-get.socket => cynara-monitor-get.socket.in} (64%)
- rename systemd/{cynara.socket => cynara.socket.in} (80%)
+ systemd/CMakeLists.txt               | 19 +++++++++++++++----
+ systemd/cynara-admin.socket          | 14 --------------
+ systemd/cynara-admin.socket.in       | 14 ++++++++++++++
+ systemd/cynara-agent.socket          | 15 ---------------
+ systemd/cynara-agent.socket.in       | 15 +++++++++++++++
+ systemd/cynara-monitor-get.socket    | 15 ---------------
+ systemd/cynara-monitor-get.socket.in | 15 +++++++++++++++
+ systemd/cynara.socket                | 14 --------------
+ systemd/cynara.socket.in             | 14 ++++++++++++++
+ 9 files changed, 73 insertions(+), 62 deletions(-)
+ delete mode 100644 systemd/cynara-admin.socket
+ create mode 100644 systemd/cynara-admin.socket.in
+ delete mode 100644 systemd/cynara-agent.socket
+ create mode 100644 systemd/cynara-agent.socket.in
+ delete mode 100644 systemd/cynara-monitor-get.socket
+ create mode 100644 systemd/cynara-monitor-get.socket.in
+ delete mode 100644 systemd/cynara.socket
+ create mode 100644 systemd/cynara.socket.in
 
 diff --git a/systemd/CMakeLists.txt b/systemd/CMakeLists.txt
 index 20accf0..1b75c12 100644
@@ -62,66 +71,167 @@ index 20accf0..1b75c12 100644
      DESTINATION
      ${SYSTEMD_UNIT_DIR}
  )
-diff --git a/systemd/cynara-admin.socket b/systemd/cynara-admin.socket.in
-similarity index 78%
-rename from systemd/cynara-admin.socket
-rename to systemd/cynara-admin.socket.in
-index ed38386..2364c3e 100644
+diff --git a/systemd/cynara-admin.socket b/systemd/cynara-admin.socket
+deleted file mode 100644
+index ed38386..0000000
 --- a/systemd/cynara-admin.socket
-+++ b/systemd/cynara-admin.socket.in
-@@ -1,5 +1,5 @@
- [Socket]
++++ /dev/null
+@@ -1,14 +0,0 @@
+-[Socket]
 -ListenStream=/run/cynara/cynara-admin.socket
+-SocketMode=0600
+-SmackLabelIPIn=@
+-SmackLabelIPOut=@
+-
+-Service=cynara.service
+-
+-[Unit]
+-Wants=cynara.target
+-Before=cynara.target
+-
+-[Install]
+-WantedBy=sockets.target
+diff --git a/systemd/cynara-admin.socket.in b/systemd/cynara-admin.socket.in
+new file mode 100644
+index 0000000..2364c3e
+--- /dev/null
++++ b/systemd/cynara-admin.socket.in
+@@ -0,0 +1,14 @@
++[Socket]
 +ListenStream=@SOCKET_DIR@/cynara-admin.socket
- SocketMode=0600
- SmackLabelIPIn=@
- SmackLabelIPOut=@
-diff --git a/systemd/cynara-agent.socket b/systemd/cynara-agent.socket.in
-similarity index 66%
-rename from systemd/cynara-agent.socket
-rename to systemd/cynara-agent.socket.in
-index 5a677e0..4f86c9d 100644
++SocketMode=0600
++SmackLabelIPIn=@
++SmackLabelIPOut=@
++
++Service=cynara.service
++
++[Unit]
++Wants=cynara.target
++Before=cynara.target
++
++[Install]
++WantedBy=sockets.target
+diff --git a/systemd/cynara-agent.socket b/systemd/cynara-agent.socket
+deleted file mode 100644
+index 5a677e0..0000000
 --- a/systemd/cynara-agent.socket
-+++ b/systemd/cynara-agent.socket.in
-@@ -1,6 +1,6 @@
- [Socket]
++++ /dev/null
+@@ -1,15 +0,0 @@
+-[Socket]
 -ListenStream=/run/cynara/cynara-agent.socket
 -SocketGroup=security_fw
+-SocketMode=0060
+-SmackLabelIPIn=*
+-SmackLabelIPOut=@
+-
+-Service=cynara.service
+-
+-[Unit]
+-Wants=cynara.target
+-Before=cynara.target
+-
+-[Install]
+-WantedBy=sockets.target
+diff --git a/systemd/cynara-agent.socket.in b/systemd/cynara-agent.socket.in
+new file mode 100644
+index 0000000..4f86c9d
+--- /dev/null
++++ b/systemd/cynara-agent.socket.in
+@@ -0,0 +1,15 @@
++[Socket]
 +ListenStream=@SOCKET_DIR@/cynara-agent.socket
 +SocketGroup=@CYNARA_ADMIN_SOCKET_GROUP@
- SocketMode=0060
- SmackLabelIPIn=*
- SmackLabelIPOut=@
-diff --git a/systemd/cynara-monitor-get.socket b/systemd/cynara-monitor-get.socket.in
-similarity index 64%
-rename from systemd/cynara-monitor-get.socket
-rename to systemd/cynara-monitor-get.socket.in
-index a50feeb..b88dbf7 100644
++SocketMode=0060
++SmackLabelIPIn=*
++SmackLabelIPOut=@
++
++Service=cynara.service
++
++[Unit]
++Wants=cynara.target
++Before=cynara.target
++
++[Install]
++WantedBy=sockets.target
+diff --git a/systemd/cynara-monitor-get.socket b/systemd/cynara-monitor-get.socket
+deleted file mode 100644
+index a50feeb..0000000
 --- a/systemd/cynara-monitor-get.socket
-+++ b/systemd/cynara-monitor-get.socket.in
-@@ -1,6 +1,6 @@
- [Socket]
++++ /dev/null
+@@ -1,15 +0,0 @@
+-[Socket]
 -ListenStream=/run/cynara/cynara-monitor-get.socket
 -SocketGroup=security_fw
+-SocketMode=0060
+-SmackLabelIPIn=@
+-SmackLabelIPOut=@
+-
+-Service=cynara.service
+-
+-[Unit]
+-Wants=cynara.target
+-Before=cynara.target
+-
+-[Install]
+-WantedBy=sockets.target
+diff --git a/systemd/cynara-monitor-get.socket.in b/systemd/cynara-monitor-get.socket.in
+new file mode 100644
+index 0000000..b88dbf7
+--- /dev/null
++++ b/systemd/cynara-monitor-get.socket.in
+@@ -0,0 +1,15 @@
++[Socket]
 +ListenStream=@SOCKET_DIR@/cynara-monitor-get.socket
 +SocketGroup=@CYNARA_ADMIN_SOCKET_GROUP@
- SocketMode=0060
- SmackLabelIPIn=@
- SmackLabelIPOut=@
-diff --git a/systemd/cynara.socket b/systemd/cynara.socket.in
-similarity index 80%
-rename from systemd/cynara.socket
-rename to systemd/cynara.socket.in
-index fad2745..ba76549 100644
++SocketMode=0060
++SmackLabelIPIn=@
++SmackLabelIPOut=@
++
++Service=cynara.service
++
++[Unit]
++Wants=cynara.target
++Before=cynara.target
++
++[Install]
++WantedBy=sockets.target
+diff --git a/systemd/cynara.socket b/systemd/cynara.socket
+deleted file mode 100644
+index fad2745..0000000
 --- a/systemd/cynara.socket
-+++ b/systemd/cynara.socket.in
-@@ -1,5 +1,5 @@
- [Socket]
++++ /dev/null
+@@ -1,14 +0,0 @@
+-[Socket]
 -ListenStream=/run/cynara/cynara.socket
+-SocketMode=0666
+-SmackLabelIPIn=*
+-SmackLabelIPOut=@
+-
+-Service=cynara.service
+-
+-[Unit]
+-Wants=cynara.target
+-Before=cynara.target
+-
+-[Install]
+-WantedBy=sockets.target
+diff --git a/systemd/cynara.socket.in b/systemd/cynara.socket.in
+new file mode 100644
+index 0000000..ba76549
+--- /dev/null
++++ b/systemd/cynara.socket.in
+@@ -0,0 +1,14 @@
++[Socket]
 +ListenStream=@SOCKET_DIR@/cynara.socket
- SocketMode=0666
- SmackLabelIPIn=*
- SmackLabelIPOut=@
--- 
-2.14.3
-
++SocketMode=0666
++SmackLabelIPIn=*
++SmackLabelIPOut=@
++
++Service=cynara.service
++
++[Unit]
++Wants=cynara.target
++Before=cynara.target
++
++[Install]
++WantedBy=sockets.target

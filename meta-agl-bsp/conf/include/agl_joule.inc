@@ -3,7 +3,7 @@ INTEL_MACHINE_SUBTYPE = "broxton-m"
 IMAGE_INSTALL_append = " linux-firmware-iwlwifi-8000c linux-firmware-ibt"
 IMAGE_INSTALL_append = " \
         libva \
-        va-intel \
+        intel-vaapi-driver \
         gstreamer1.0-vaapi"
 OSTREE_BOOTLOADER ?= "u-boot"
 
