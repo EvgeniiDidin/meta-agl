@@ -9,6 +9,7 @@ SRC_URI_append = "\
    file://0003-Handle-unavailability-of-policy-results-for-broadcas.patch \
    file://0004-Add-own-rule-result-unavailability-handling.patch \
    file://0005-Perform-Cynara-runtime-policy-checks-by-default.patch \
+   file://0006-Fix-gcc-8-warnings.patch \
 "
 
 DEPENDS += "cynara smack"

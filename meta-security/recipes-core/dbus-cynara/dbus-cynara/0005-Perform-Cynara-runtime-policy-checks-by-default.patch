@@ -1,7 +1,7 @@
-From 92a373a6dbb1c7cd7c9824167aac232f3e0daebd Mon Sep 17 00:00:00 2001
+From 69ba571e0daa0a7a9aa6c6b5be5d3338a89d144a Mon Sep 17 00:00:00 2001
 From: Jacek Bukarewicz <j.bukarewicz@samsung.com>
 Date: Tue, 23 Jun 2015 11:08:48 +0200
-Subject: [PATCH 5/5] Perform Cynara runtime policy checks by default
+Subject: Perform Cynara runtime policy checks by default
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -22,16 +22,67 @@ signals.
 Services are supposed to override these default settings to implement their
 own security policy.
 
-Change-Id: Ifb4a160bf6e0638404e0295a2e4fa3077efd881c
-Signed-off-by: Jacek Bukarewicz <j.bukarewicz@samsung.com>
-
 Cherry picked from e8610297cf7031e94eb314a2e8c11246f4405403 by Jose Bollo
 
-Updated for dbus 1.12.10 by Scott Murray.
+Updated for dbus 1.10.20 by Scott Murray and José Bollo
 
+Signed-off-by: Jacek Bukarewicz <j.bukarewicz@samsung.com>
 Signed-off-by: José Bollo <jose.bollo@iot.bzh>
 Signed-off-by: Scott Murray <scott.murray@konsulko.com>
 
+diff --git a/bus/activation.c b/bus/activation.c
+index ffdc6fc..6a95b95 100644
+--- a/bus/activation.c
++++ b/bus/activation.c
+@@ -1837,22 +1837,32 @@ bus_activation_activate_service (BusActivation  *activation,
+     }
+ 
+   if (auto_activation &&
+-      entry != NULL &&
+-      BUS_RESULT_TRUE != bus_context_check_security_policy (activation->context,
+-        transaction,
+-        connection, /* sender */
+-        NULL, /* addressed recipient */
+-        NULL, /* proposed recipient */
+-        activation_message,
+-        entry,
+-        error,
+-        NULL))
+-    {
+-      _DBUS_ASSERT_ERROR_IS_SET (error);
+-      _dbus_verbose ("activation not authorized: %s: %s\n",
+-          error != NULL ? error->name : "(error ignored)",
+-          error != NULL ? error->message : "(error ignored)");
+-      return FALSE;
++      entry != NULL)
++   {
++      BusResult result;
++
++      result = bus_context_check_security_policy (activation->context,
++                      transaction,
++                      connection, /* sender */
++                      NULL, /* addressed recipient */
++                      NULL, /* proposed recipient */
++                      activation_message,
++                      entry,
++                      error,
++                      NULL);
++      if (result == BUS_RESULT_FALSE)
++        {
++          _DBUS_ASSERT_ERROR_IS_SET (error);
++          _dbus_verbose ("activation not authorized: %s: %s\n",
++              error != NULL ? error->name : "(error ignored)",
++              error != NULL ? error->message : "(error ignored)");
++          return FALSE;
++        }
++      if (result == BUS_RESULT_LATER)
++        {
++          /* TODO */
++          _dbus_verbose ("ALERT FIX ME!!!!!!!!!!!!!!!");
++        }
+     }
+ 
+   /* Bypass the registry lookup if we're auto-activating, bus_dispatch would not
 diff --git a/bus/session.conf.in b/bus/session.conf.in
 index affa7f1..157dfb4 100644
 --- a/bus/session.conf.in
@@ -119,3 +170,6 @@ index f139b55..19d0c04 100644
      <!-- But disallow some specific bus services -->
      <deny send_destination="org.freedesktop.DBus"
            send_interface="org.freedesktop.DBus"
+-- 
+2.17.2
+

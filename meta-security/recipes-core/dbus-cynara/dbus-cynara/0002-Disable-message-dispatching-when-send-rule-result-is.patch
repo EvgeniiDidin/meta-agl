@@ -1,8 +1,7 @@
-From 9bea6ec0497391b6af41daca18d7868af2656cef Mon Sep 17 00:00:00 2001
+From aae977a0c4bb1c25640c7056166fbc4e76ef1db6 Mon Sep 17 00:00:00 2001
 From: Jacek Bukarewicz <j.bukarewicz@samsung.com>
 Date: Fri, 28 Nov 2014 12:07:39 +0100
-Subject: [PATCH 2/5] Disable message dispatching when send rule result is not
- known
+Subject: Disable message dispatching when send rule result is not known
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -17,18 +16,16 @@ Receive rule result unavailability is not yet handled - such messages are
 rejected. Also, if message is sent to non-addressed recipient and policy result
 is unknown, message is silently dropped.
 
-Change-Id: I57eccbf973525fd51369c7d4e58908292f44da80
-
 Cherry-picked from b1b87ad9f20b2052c28431b48e81073078a745ce
 by Jose Bollo.
 
-Updated for dbus 1.12.10 by Scott Murray.
+Updated for dbus 1.10.20 by Scott Murray and José Bollo
 
 Signed-off-by: José Bollo <jose.bollo@iot.bzh>
 Signed-off-by: Scott Murray <scott.murray@konsulko.com>
 
 diff --git a/bus/activation.c b/bus/activation.c
-index 451179d..5f02153 100644
+index f8a02eb..005047f 100644
 --- a/bus/activation.c
 +++ b/bus/activation.c
 @@ -32,6 +32,7 @@
@@ -153,9 +150,8 @@ index 451179d..5f02153 100644
                                 bus_connection_get_loginfo (connection));
                /* Wonderful, systemd is connected, let's just send the msg */
 -              retval = bus_dispatch_matches (activation_transaction, NULL,
--                                             systemd, message, error);
 +              res = bus_dispatch_matches (activation_transaction, NULL,
-+                                          systemd, message, error);
+                                              systemd, message, error);
 +
 +              if (res == BUS_RESULT_TRUE)
 +                retval = TRUE;
@@ -377,7 +373,7 @@ index 57a4c45..77aed62 100644
  typedef struct BusCynara
  {
 diff --git a/bus/dispatch.c b/bus/dispatch.c
-index 7e51bc1..0250b53 100644
+index d3867f7..50a22a3 100644
 --- a/bus/dispatch.c
 +++ b/bus/dispatch.c
 @@ -35,6 +35,7 @@
@@ -472,7 +468,7 @@ index 7e51bc1..0250b53 100644
  }
  
  static DBusHandlerResult
-@@ -410,10 +427,12 @@ bus_dispatch (DBusConnection *connection,
+@@ -409,10 +426,12 @@ bus_dispatch (DBusConnection *connection,
          }
        else if (res == BUS_RESULT_LATER)
          {
@@ -489,7 +485,7 @@ index 7e51bc1..0250b53 100644
            goto out;
          }
  
-@@ -515,8 +534,14 @@ bus_dispatch (DBusConnection *connection,
+@@ -514,8 +533,14 @@ bus_dispatch (DBusConnection *connection,
     * addressed_recipient == NULL), and match it against other connections'
     * match rules.
     */
@@ -506,7 +502,7 @@ index 7e51bc1..0250b53 100644
  
   out:
    if (dbus_error_is_set (&error))
-@@ -5061,9 +5086,132 @@ bus_dispatch_test_conf_fail (const DBusString *test_data_dir,
+@@ -5060,9 +5085,132 @@ bus_dispatch_test_conf_fail (const DBusString *test_data_dir,
  }
  #endif
  
@@ -709,7 +705,7 @@ index 4835732..94b1c95 100644
  DBUS_PRIVATE_EXPORT
  void _dbus_connection_get_stats (DBusConnection *connection,
 diff --git a/dbus/dbus-connection.c b/dbus/dbus-connection.c
-index c525b6d..f1b0ea0 100644
+index c525b6d..958968c 100644
 --- a/dbus/dbus-connection.c
 +++ b/dbus/dbus-connection.c
 @@ -311,7 +311,8 @@ struct DBusConnection
@@ -851,7 +847,7 @@ index c525b6d..f1b0ea0 100644
    HAVE_LOCK_CHECK (connection);
 -  
 -  if (connection->n_incoming > 0)
-+  if (connection->dispatch_disabled && dbus_connection_get_is_connected(connection))
++  if (connection->dispatch_disabled && _dbus_connection_get_is_connected_unlocked(connection))
 +    return DBUS_DISPATCH_COMPLETE;
 +  else if (connection->n_incoming > 0)
      return DBUS_DISPATCH_DATA_REMAINS;
@@ -948,3 +944,6 @@ index 7ab9103..e5bfbed 100644
  } DBusHandlerResult;
  
  /* Bus names */
+-- 
+2.17.2
+

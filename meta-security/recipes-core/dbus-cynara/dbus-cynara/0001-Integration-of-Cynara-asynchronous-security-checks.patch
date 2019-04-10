@@ -1,7 +1,7 @@
-From 8f69153081140fa4c347ab1729c348ec77b309ec Mon Sep 17 00:00:00 2001
+From 6c498a9b0f4122d1ac49d603f9968b6d85830cdb Mon Sep 17 00:00:00 2001
 From: Jacek Bukarewicz <j.bukarewicz@samsung.com>
 Date: Thu, 27 Nov 2014 18:11:05 +0100
-Subject: [PATCH 1/5] Integration of Cynara asynchronous security checks
+Subject: Integration of Cynara asynchronous security checks
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -19,7 +19,7 @@ Currently such return value results in message denial.
 Cherry picked from 4dcfb02f17247ff9de966b62182cd2e08f301238
 by José Bollo.
 
-Updated for dbus 1.10.20 by Scott Murray.
+Updated for dbus 1.10.20 by Scott Murray and José Bollo
 
 Change-Id: I9bcbce34577e5dc2a3cecf6233a0a2b0e43e1108
 Signed-off-by: José Bollo <jose.bollo@iot.bzh>
@@ -64,10 +64,18 @@ index 9ae3071..46afb31 100644
  	desktop-file.h				\
  	$(DIR_WATCH_SOURCE)			\
 diff --git a/bus/activation.c b/bus/activation.c
-index 6f009f5..451179d 100644
+index 6f009f5..f8a02eb 100644
 --- a/bus/activation.c
 +++ b/bus/activation.c
-@@ -1795,7 +1795,8 @@ bus_activation_activate_service (BusActivation  *activation,
+@@ -1788,14 +1788,15 @@ bus_activation_activate_service (BusActivation  *activation,
+ 
+   if (auto_activation &&
+       entry != NULL &&
+-      !bus_context_check_security_policy (activation->context,
++      BUS_RESULT_TRUE != bus_context_check_security_policy (activation->context,
+         transaction,
+         connection, /* sender */
+         NULL, /* addressed recipient */
          NULL, /* proposed recipient */
          activation_message,
          entry,
@@ -750,7 +758,7 @@ index 382a014..9e026d1 100644
    ELEMENT_PIDFILE,
    ELEMENT_SERVICEDIR,
 diff --git a/bus/config-parser.c b/bus/config-parser.c
-index be27d38..b54b0e4 100644
+index be27d38..b5f1dd1 100644
 --- a/bus/config-parser.c
 +++ b/bus/config-parser.c
 @@ -1318,7 +1318,7 @@ append_rule_from_element (BusConfigParser   *parser,
@@ -823,7 +831,7 @@ index be27d38..b54b0e4 100644
          return FALSE;
  
 -      rule = bus_policy_rule_new (BUS_POLICY_RULE_SEND, allow); 
-+      rule = bus_policy_rule_new (BUS_POLICY_RULE_SEND, access); 
++      rule = bus_policy_rule_new (BUS_POLICY_RULE_SEND, access);
        if (rule == NULL)
          goto nomem;
        
@@ -832,7 +840,7 @@ index be27d38..b54b0e4 100644
          return FALSE;
  
 -      rule = bus_policy_rule_new (BUS_POLICY_RULE_RECEIVE, allow); 
-+      rule = bus_policy_rule_new (BUS_POLICY_RULE_RECEIVE, access); 
++      rule = bus_policy_rule_new (BUS_POLICY_RULE_RECEIVE, access);
        if (rule == NULL)
          goto nomem;
  
@@ -958,7 +966,7 @@ index be27d38..b54b0e4 100644
      {
        _DBUS_ASSERT_ERROR_IS_SET (&error);
 diff --git a/bus/connection.c b/bus/connection.c
-index 53605fa..deebde3 100644
+index 53605fa..b348d42 100644
 --- a/bus/connection.c
 +++ b/bus/connection.c
 @@ -36,6 +36,10 @@
@@ -1080,7 +1088,7 @@ index 53605fa..deebde3 100644
  
    /* We have to set the sender to the driver, and have
     * to check security policy since it was not done in
-@@ -2370,10 +2398,12 @@ bus_transaction_send_from_driver (BusTransaction *transaction,
+@@ -2370,10 +2398,11 @@ bus_transaction_send_from_driver (BusTransaction *transaction,
     * if we're actively capturing messages, it's nice to log that we
     * tried to send it and did not allow ourselves to do so.
     */
@@ -1090,14 +1098,13 @@ index 53605fa..deebde3 100644
 -                                          message, NULL, &error))
 +  res = bus_context_check_security_policy (bus_transaction_get_context (transaction),
 +                                           transaction,
-+                                           NULL, connection, connection,
-+                                           message, NULL, &error,
-+                                           NULL);
++                                           NULL, connection, connection, message, NULL,
++                                           &error, NULL);
 +  if (res == BUS_RESULT_FALSE)
      {
        if (!bus_transaction_capture_error_reply (transaction, connection,
                                                  &error, message))
-@@ -2388,6 +2418,12 @@ bus_transaction_send_from_driver (BusTransaction *transaction,
+@@ -2388,6 +2417,12 @@ bus_transaction_send_from_driver (BusTransaction *transaction,
        dbus_error_free (&error);
        return TRUE;
      }
@@ -1556,7 +1563,7 @@ index 0000000..c4728bb
 +                                       BusDeferredMessageStatus check_type,
 +                                       BusDeferredMessage **deferred_message);
 diff --git a/bus/dispatch.c b/bus/dispatch.c
-index 19228be..7e51bc1 100644
+index 19228be..d3867f7 100644
 --- a/bus/dispatch.c
 +++ b/bus/dispatch.c
 @@ -25,6 +25,7 @@
@@ -1588,15 +1595,16 @@ index 19228be..7e51bc1 100644
      {
        if (!bus_transaction_capture_error_reply (transaction, sender,
                                                  &stack_error, message))
-@@ -130,6 +135,7 @@ bus_dispatch_matches (BusTransaction *transaction,
+@@ -130,6 +135,8 @@ bus_dispatch_matches (BusTransaction *transaction,
    BusMatchmaker *matchmaker;
    DBusList *link;
    BusContext *context;
 +  BusDeferredMessage *deferred_message;
++  BusResult res;
  
    _DBUS_ASSERT_ERROR_IS_CLEAR (error);
  
-@@ -145,11 +151,21 @@ bus_dispatch_matches (BusTransaction *transaction,
+@@ -145,11 +152,20 @@ bus_dispatch_matches (BusTransaction *transaction,
    /* First, send the message to the addressed_recipient, if there is one. */
    if (addressed_recipient != NULL)
      {
@@ -1604,7 +1612,6 @@ index 19228be..7e51bc1 100644
 -                                              sender, addressed_recipient,
 -                                              addressed_recipient,
 -                                              message, NULL, error))
-+      BusResult res;
 +      res = bus_context_check_security_policy (context, transaction,
 +                                               sender, addressed_recipient,
 +                                               addressed_recipient,
@@ -1622,7 +1629,7 @@ index 19228be..7e51bc1 100644
  
        if (dbus_message_contains_unix_fds (message) &&
            !dbus_connection_can_send_type (addressed_recipient,
-@@ -374,19 +390,32 @@ bus_dispatch (DBusConnection *connection,
+@@ -374,19 +390,31 @@ bus_dispatch (DBusConnection *connection,
    if (service_name &&
        strcmp (service_name, DBUS_SERVICE_DBUS) == 0) /* to bus driver */
      {
@@ -1639,9 +1646,8 @@ index 19228be..7e51bc1 100644
 -                                              connection, NULL, NULL, message,
 -                                              NULL, &error))
 +      res = bus_context_check_security_policy (context, transaction,
-+                                               connection, NULL, NULL, message,
-+                                               NULL, &error,
-+                                               &deferred_message);
++                                               connection, NULL, NULL, message, NULL,
++                                               &error, &deferred_message);
 +      if (res == BUS_RESULT_FALSE)
          {
            _dbus_verbose ("Security policy rejected message\n");
@@ -2039,7 +2045,7 @@ index a37be80..7ee1ce5 100644
  
    return allowed;
 diff --git a/bus/policy.h b/bus/policy.h
-index ec43ffa..f306a3c 100644
+index ec43ffa..f839d23 100644
 --- a/bus/policy.h
 +++ b/bus/policy.h
 @@ -46,6 +46,14 @@ typedef enum
@@ -2083,49 +2089,38 @@ index ec43ffa..f306a3c 100644
  BusClientPolicy* bus_client_policy_ref               (BusClientPolicy  *policy);
  void             bus_client_policy_unref             (BusClientPolicy  *policy);
 -dbus_bool_t      bus_client_policy_check_can_send    (BusClientPolicy  *policy,
--                                                      BusRegistry      *registry,
--                                                      dbus_bool_t       requested_reply,
--                                                      DBusConnection   *receiver,
--                                                      DBusMessage      *message,
--                                                      dbus_int32_t     *toggles,
++BusResult        bus_client_policy_check_can_send    (DBusConnection   *sender,
++                                                      BusClientPolicy  *policy,
+                                                       BusRegistry      *registry,
+                                                       dbus_bool_t       requested_reply,
++                                                      DBusConnection   *addressed_recipient,
+                                                       DBusConnection   *receiver,
+                                                       DBusMessage      *message,
+                                                       dbus_int32_t     *toggles,
 -                                                      dbus_bool_t      *log);
 -dbus_bool_t      bus_client_policy_check_can_receive (BusClientPolicy  *policy,
--                                                      BusRegistry      *registry,
--                                                      dbus_bool_t       requested_reply,
--                                                      DBusConnection   *sender,
--                                                      DBusConnection   *addressed_recipient,
--                                                      DBusConnection   *proposed_recipient,
--                                                      DBusMessage      *message,
--                                                      dbus_int32_t     *toggles);
-+BusResult        bus_client_policy_check_can_send    (DBusConnection      *sender,
-+                                                      BusClientPolicy     *policy,
-+                                                      BusRegistry         *registry,
-+                                                      dbus_bool_t          requested_reply,
-+                                                      DBusConnection      *addressed_recipient,
-+                                                      DBusConnection      *receiver,
-+                                                      DBusMessage         *message,
-+                                                      dbus_int32_t        *toggles,
-+                                                      dbus_bool_t         *log,
-+                                                      const char         **privilege_param,
++                                                      dbus_bool_t      *log,
++                                                      const char      **privilege_param,
 +                                                      BusDeferredMessage **deferred_message);
-+BusResult        bus_client_policy_check_can_receive (BusClientPolicy     *policy,
-+                                                      BusRegistry         *registry,
-+                                                      dbus_bool_t          requested_reply,
-+                                                      DBusConnection      *sender,
-+                                                      DBusConnection      *addressed_recipient,
-+                                                      DBusConnection      *proposed_recipient,
-+                                                      DBusMessage         *message,
-+                                                      dbus_int32_t        *toggles,
-+                                                      const char         **privilege_param,
++BusResult        bus_client_policy_check_can_receive (BusClientPolicy  *policy,
+                                                       BusRegistry      *registry,
+                                                       dbus_bool_t       requested_reply,
+                                                       DBusConnection   *sender,
+                                                       DBusConnection   *addressed_recipient,
+                                                       DBusConnection   *proposed_recipient,
+                                                       DBusMessage      *message,
+-                                                      dbus_int32_t     *toggles);
++                                                      dbus_int32_t     *toggles,
++                                                      const char      **privilege_param,
 +                                                      BusDeferredMessage **deferred_message);
  dbus_bool_t      bus_client_policy_check_can_own     (BusClientPolicy  *policy,
                                                        const DBusString *service_name);
  dbus_bool_t      bus_client_policy_append_rule       (BusClientPolicy  *policy,
 diff --git a/configure.ac b/configure.ac
-index 80671b2..d975b04 100644
+index 81028ba..f21d1b2 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -1761,6 +1761,17 @@ AC_ARG_ENABLE([user-session],
+@@ -1770,6 +1770,17 @@ AC_ARG_ENABLE([user-session],
  AM_CONDITIONAL([DBUS_ENABLE_USER_SESSION],
    [test "x$enable_user_session" = xyes])
  
@@ -2143,7 +2138,7 @@ index 80671b2..d975b04 100644
  AC_CONFIG_FILES([
  Doxyfile
  dbus/Version
-@@ -1843,6 +1854,7 @@ echo "
+@@ -1852,6 +1863,7 @@ echo "
          Building bus stats API:   ${enable_stats}
          Building SELinux support: ${have_selinux}
          Building AppArmor support: ${have_apparmor}
@@ -2232,3 +2227,6 @@ index 0000000..47ee854
 +    <check privilege="foo" send_interface="org.freedesktop.TestSuite" send_member="Echo"/>
 +  </policy>
 +</busconfig>
+-- 
+2.17.2
+
