@@ -35,3 +35,7 @@ KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/raspberrypi-panel.cfg"
 # Enable bt hci uart
 SRC_URI_append = " file://raspberrypi-hciuart.cfg"
 KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/raspberrypi-hciuart.cfg"
+
+# ENABLE NETWORK (built-in)
+SRC_URI_append = " file://raspberrypi_network.cfg"
+KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/raspberrypi_network.cfg"
