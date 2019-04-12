@@ -2,14 +2,14 @@ type: books
 books:
 -
     id: meta-agl
-    title: Meta AGL
+    title: AGL Layers
     description: Meta AGL documentation
     keywords:
     author: "AGL"
     version: master
     chapters:
-    - url: ../README-AGL.md
+    - url: ../agl-layers-overview.md
       name: AGL Overview
-    - url: ../README.md
+    - url: ../meta-agl.md
       destination: meta-agl.md
       name: meta-agl
