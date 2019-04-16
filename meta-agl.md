@@ -9,7 +9,7 @@ You use this layer as the minimal core on which to build AGL profiles.
   [`meta-agl-demo`](./meta-agl-demo.html) layer.
   Furthermore, `meta-agl` does not include additional components, such
   as security, which are part of the
-  [`meta-agl-extra`](./meta-agl-extra.html) layer.
+  `meta-agl-extra` layer.
 
 ## Sub-Layers
 
