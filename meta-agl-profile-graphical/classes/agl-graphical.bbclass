@@ -1,4 +1,4 @@
-WESTONTTY ??= "1"
+WESTONTTY ??= "60"
 WESTONUSER ??= "display"
 WESTONGROUP ??= "display"
 WESTONARGS ?= "--idle-time=0  --tty=${WESTONTTY} ${@bb.utils.contains("DISTRO_FEATURES", "gst-record", "--gst-record", "",d)}"
