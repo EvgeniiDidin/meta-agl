@@ -1,0 +1,28 @@
+From ebf1a72d9858d0a65b78df82fa2193226b70526e Mon Sep 17 00:00:00 2001
+From: Evgeniy Didin <Evgeniy.Didin@synopsys.com>
+Date: Sun, 2 Dec 2018 00:38:30 +0300
+Subject: [PATCH] Remove signal handling for debug purpose
+
+Signed-off-by: Evgeniy Didin <Evgeniy.Didin@synopsys.com>
+---
+ src/sig-monitor.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/sig-monitor.c b/src/sig-monitor.c
+index e15c32d..6e6e74c 100644
+--- a/src/sig-monitor.c
++++ b/src/sig-monitor.c
+@@ -41,8 +41,8 @@ static _Thread_local int thread_timer_set;
+ static _Thread_local timer_t thread_timerid;
+ 
+ /* internal signal lists */
+-static int sigerr[] = { SIG_FOR_TIMER, SIGSEGV, SIGFPE, SIGILL, SIGBUS, 0 };
+-static int sigterm[] = { SIGINT, SIGABRT, SIGTERM, 0 };
++static int sigerr[] = {   0 };
++static int sigterm[] = {  0 };
+ static int exiting = 0;
+ 
+ /*
+-- 
+2.16.2
+

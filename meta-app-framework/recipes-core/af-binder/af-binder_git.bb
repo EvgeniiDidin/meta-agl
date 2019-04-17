@@ -8,6 +8,8 @@ EXTRA_OECMAKE_append_class-target = "\
 	-DUNITDIR_SYSTEM=${systemd_system_unitdir} \
 "
 
+TARGET_CFLAGS += "-Os"
+
 EXTRA_OECMAKE_append_agl-devel = " \
 	-DAGL_DEVEL=ON \
 	-DINCLUDE_MONITORING=ON \
