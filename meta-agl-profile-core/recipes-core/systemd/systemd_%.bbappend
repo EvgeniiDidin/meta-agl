@@ -3,6 +3,7 @@ FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 SRC_URI += "\
     file://e2fsck.conf \
     ${@bb.utils.contains('VIRTUAL-RUNTIME_net_manager','systemd','file://wired.network','',d)} \
+    file://system.conf \
 "
 
 # enable networkd/resolved support
@@ -18,6 +19,7 @@ do_install_append() {
        # Install DHCP configuration for Ethernet adapters
        install -m 644 ${WORKDIR}/wired.network ${D}${sysconfdir}/systemd/network
     fi
+    install -m 644 -p -D ${WORKDIR}/system.conf ${D}${sysconfdir}/systemd/system.conf
 }
 
 FILES_${PN} += "${sysconfdir}/e2fsck.conf "
