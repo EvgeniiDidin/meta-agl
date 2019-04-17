@@ -1,0 +1,92 @@
+From 7b340ed3a984d013c9083934ca04f9b2dcefeafb Mon Sep 17 00:00:00 2001
+From: Evgeniy Didin <Evgeniy.Didin@synopsys.com>
+Date: Fri, 25 Jan 2019 17:50:24 +0300
+Subject: [PATCH] Update some code due to timer API changes and removing
+ unnecessary mappings
+
+Signed-off-by: Evgeniy Didin <Evgeniy.Didin@synopsys.com>
+---
+ aim-sound/sound.c |  1 -
+ hdm-usb/hdm_usb.c | 27 +++------------------------
+ 2 files changed, 3 insertions(+), 25 deletions(-)
+
+diff --git a/aim-sound/sound.c b/aim-sound/sound.c
+index 6a290ff..4b3329b 100644
+--- a/aim-sound/sound.c
++++ b/aim-sound/sound.c
+@@ -463,7 +463,6 @@ static const struct snd_pcm_ops pcm_ops = {
+ 	.trigger    = pcm_trigger,
+ 	.pointer    = pcm_pointer,
+ 	.page       = snd_pcm_lib_get_vmalloc_page,
+-	.mmap       = snd_pcm_lib_mmap_vmalloc,
+ };
+ 
+ static int split_arg_list(char *buf, char **card_name, u16 *ch_num,
+diff --git a/hdm-usb/hdm_usb.c b/hdm-usb/hdm_usb.c
+index 5b0af88..667daca 100644
+--- a/hdm-usb/hdm_usb.c
++++ b/hdm-usb/hdm_usb.c
+@@ -626,22 +626,6 @@ _error:
+ 	return retval;
+ }
+ 
+-static void *hdm_dma_alloc(struct mbo *mbo, u32 size)
+-{
+-	struct most_dev *mdev = to_mdev(mbo->ifp);
+-
+-	return usb_alloc_coherent(mdev->usb_device, size, GFP_KERNEL,
+-				  &mbo->bus_address);
+-}
+-
+-static void hdm_dma_free(struct mbo *mbo, u32 size)
+-{
+-	struct most_dev *mdev = to_mdev(mbo->ifp);
+-
+-	usb_free_coherent(mdev->usb_device, size, mbo->virt_address,
+-			  mbo->bus_address);
+-}
+-
+ /**
+  * hdm_configure_channel - receive channel configuration from core
+  * @iface: interface
+@@ -760,9 +744,9 @@ static void hdm_request_netinfo(struct most_interface *iface, int channel,
+  * The handler runs in interrupt context. That's why we need to defer the
+  * tasks to a work queue.
+  */
+-static void link_stat_timer_handler(unsigned long data)
++static void link_stat_timer_handler(struct timer_list *t)
+ {
+-	struct most_dev *mdev = (struct most_dev *)data;
++	struct most_dev *mdev = from_timer(mdev, t, link_stat_timer);
+ 
+ 	schedule_work(&mdev->poll_work_obj);
+ 	mdev->link_stat_timer.expires = jiffies + (2 * HZ);
+@@ -1154,24 +1138,19 @@ hdm_probe(struct usb_interface *interface, const struct usb_device_id *id)
+ 	num_endpoints = usb_iface_desc->desc.bNumEndpoints;
+ 	mutex_init(&mdev->io_mutex);
+ 	INIT_WORK(&mdev->poll_work_obj, wq_netinfo);
+-	setup_timer(&mdev->link_stat_timer, link_stat_timer_handler,
+-		    (unsigned long)mdev);
++	timer_setup(&mdev->link_stat_timer, link_stat_timer_handler, 0);
+ 
+ 	mdev->usb_device = usb_dev;
+ 	mdev->link_stat_timer.expires = jiffies + (2 * HZ);
+ 
+ 	mdev->iface.mod = hdm_usb_fops.owner;
+-	mdev->iface.dev = &interface->dev;
+ 	mdev->iface.interface = ITYPE_USB;
+ 	mdev->iface.configure = hdm_configure_channel;
+ 	mdev->iface.request_netinfo = hdm_request_netinfo;
+ 	mdev->iface.enqueue = hdm_enqueue;
+ 	mdev->iface.poison_channel = hdm_poison_channel;
+-	mdev->iface.dma_alloc = hdm_dma_alloc;
+-	mdev->iface.dma_free = hdm_dma_free;
+ 	mdev->iface.description = mdev->description;
+ 	mdev->iface.num_channels = num_endpoints;
+-	mdev->iface.extra_attrs = XACT_ATTRS;
+ 
+ 	snprintf(mdev->description, sizeof(mdev->description),
+ 		 "usb_device %d-%s:%d.%d",
+-- 
+2.16.2
+

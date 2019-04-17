@@ -23,6 +23,7 @@ SRC_URI_append = " \
 	    file://0007-dim2-use-device-tree.patch \
 	    file://0008-dim2-read-clock-speed-from-the-device-tree.patch \
 	    file://0009-dim2-use-device-for-coherent-memory-allocation.patch \
+	    file://0001-Update-some-code-due-to-timer-API-changes-and-removi.patch \
 	   "
 # Make sure we can expose KERNEL_VERSION ...
 do_patch[depends] += "virtual/kernel:do_populate_sysroot"
