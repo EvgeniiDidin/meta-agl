@@ -1,15 +1,32 @@
+From 5026cd7d25f2394786e993a83be62ebc4b3c073a Mon Sep 17 00:00:00 2001
+From: Evgeniy Didin <Evgeniy.Didin@synopsys.com>
+Date: Thu, 24 Jan 2019 20:40:37 +0300
+Subject: [PATCH] simple-id-agent-for 2.2.0
+
+Signed-off-by: Evgeniy Didin <Evgeniy.Didin@synopsys.com>
+---
+ CMakeLists.txt                                     |   1 +
+ id-agent-modules/simple-id-agent/CMakeLists.txt    |  72 ++++++++++++
+ .../simple-id-agent/src/simple-id-agent.c          | 124 +++++++++++++++++++++
+ id-agent-modules/simple-id-agent/weston.ini.in     |  11 ++
+ weston-ivi-shell/src/ivi-controller.c              |  39 +++++++
+ 5 files changed, 247 insertions(+)
+ create mode 100644 id-agent-modules/simple-id-agent/CMakeLists.txt
+ create mode 100644 id-agent-modules/simple-id-agent/src/simple-id-agent.c
+ create mode 100644 id-agent-modules/simple-id-agent/weston.ini.in
+
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index c82136e..eeed7a6 100644
+index 7d0044a..b05fc34 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -35,6 +35,7 @@ add_subdirectory(ivi-layermanagement-api/ilmClient)
+@@ -38,6 +38,7 @@ add_subdirectory(ivi-layermanagement-api/ilmClient)
  add_subdirectory(ivi-layermanagement-api/ilmControl)
  add_subdirectory(ivi-layermanagement-api/test)
  add_subdirectory(ivi-layermanagement-examples)
 +add_subdirectory(id-agent-modules/simple-id-agent)
-
- if(WITH_ILM_INPUT)
-     add_subdirectory(ivi-input-api/ilmInput)
+ add_subdirectory(ivi-layermanagement-api/ilmInput)
+ add_subdirectory(ivi-input-modules/ivi-input-controller)
+ 
 diff --git a/id-agent-modules/simple-id-agent/CMakeLists.txt b/id-agent-modules/simple-id-agent/CMakeLists.txt
 new file mode 100644
 index 0000000..8290722
@@ -236,10 +253,10 @@ index 0000000..b5e5fa1
 +[id-agent]
 +default-id-offset=10
 diff --git a/weston-ivi-shell/src/ivi-controller.c b/weston-ivi-shell/src/ivi-controller.c
-index 6d95c88..5e61e76 100644
+index 9f33529..294caa8 100644
 --- a/weston-ivi-shell/src/ivi-controller.c
 +++ b/weston-ivi-shell/src/ivi-controller.c
-@@ -2164,6 +2164,40 @@ load_input_module(struct ivishell *shell)
+@@ -2150,6 +2150,40 @@ load_input_module(struct ivishell *shell)
      return 0;
  }
  
@@ -280,10 +297,10 @@ index 6d95c88..5e61e76 100644
  static void
  launch_client_process(void *data)
  {
-@@ -2229,6 +2263,11 @@ controller_module_init(struct weston_compositor *compositor,
+@@ -2215,6 +2249,11 @@ controller_module_init(struct weston_compositor *compositor,
          return -1;
      }
-
+ 
 +    if (load_id_agent_module(compositor, interface, interface_version) < 0) {
 +        free(shell);
 +        return -1;
@@ -292,3 +309,6 @@ index 6d95c88..5e61e76 100644
      if (shell->bkgnd_surface_id && shell->ivi_client_name) {
          loop = wl_display_get_event_loop(compositor->wl_display);
          wl_event_loop_add_idle(loop, launch_client_process, shell);
+-- 
+2.16.2
+
