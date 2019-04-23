@@ -89,3 +89,4 @@ agl-driver::1001:
 agl-passenger::1002:
 systemd-network::1005:
 systemd-resolve::1006:
+mosquitto::1007:
