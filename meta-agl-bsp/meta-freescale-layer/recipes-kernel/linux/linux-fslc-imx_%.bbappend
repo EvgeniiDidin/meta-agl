@@ -16,3 +16,8 @@ KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/cgroup.cfg"
 SRC_URI_append_with-lsm-smack = "\
        file://0004-Smack-Assign-smack_known_web-label-for-kernel-thread.patch \
 "
+
+# Support for CFG80211 subsystem
+SRC_URI_append = " file://cfg80211.cfg"
+KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/cfg80211.cfg"
+
