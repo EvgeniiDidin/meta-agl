@@ -12,6 +12,14 @@ KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/extra-graphic-devices.cfg"
 SRC_URI_append = " file://net-devices.cfg"
 KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/net-devices.cfg"
 
+# adding specific driver needed by the upsquare board
+SRC_URI_append = " file://upsquare.cfg"
+KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/upsquare.cfg"
+
+# adding CONFIG needed by LAVA and NBD
+SRC_URI_append = " file://lava.cfg"
+KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/lava.cfg"
+
 # Ensure we have a startup.nsh file
 SRC_URI_append = " file://startup.nsh"
 
