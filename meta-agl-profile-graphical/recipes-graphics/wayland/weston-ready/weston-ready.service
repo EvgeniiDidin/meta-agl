@@ -4,6 +4,7 @@ Requires=weston.service
 After=weston.service
 
 [Service]
+SupplementaryGroups=display
 Environment="XDG_RUNTIME_DIR=/run/platform/display"
 ExecStart=/usr/bin/weston-ready -t 10
 Type=oneshot
