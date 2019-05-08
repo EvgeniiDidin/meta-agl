@@ -11,6 +11,7 @@ ALLOW_EMPTY_${PN} = "1"
 
 RDEPENDS_${PN} += "\
 agl-service-bluetooth \
+agl-service-bluetooth-map \
 agl-service-bluetooth-pbap \
 agl-service-can-low-level \
 agl-service-data-persistence \
