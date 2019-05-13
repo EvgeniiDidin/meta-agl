@@ -1,6 +1,6 @@
-# **README.md for the 'meta-agl' layer**
+# 'meta-agl' layer
 
-**See README-AGL.md for general information about Automotive Grade Linux.**
+See README-AGL.md for general information about Automotive Grade Linux.
 
 ## meta-agl, the core layer for Automotive Grade Linux Distribution
 
