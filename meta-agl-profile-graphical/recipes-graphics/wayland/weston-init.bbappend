@@ -2,6 +2,7 @@ FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 
 inherit agl-graphical
 
+
 WESTONSTART ??= "/usr/bin/weston ${WESTONARGS}"
 WESTONSTART_append = " ${@bb.utils.contains("IMAGE_FEATURES", "debug-tweaks", " --log=${DISPLAY_XDG_RUNTIME_DIR}/weston.log", "",d)}"
 
@@ -29,6 +30,7 @@ do_install_append() {
         -e 's,ExecStart=.*,ExecStart=${WESTONSTART},g' \
         -e 's,@WESTONTTY@,${WESTONTTY},g' \
         -e 's,@XDG_RUNTIME_DIR@,${DISPLAY_XDG_RUNTIME_DIR},g' \
+	-e '/PAMName=/d' \
         -i ${D}${systemd_system_unitdir}/weston.service
 
     # Add a rule to ensure the 'display' user has permissions to
