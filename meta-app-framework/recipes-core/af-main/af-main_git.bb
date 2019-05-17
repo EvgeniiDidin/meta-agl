@@ -65,9 +65,6 @@ USERADD_PACKAGES = "${PN}"
 USERADD_PARAM_${PN} = "--system --gid ${afm_name} --home-dir ${afm_datadir} ${afm_name}"
 GROUPADD_PARAM_${PN} = "--system ${afm_name}"
 
-FILES_${PN} += "\
-	${@bb.utils.contains('DISTRO_FEATURES', 'systemd', '${systemd_user_unitdir}/afm-user-daemon.service', '', d)} \
-"
 RDEPENDS_${PN}_append_with-lsm-smack = " smack bash"
 DEPENDS_append_with-lsm-smack = " smack-native"
 
@@ -87,9 +84,6 @@ do_install_append_class-target() {
     install -d ${D}${afm_datadir}/applications
     install -d ${D}${afm_datadir}/icons
     if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
-        install -d -m 0755 ${D}${systemd_user_unitdir}/default.target.wants
-        ln -s ../afm-user-daemon.service ${D}${systemd_user_unitdir}/default.target.wants/afm-user-daemon.service
-        ln -s ../afm-user-session.service ${D}${systemd_user_unitdir}/default.target.wants/afm-user-session.service
         install -d -m 0755 ${D}${systemd_system_unitdir}/multi-user.target.wants
         install -d -m 0755 ${D}${systemd_system_unitdir}/sockets.target.wants
         ln -sf ../afm-system-setup.service ${D}${systemd_system_unitdir}/multi-user.target.wants/afm-system-setup.service
