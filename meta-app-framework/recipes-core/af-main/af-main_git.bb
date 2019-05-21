@@ -10,7 +10,7 @@ BBCLASSEXTEND = "native"
 
 SECTION = "base"
 
-DEPENDS = "openssl libxml2 xmlsec1 systemd libzip json-c systemd security-manager af-binder"
+DEPENDS = "openssl libxml2 xmlsec1 systemd libzip json-c systemd security-manager af-binder sed m4"
 DEPENDS_class-native = "openssl libxml2 xmlsec1 libzip json-c"
 RDEPENDS_${PN}_class-target += "af-binder-tools"
 
