@@ -62,8 +62,8 @@ EXTRA_OECMAKE_append = " ${@bb.utils.contains('AGL_FORBID_UNSIGNED_APPS','1','',
 
 
 USERADD_PACKAGES = "${PN}"
-USERADD_PARAM_${PN} = "-g ${afm_name} -d ${afm_datadir} -r ${afm_name}"
-GROUPADD_PARAM_${PN} = "-r ${afm_name}"
+USERADD_PARAM_${PN} = "--system --gid ${afm_name} --home-dir ${afm_datadir} ${afm_name}"
+GROUPADD_PARAM_${PN} = "--system ${afm_name}"
 
 FILES_${PN} += "\
 	${@bb.utils.contains('DISTRO_FEATURES', 'systemd', '${systemd_user_unitdir}/afm-user-daemon.service', '', d)} \
