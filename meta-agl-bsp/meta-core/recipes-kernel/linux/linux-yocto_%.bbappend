@@ -2,6 +2,7 @@ FILESEXTRAPATHS_prepend := "${THISDIR}/linux-yocto:"
 
 # Extra configuration options for the QEMU kernel
 SRC_URI += "file://hciattach.cfg \
+	    file://virtio.cfg \
             "
 
 # Enable some things on qemuarm64 so MOST drivers will build and load.
