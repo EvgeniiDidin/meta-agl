@@ -4,7 +4,8 @@ Description=Lightmediascanner (LMS)
 [Service]
 Type=dbus
 BusName=org.lightmediascanner
-ExecStart=/usr/bin/lightmediascannerd --startup-scan --db-path=/tmp/%U/lightmediascannerd.db --directory=/media --directory=%h/Music --directory=%h/Videos
+UMask=0077
+ExecStart=/usr/bin/lightmediascannerd --startup-scan --db-path=/run/user/%U/usrshr/lightmediascannerd.db --directory=/media --directory=%h/Music --directory=%h/Videos
 
 [Install]
 WantedBy=default.target
