@@ -9,7 +9,7 @@ books:
     version: master
     chapters:
     - url: ../agl-layers-overview.md
-      name: AGL Overview
+      name: Overview
     - url: ../meta-agl.md
       destination: meta-agl.md
       name: meta-agl
