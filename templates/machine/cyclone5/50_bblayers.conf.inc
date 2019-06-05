@@ -1,1 +1,1 @@
-BBLAYERS =+ "${METADIR}/meta-altera"
+BBLAYERS =+ "${METADIR}/bsp/meta-altera"

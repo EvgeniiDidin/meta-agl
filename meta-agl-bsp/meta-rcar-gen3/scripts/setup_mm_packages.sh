@@ -8,7 +8,7 @@ ARCHIVE_PREFIX_NAME="R-Car_Gen3_Series_Evaluation_Software_Package_for_Linux"
 ZIP_BUGFIX=$ARCHIVE_PREFIX_NAME"-weston5-20190516.zip"
 TAR_BUGFIX=$ARCHIVE_PREFIX_NAME"-20190516.tar.gz"
 
-COPY_SCRIPT="$METADIR/meta-renesas-rcar-gen3/meta-rcar-gen3/docs/sample/copyscript/copy_evaproprietary_softwares.sh"
+COPY_SCRIPT="$METADIR/bsp/meta-renesas-rcar-gen3/meta-rcar-gen3/docs/sample/copyscript/copy_evaproprietary_softwares.sh"
 
 test -f ${XDG_CONFIG_HOME:-~/.config}/user-dirs.dirs && source ${XDG_CONFIG_HOME:-~/.config}/user-dirs.dirs
 DOWNLOAD_DIR=${XDG_DOWNLOAD_DIR:-$HOME/Downloads}
@@ -63,7 +63,7 @@ function copy_mm_packages() {
     fi
 
     if [ -f $COPY_SCRIPT ]; then
-        cd $METADIR/meta-renesas-rcar-gen3/
+        cd $METADIR/bsp/meta-renesas-rcar-gen3/
         $COPY_SCRIPT -d -f $EXTRACT_DIR
         cd ..
     else
@@ -105,7 +105,7 @@ function copy_mm_packages() {
     find $EXTRACT_DIR -name "$GFX_BINARIES_NAME" -exec mv -t $EXTRACT_DIR {} \;
     for f in `find $EXTRACT_DIR -name "$GFX_BINARIES_NAME" -exec basename {} \;`
     do
-        mv $EXTRACT_DIR/${f} "$METADIR/meta-renesas-rcar-gen3/meta-rcar-gen3/recipes-graphics/gles-module/gles-user-module"/${f:4}
+        mv $EXTRACT_DIR/${f} "$METADIR/bsp/meta-renesas-rcar-gen3/meta-rcar-gen3/recipes-graphics/gles-module/gles-user-module"/${f:4}
     done;
 
     #Clean

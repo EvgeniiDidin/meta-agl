@@ -51,11 +51,11 @@ function debug() { [[ $DEBUG == 1 ]] && echo "DEBUG: $@" >&2; return 0;}
 info "------------ $SCRIPT: Starting"
 
 #compute AGL_REPOSITORIES
-AGL_REPOSITORIES=$(for x in $(ls -d $METADIR/*/templates/{machine,feature}); do echo $(basename $(dirname $(dirname $x))); done | sort -u)
+AGL_REPOSITORIES=$(for x in $(ls -d $METADIR/meta-ag*/templates/{machine,feature} $METADIR/bsp/*/templates/machine); do echo $(basename $(dirname $(dirname $x))); done | sort -u)
 
 function list_machines() {
-	for x in $@; do
-		for y in $(ls -d $METADIR/$x/templates/machine/* 2>/dev/null); do
+	for a in $@; do
+		for y in $(ls -d $METADIR/{.,bsp}/$a/templates/machine/* 2>/dev/null); do
 			echo $(basename $y)
 		done
 	done
@@ -78,7 +78,7 @@ function validate_machines() {
 	list_all_machines | sort | uniq -c | while read cnt machine; do
 		[[ $cnt == 1 ]] && continue
 		info "Machine $machine found in the following repositories:"
-		for x in $(ls -d $METADIR/*/templates/machine/$machine); do
+		for x in $(ls -d $METADIR/*/templates/machine/$machine $METADIR/bsp/*/templates/machine/$machine ); do
 			info "   - $x"
 		done
 		error "Multiple machine templates are not allowed"
@@ -104,7 +104,7 @@ function validate_features() {
 	list_all_features | sort | uniq -c | while read cnt feature; do
 		[[ $cnt == 1 ]] && continue;
 		info "Feature $feature found in the following repositories:"
-		for x in $(ls -d $METADIR/*/templates/feature/$feature); do
+		for x in $(ls -d $METADIR/*/templates/feature/$feature ); do
 			info "   - $x"
 		done
 		error "Multiple feature templates are not allowed"
@@ -115,8 +115,10 @@ function validate_features() {
 function find_machine_dir() {
 	machine=$1
 	for x in $AGL_REPOSITORIES; do
-		dir=$METADIR/$x/templates/machine/$machine
-		[[ -d $dir ]] && { echo $dir; return 0; }
+		dirs=$(ls -d $METADIR/{.,bsp}/$x/templates/machine/$machine)
+		for dir in $dirs; do
+		    [[ -d $dir ]] && { echo $dir; return 0; }
+		done
 	done
 	return 1
 }
@@ -373,11 +375,11 @@ function genconfig() {
 	# step 1: run usual OE setup to generate conf dir
 	export TEMPLATECONF=$(cd $SCRIPTDIR/../templates/base && pwd -P)
 	debug "running oe-init-build-env with TEMPLATECONF=$TEMPLATECONF"
-	info "   Running $METADIR/poky/oe-init-build-env"
+	info "   Running $METADIR/external/poky/oe-init-build-env"
 	info "   Templates dir: $TEMPLATECONF"
 
 	CURDIR=$(pwd -P)
-	. $METADIR/poky/oe-init-build-env $BUILDDIR >/dev/null
+	. $METADIR/external/poky/oe-init-build-env $BUILDDIR >/dev/null
 	cd $CURDIR
 
 	# step 2: concatenate other remaining fragments coming from base
@@ -517,7 +519,7 @@ info "OK"
 infon "Generating setup file: $BUILDDIR/agl-init-build-env ... "
 
 cat <<EOF >$BUILDDIR/agl-init-build-env
-. $METADIR/poky/oe-init-build-env $BUILDDIR
+. $METADIR/external/poky/oe-init-build-env $BUILDDIR
 if [ -n "\$DL_DIR" ]; then
 	BB_ENV_EXTRAWHITE="\$BB_ENV_EXTRAWHITE DL_DIR"
 fi

@@ -8,16 +8,16 @@ BBFILES ?= ""
 # Convenience variables usable in various configuration fragments
 #----------------------------------
 BCONFDIR := "${@os.path.abspath(os.path.dirname(d.getVar('FILE', True)))}"
-METADIR  := "${@os.path.abspath('##OEROOT##/..')}"
+METADIR  := "${@os.path.abspath('##OEROOT##/../..')}"
 
 # These are the core OE + YP Layers
 #----------------------------------
 YOCTO_LAYERS = " \
-  ${METADIR}/poky/meta \
-  ${METADIR}/poky/meta-poky \
+  ${METADIR}/external/poky/meta \
+  ${METADIR}/external/poky/meta-poky \
   "
 #  this is added for the boards where necessary, not globally
-#  ${METADIR}/poky/meta-yocto-bsp \
+#  ${METADIR}/external/poky/meta-yocto-bsp \
 #
 # These are the AGL CORE Layers that make up the basis
 # - they create a minimal bootable filesystem
@@ -30,8 +30,8 @@ AGL_CORE_LAYERS = " \
   "
 
 AGL_APPFW_LAYERS = " \
-  ${METADIR}/meta-security \
-  ${METADIR}/meta-openembedded/meta-perl \
+  ${METADIR}/external/meta-security \
+  ${METADIR}/external/meta-openembedded/meta-perl \
   ${METADIR}/meta-agl/meta-security \
   ${METADIR}/meta-agl/meta-app-framework \
     "
@@ -40,11 +40,11 @@ AGL_APPFW_LAYERS = " \
 # These are the direct dependencies of the AGL CORE Layers
 #---------------------------------------------------------
 AGL_CORE_DEPENDENCY_LAYERS = " \
-  ${METADIR}/meta-openembedded/meta-oe \
-  ${METADIR}/meta-openembedded/meta-multimedia \
-  ${METADIR}/meta-openembedded/meta-networking \
-  ${METADIR}/meta-openembedded/meta-python \
-  ${METADIR}/meta-openembedded/meta-filesystems \
+  ${METADIR}/external/meta-openembedded/meta-oe \
+  ${METADIR}/external/meta-openembedded/meta-multimedia \
+  ${METADIR}/external/meta-openembedded/meta-networking \
+  ${METADIR}/external/meta-openembedded/meta-python \
+  ${METADIR}/external/meta-openembedded/meta-filesystems \
   "
 
 ####################
@@ -57,8 +57,8 @@ BBLAYERS ?= " \
   "
 
 BBLAYERS_NON_REMOVABLE ?= " \
-  ${METADIR}/poky/meta \
-  ${METADIR}/poky/meta-poky \
+  ${METADIR}/external/poky/meta \
+  ${METADIR}/external/poky/meta-poky \
   ${METADIR}/meta-agl/meta-agl-profile-core \
   ${METADIR}/meta-agl/meta-agl-distro \
   "

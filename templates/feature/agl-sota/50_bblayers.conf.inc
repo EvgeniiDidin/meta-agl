@@ -1,7 +1,7 @@
 BBLAYERS =+ " \
-	${METADIR}/meta-updater \
-	${METADIR}/meta-updater-qemux86-64 \
-	${METADIR}/meta-openembedded/meta-filesystems \
-	${METADIR}/meta-openembedded/meta-python \
+	${METADIR}/external/meta-updater \
+	${METADIR}/external/meta-updater-qemux86-64 \
+	${METADIR}/external/meta-openembedded/meta-filesystems \
+	${METADIR}/external/meta-openembedded/meta-python \
 	"
 

@@ -5,5 +5,5 @@ BBLAYERS =+ " \
 # These are the dependencies
 #---------------------------
 BBLAYERS =+ " \
-   ${METADIR}/meta-qt5 \
+   ${METADIR}/external/meta-qt5 \
 "
