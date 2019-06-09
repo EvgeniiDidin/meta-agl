@@ -19,7 +19,6 @@ RDEPENDS_${PN} += "\
 RDEPENDS_${PN} += "\
     packagegroup-agl-core-connectivity \
     packagegroup-agl-core-navigation \
-    packagegroup-agl-core-multimedia \
     packagegroup-agl-core-os-commonlibs \
     packagegroup-agl-core-services \
     packagegroup-agl-core-security \

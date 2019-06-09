@@ -15,6 +15,7 @@ RDEPENDS_${PN} += "\
     packagegroup-agl-image-minimal \
     packagegroup-agl-graphical-weston \
     packagegroup-agl-graphical-services \
+    packagegroup-agl-graphical-multimedia \
 "
 # FIXME: Removed due to issues building against weston 5.0.0:
 #    waltham-transmitter

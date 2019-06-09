@@ -24,7 +24,6 @@ agl-service-mediascanner \
 agl-service-navigation \
 agl-service-network \
 agl-service-nfc \
-${@bb.utils.contains('DISTRO_FEATURES', 'pipewire', 'agl-service-radio', '', d)} \
 agl-service-signal-composer \
 agl-service-steering-wheel \
 agl-service-unicens \

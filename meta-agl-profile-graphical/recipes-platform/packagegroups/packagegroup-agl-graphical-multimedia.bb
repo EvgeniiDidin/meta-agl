@@ -7,7 +7,7 @@ LICENSE = "MIT"
 inherit packagegroup
 
 PACKAGES = "\
-    packagegroup-agl-core-multimedia \
+    packagegroup-agl-graphical-multimedia \
     "
 
 RDEPENDS_${PN} += "\

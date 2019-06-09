@@ -10,5 +10,6 @@ PACKAGES = "\
 ALLOW_EMPTY_${PN} = "1"
 
 RDEPENDS_${PN} += "\
-agl-service-mediaplayer \
+${@bb.utils.contains('DISTRO_FEATURES', 'pipewire', 'agl-service-mediaplayer', '', d)} \
+${@bb.utils.contains('DISTRO_FEATURES', 'pipewire', 'agl-service-radio', '', d)} \
     "
