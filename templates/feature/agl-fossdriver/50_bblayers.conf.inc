@@ -1,1 +1,1 @@
-BBLAYERS =+ "${METADIR}/meta-spdxscanner"
+BBLAYERS =+ "${METADIR}/external/meta-spdxscanner"

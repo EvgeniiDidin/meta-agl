@@ -1,1 +1,1 @@
-BBLAYERS =+ "${METADIR}/meta-qcom"
+BBLAYERS =+ "${METADIR}/bsp/meta-qcom"

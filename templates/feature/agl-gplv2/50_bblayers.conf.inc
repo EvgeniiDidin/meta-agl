@@ -1,1 +1,1 @@
-BBLAYERS =+ "${METADIR}/meta-gplv2"
+BBLAYERS =+ "${METADIR}/external/meta-gplv2"
