@@ -26,7 +26,7 @@ PREFERRED_VERSION_libgbm            = "10.0.0"
 
 PACKAGES_MULTIMEDIA   = " \
     ipumm-fw \
-    pulseaudio-misc      \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'pulseaudio', 'pulseaudio-misc' , '', d)}      \
 "
 
 PREFERRED_PROVIDER_virtual/kernel  = "linux-ti-staging"
