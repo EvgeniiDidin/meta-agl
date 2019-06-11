@@ -24,7 +24,7 @@ agl-service-mediascanner \
 agl-service-navigation \
 agl-service-network \
 agl-service-nfc \
-${@bb.utils.contains('DISTRO_FEATURES', 'agl-audio-4a-framework', 'agl-service-radio', bb.utils.contains('DISTRO_FEATURES', 'pulseaudio','agl-service-radio','',d), d)} \
+${@bb.utils.contains('DISTRO_FEATURES', 'pipewire', 'agl-service-radio', '', d)} \
 agl-service-signal-composer \
 agl-service-steering-wheel \
 agl-service-unicens \
