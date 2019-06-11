@@ -2,8 +2,10 @@ RDEPENDS_${PN}_append_with-lsm-smack = " smack"
 PACKAGE_WRITE_DEPS_append_with-lsm-smack = " smack-native"
 
 do_install_append() {
-    install -d ${D}/${sysconfdir}/skel/app-data
-    install -d ${D}/${sysconfdir}/skel/.config
+    install -m 0700 -d ${D}/${sysconfdir}/skel
+    chmod -R 0700 ${D}/${sysconfdir}/skel
+    install -m 0700 -d ${D}/${sysconfdir}/skel/app-data
+    install -m 0700 -d ${D}/${sysconfdir}/skel/.config
     install -m 0755 -d ${D}/var
     if [ -d ${D}/usr/local ]; then
         mv ${D}/usr/local ${D}/var
