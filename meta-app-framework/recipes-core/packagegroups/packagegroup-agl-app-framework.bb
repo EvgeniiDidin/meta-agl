@@ -16,4 +16,5 @@ RDEPENDS_${PN} += "\
 	af-main \
 	nss-localuser \
 	systemd-agl-sync \
+	af-platform-setup \
 	"
