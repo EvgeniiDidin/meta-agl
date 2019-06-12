@@ -18,3 +18,8 @@ KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/cfg80211.cfg"
 # (lock debugging and userspace firmware loader fallback)
 SRC_URI_append = " file://fixups.cfg"
 KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/fixups.cfg"
+
+do_install_append_cubox-i() {
+    # Add symlink to work with default Hummingboard 2 u-boot configuration
+    ln -sf imx6q-hummingboard2.dtb ${D}/boot/imx6q-hummingboard2-emmc.dtb
+}
