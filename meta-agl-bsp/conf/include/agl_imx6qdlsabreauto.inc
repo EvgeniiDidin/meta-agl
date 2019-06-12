@@ -1,20 +1,16 @@
 DISTRO_FEATURES_append = " agl-medium-arm-compiler"
 
-# Caution: Hand-merge needed when original recipes are updated
-#
-# Here we only have selected lines from the following (and
-# their included) files
-#
-# fslc-wayland.conf
-# fsl-image-multimedia-full.bb
-#
+# This disables the Freescale/NXP Vivante GPU driver and enables
+# etnaviv support.
+MACHINEOVERRIDES .= ":use-mainline-bsp"
 
-# fix build error
-SECURITY_CFLAGS_pn-devil = "${SECURITY_NO_PIE_CFLAGS}"
+# Disable the meta-freescale weston-init bbappend as it conflicts
+# with AGL's.
+BBMASK = "meta-freescale/recipes-graphics/wayland/weston-init"
 
-# since krogoth, u-boot-fslc does not seem to handle imx6qsabreauto correctly
-PREFERRED_PROVIDER_u-boot = "u-boot-imx"
-PREFERRED_PROVIDER_virtual/bootloader = "u-boot-imx"
-PREFERRED_PROVIDER_u-boot-mxsboot-native = "u-boot-imx"
+# Set CMA size large enough to work with AGL
+UBOOT_EXTLINUX_KERNEL_ARGS_append = " cma=512M"
 
-#PREFERRED_VERSION_weston_mx6_forcevariable = "2.0.0"
+# Generate WIC image also
+AGL_EXTRA_IMAGE_FSTYPES = "wic.xz wic.bmap wic.xz.sha256sum"
+AGL_DEFAULT_INITRAMFS_FSTYPES := ""
