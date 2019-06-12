@@ -51,7 +51,7 @@ function debug() { [[ $DEBUG == 1 ]] && echo "DEBUG: $@" >&2; return 0;}
 info "------------ $SCRIPT: Starting"
 
 #compute AGL_REPOSITORIES
-AGL_REPOSITORIES=$(for x in $(ls -d $METADIR/meta-ag*/templates/{machine,feature} $METADIR/bsp/*/templates/machine); do echo $(basename $(dirname $(dirname $x))); done | sort -u)
+AGL_REPOSITORIES=$(for x in $(ls -d $METADIR/meta-*/templates/{machine,feature} $METADIR/bsp/*/templates/machine); do echo $(basename $(dirname $(dirname $x))); done | sort -u)
 
 function list_machines() {
 	for a in $@; do
