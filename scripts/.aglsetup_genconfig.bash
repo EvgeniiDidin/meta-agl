@@ -51,7 +51,7 @@ function debug() { [[ $DEBUG == 1 ]] && echo "DEBUG: $@" >&2; return 0;}
 info "------------ $SCRIPT: Starting"
 
 #compute AGL_REPOSITORIES
-AGL_REPOSITORIES=$(for x in $(ls -d $METADIR/meta-*/templates/{machine,feature} $METADIR/bsp/*/templates/machine); do echo $(basename $(dirname $(dirname $x))); done | sort -u)
+AGL_REPOSITORIES=$(for x in $(ls -d $METADIR/meta-*/templates/{machine,feature} $METADIR/bsp/*/templates/machine 2>/dev/null); do echo $(basename $(dirname $(dirname $x))); done | sort -u)
 
 function list_machines() {
 	for a in $@; do
@@ -78,7 +78,7 @@ function validate_machines() {
 	list_all_machines | sort | uniq -c | while read cnt machine; do
 		[[ $cnt == 1 ]] && continue
 		info "Machine $machine found in the following repositories:"
-		for x in $(ls -d $METADIR/*/templates/machine/$machine $METADIR/bsp/*/templates/machine/$machine ); do
+		for x in $(ls -d $METADIR/*/templates/machine/$machine $METADIR/bsp/*/templates/machine/$machine 2>/dev/null); do
 			info "   - $x"
 		done
 		error "Multiple machine templates are not allowed"
@@ -104,7 +104,7 @@ function validate_features() {
 	list_all_features | sort | uniq -c | while read cnt feature; do
 		[[ $cnt == 1 ]] && continue;
 		info "Feature $feature found in the following repositories:"
-		for x in $(ls -d $METADIR/*/templates/feature/$feature ); do
+		for x in $(ls -d $METADIR/*/templates/feature/$feature 2>/dev/null); do
 			info "   - $x"
 		done
 		error "Multiple feature templates are not allowed"
@@ -115,7 +115,7 @@ function validate_features() {
 function find_machine_dir() {
 	machine=$1
 	for x in $AGL_REPOSITORIES; do
-		dirs=$(ls -d $METADIR/{.,bsp}/$x/templates/machine/$machine)
+		dirs=$(ls -d $METADIR/{.,bsp}/$x/templates/machine/$machine 2>/dev/null)
 		for dir in $dirs; do
 		    [[ -d $dir ]] && { echo $dir; return 0; }
 		done
