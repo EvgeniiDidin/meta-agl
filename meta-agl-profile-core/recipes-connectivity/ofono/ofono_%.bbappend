@@ -7,3 +7,5 @@ SRC_URI_append = "\
 do_install_append() {
     install -m 0644 ${WORKDIR}/ofono.conf ${D}${sysconfdir}/dbus-1/system.d/ofono.conf
 }
+
+SYSTEMD_AUTO_ENABLE = "enable"
