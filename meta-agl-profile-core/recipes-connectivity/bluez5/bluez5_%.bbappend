@@ -1,5 +1,8 @@
 FILESEXTRAPATHS_prepend := "${THISDIR}/${BPN}:"
-SRC_URI_append = " file://bluetooth.conf"
+SRC_URI_append = " \
+    file://bluetooth.conf \
+    file://0001-obex-report-notification-status-on-incoming-message.patch \
+"
 
 do_install_append() {
     install -m 0644 ${WORKDIR}/bluetooth.conf ${D}${sysconfdir}/dbus-1/system.d/bluetooth.conf
