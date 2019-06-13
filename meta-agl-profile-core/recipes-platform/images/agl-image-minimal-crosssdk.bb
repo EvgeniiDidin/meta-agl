@@ -22,6 +22,8 @@ TOOLCHAIN_HOST_TASK += " \
 TOOLCHAIN_TARGET_TASK += " \
     lua-dev \
     lua-staticdev \
+    libafb-helpers-staticdev \
+    libappcontroller-staticdev \
     "
 
 inherit populate_sdk
