@@ -10,7 +10,7 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=3b83ef96387f14655fc854ddc3c6bd57"
 
 SRC_URI = "git://gerrit.automotivelinux.org/gerrit/src/app-framework-main;protocol=https;branch=${AGL_BRANCH}"
 
-SRCREV = "ce5c20d2fa7e9c3e08c97643c77c7647bef79cd5"
+SRCREV = "533d5a1a51a07f2f92e508d113cb49d373e1bad8"
 PV = "${AGL_BRANCH}+git${SRCPV}"
 
 S = "${WORKDIR}/git"
