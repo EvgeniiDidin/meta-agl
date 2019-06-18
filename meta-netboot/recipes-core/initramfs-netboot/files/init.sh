@@ -25,6 +25,7 @@ SMACK=n
 NBD_SERVER=
 NBD_PORT=10809
 NBD_DEV=/dev/nbd0
+NBD_NAMEV3=
 DEBUG=n
 
 # -------------------------------------------
@@ -76,6 +77,7 @@ for x in $(cat /proc/cmdline); do
 		nbd.server=*) NBD_SERVER=${x/*=/};;
 		nbd.port=*) NBD_PORT=${x/*=/};;
 		nbd.dev=*)  NBD_DEV=/dev/${x/*=/};;
+		nbd.namev3=*) NBD_NAMEV3=${x/*=/};;
 		nbd.debug=*) DEBUG=${x/*=/};;
 	esac
 done
@@ -99,8 +101,13 @@ grep -q smackfs /proc/filesystems && {
 try=5
 while :;do
 	log_info "Starting NBD client"
-	nbd-client $NBD_SERVER $NBD_PORT $NBD_DEV && { log_info "NBD client successfully started"; break; }
-	log_info "NBD client failed"
+	if [ -z "${NBD_NAMEV3}" ]; then
+		nbd-client $NBD_SERVER $NBD_PORT $NBD_DEV && { log_info "NBD client successfully started"; break; }
+		log_info "NBD client failed"
+	else
+		nbd3-client $NBD_SERVER $NBD_DEV --name $NBD_NAMEV3 && { log_info "NBD3 client successfully started"; break; }
+		log_info "NBDv3 client failed"
+	fi
 	[[ $try -gt 0 ]] && { log_info "Retrying ($try trie(s) left)..."; sleep 3; try=$(( try - 1 )); continue; }
 
 	bail_out "Unable to mount NBD device $NBD_DEV using server $NBD_SERVER:$NBD_PORT"
