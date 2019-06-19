@@ -155,8 +155,8 @@ function _getgitmanifest() {
 
 	local gitrepo gitrev metagitdir sep=""
 	DIST_LAYERS=""
-	for metagitdir in $(find $DIST_METADIR -type d -name ".git"); do
-		gitrepo=$($REALPATH -Ls $metagitdir/.. --relative-to=$DIST_METADIR)
+	for metagitdir in $(find $DIST_METADIR -maxdepth 2 -type d -exec test -d "{}/.git" \; -print -prune); do
+		gitrepo=$($REALPATH -Ls $metagitdir --relative-to=$DIST_METADIR)
 		pushd $DIST_METADIR/$gitrepo &>/dev/null && {
 			gitrev=$( { $GIT describe --long --dirty --always 2>/dev/null || echo "unknown_revision"; } | tr ' \t' '__' )
 			popd &>/dev/null
