@@ -3,11 +3,6 @@
 ZIP_1="R-Car_Gen3_Series_Evaluation_Software_Package_for_Linux-weston5-20190212.zip"
 ZIP_2="R-Car_Gen3_Series_Evaluation_Software_Package_of_Linux_Drivers-weston5-20190212.zip"
 
-#BUG FIX PART (AGL JIRA SPEC-2253)
-ARCHIVE_PREFIX_NAME="R-Car_Gen3_Series_Evaluation_Software_Package_for_Linux"
-ZIP_BUGFIX=$ARCHIVE_PREFIX_NAME"-weston5-20190516.zip"
-TAR_BUGFIX=$ARCHIVE_PREFIX_NAME"-20190516.tar.gz"
-
 COPY_SCRIPT="$METADIR/bsp/meta-renesas-rcar-gen3/meta-rcar-gen3/docs/sample/copyscript/copy_evaproprietary_softwares.sh"
 
 test -f ${XDG_CONFIG_HOME:-~/.config}/user-dirs.dirs && source ${XDG_CONFIG_HOME:-~/.config}/user-dirs.dirs
@@ -73,50 +68,4 @@ function copy_mm_packages() {
         log   "scripts to copy drivers for Gen3 not found."
         return 1
     fi
-
-    #BUG FIX PART (AGL JIRA SPEC-2253)
-    #Detect supported machine
-    if [ $MACHINE == "m3ulcb" ] || [ $MACHINE == "h3ulcb" ]
-    then
-        GFX_ARCHIVE_NAME="EVARTM0RC779*GLPG0001SL41C_2_0_8_C";
-        GFX_BINARIES_NAME="EVA_r8a*_linux_gsx_binaries_gles.tar.bz2";
-    else
-        log "Note: graphics bug (SPEC-2253) will not be fixed for the requested machine ($MACHINE)."
-    fi
-
-    #Get binary file
-    if [ -f $DOWNLOAD_DIR/$ZIP_BUGFIX ]; then
-        cp --update $DOWNLOAD_DIR/$ZIP_BUGFIX $EXTRACT_DIR
-    else
-        error "ERROR: FILE '$DOWNLOAD_DIR/$ZIP_BUGFIX' NOT FOUND."
-        log   "The graphics and multimedia acceleration packages for "
-        log   "the R-Car Gen3 board BSP can be downloaded from:"
-        log   "<https://www.renesas.com/us/en/solutions/automotive/rcar-download/rcar-demoboard-2.html>"
-        log
-        error  "This archive should be stored in your '$DOWNLOAD_DIR' directory."
-        error  "Requested archive name: '$ZIP_BUGFIX'"
-        return 1
-    fi
-
-    #Extract the only the needed GFX binaries
-    unzip -d $EXTRACT_DIR -oq $EXTRACT_DIR/$ZIP_BUGFIX
-    tar -C $EXTRACT_DIR -zxf $EXTRACT_DIR/$TAR_BUGFIX
-    mv $EXTRACT_DIR/$ARCHIVE_PREFIX_NAME/*/*.zip $EXTRACT_DIR
-
-    #Manage the needed GFX binaries
-    find $EXTRACT_DIR -name "$GFX_ARCHIVE_NAME.zip" -exec unzip -d $EXTRACT_DIR -oq {} \;
-    find $EXTRACT_DIR -name "$GFX_BINARIES_NAME" -exec mv -t $EXTRACT_DIR {} \;
-    for f in `find $EXTRACT_DIR -name "$GFX_BINARIES_NAME" -exec basename {} \;`
-    do
-        mv $EXTRACT_DIR/${f} "$METADIR/bsp/meta-renesas-rcar-gen3/meta-rcar-gen3/recipes-graphics/gles-module/gles-user-module"/${f:4}
-    done;
-
-    #Clean
-    rm -r $EXTRACT_DIR/$ARCHIVE_PREFIX_NAME
-    rm -r $EXTRACT_DIR/$GFX_ARCHIVE_NAME
-
-    log   "The graphics hotfix for BUG SPEC-2253 has been successfully applied."
-
-	# clean up workdir if not done by older script
-	rm -r $EXTRACT_DIR
 }
