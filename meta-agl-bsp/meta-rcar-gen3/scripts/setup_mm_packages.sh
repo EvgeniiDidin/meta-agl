@@ -44,6 +44,9 @@ function log() {
 }
 
 function copy_mm_packages() {
+	# first clean up workdir
+	[[ -d $EXTRACT_DIR ]] && rm -r $EXTRACT_DIR
+
     if [ -f $DOWNLOAD_DIR/$ZIP_1 -a -f $DOWNLOAD_DIR/$ZIP_2 ]; then
         mkdir -p $EXTRACT_DIR
         cp --update $DOWNLOAD_DIR/$ZIP_1 $EXTRACT_DIR
@@ -113,4 +116,7 @@ function copy_mm_packages() {
     rm -r $EXTRACT_DIR/$GFX_ARCHIVE_NAME
 
     log   "The graphics hotfix for BUG SPEC-2253 has been successfully applied."
+
+	# clean up workdir if not done by older script
+	rm -r $EXTRACT_DIR
 }
