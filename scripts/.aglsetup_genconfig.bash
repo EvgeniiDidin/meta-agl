@@ -215,6 +215,7 @@ function append_fragment() {
 	echo "#" >>$basefile
 	[[ -n "$label" ]] && echo "$label" >>$basefile
 	[[ -f $f ]] && cat $f >>$basefile || true
+	echo "" >>$basefile
 	echo "#" >>$basefile
 	echo "# }" >>$basefile
 	echo "# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #" >>$basefile
