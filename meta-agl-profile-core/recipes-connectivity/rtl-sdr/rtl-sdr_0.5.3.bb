@@ -17,10 +17,16 @@ S = "${WORKDIR}/git"
 inherit autotools pkgconfig
 
 EXTRA_OECONF = "--enable-driver-detach"
-#CFLAGS_remove = "
+
 do_configure_append() {
     # remove included temporary path from pc file due to pass-through of OE CFLAGS
     # debug-prefix-map
     # See: http://lists.openembedded.org/pipermail/openembedded-devel/2016-May/107456.html
     sed -i -e "s# -fdebug-prefix-map=.*##g" librtlsdr.pc
+}
+
+do_install_append() {
+    install -D -m 0644 ${S}/rtl-sdr.rules ${D}${sysconfdir}/udev/rules.d/55-rtl-sdr.rules
+    sed -i 's/MODE:="0666"/GROUP="audio", MODE="0660", SECLABEL{smack}="*"/' \
+        ${D}${sysconfdir}/udev/rules.d/55-rtl-sdr.rules
 }
