@@ -80,9 +80,9 @@ KERNEL_CONFIG_FRAGMENTS_append_with-lsm-smack = "\
        ${WORKDIR}/smack-default-lsm.cfg \
 "
 
-# snd-aloop support for 4a
-SRC_URI_append = " file://4a-sound.cfg"
-KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/4a-sound.cfg"
+# ALSA support and other sound related configuration
+SRC_URI_append = " file://sound.cfg"
+KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/sound.cfg"
 
 # iio-dummy-device support for test iiodevice
 SRC_URI_append = " file://iiodevice.cfg"
