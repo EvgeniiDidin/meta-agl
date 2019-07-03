@@ -126,8 +126,8 @@ done
 
 # switch to new rootfs
 log_info "Switching to new rootfs"
-mkdir -p run/initramfs
-pivot_root . run/initramfs || bail_out "pivot_root failed."
+mkdir -p boot/initramfs
+pivot_root . boot/initramfs || bail_out "pivot_root failed."
 
 # workaround for connman (avoid bringing down the network interface used for booting, disable DNS proxy)
 if [[ -f /lib/systemd/system/connman.service ]]; then
@@ -137,7 +137,13 @@ if [[ -f /lib/systemd/system/connman.service ]]; then
 fi
 
 # also use /proc/net/pnp to generate /etc/resolv.conf
+rm -f /etc/resolv.conf
 grep -v bootserver /proc/net/pnp | sed 's/^domain/search/g' >/etc/resolv.conf
+
+# unmount tmp and run to let systemd remount them with correct smack labels (SPEC-2596)
+log_info "Unmounting /tmp and /run"
+umount /tmp
+umount /run
 
 # finally, run systemd
 check_debug "Debug point 2. Exit to continue initrd script (run systemd)."
