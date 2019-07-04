@@ -15,4 +15,8 @@ S  = "${WORKDIR}/git"
 DEPENDS = "json-c"
 RDEPENDS_${PN} += "agl-service-identity-agent"
 
+do_install_append () {
+    install -D -m 644 ${S}/hvac.json ${D}${sysconfdir}/hvac.json
+}
+
 inherit cmake aglwgt pkgconfig
