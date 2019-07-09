@@ -11,7 +11,7 @@ EXTRA_OECMAKE_append_class-target = "\
 EXTRA_OECMAKE_append_agl-devel = " \
 	-DAGL_DEVEL=ON \
 	-DINCLUDE_MONITORING=ON \
-	-DINCLUDE_SUPERVISOR=ON -DAFS_SURPERVISION_SOCKET=/run/platform/supervisor \
+	-DINCLUDE_SUPERVISOR=ON -DAFS_SUPERVISION_SOCKET=/run/platform/supervisor \
 "
 
 pkg_postinst_${PN}() {
