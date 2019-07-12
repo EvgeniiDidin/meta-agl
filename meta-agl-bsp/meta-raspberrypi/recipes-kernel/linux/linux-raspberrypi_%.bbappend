@@ -3,15 +3,6 @@ FILESEXTRAPATHS_prepend := "${THISDIR}/${BPN}:"
 require recipes-kernel/linux/linux-agl.inc
 require recipes-kernel/linux/linux-agl-4.14.inc
 
-# ENABLE DSI
-# ported from https://github.com/k-quigley/linux
-SRC_URI_append = " \
-    file://dsi/0001-Add-devicetree-support-for-RaspberryPi-7-panel-over-.patch \
-    file://dsi/0002-drm-vc4-Make-DSI-call-into-the-bridge-after-the-DSI-.patch \
-    file://dsi/0003-drm-vc4-Set-up-the-DSI-host-at-pdev-probe-time-not-c.patch \
-    file://dsi/0004-drm-panel-Backport-4.15-support-for-the-Raspberry-Pi.patch \
-"
-
 # NOTE: Kprobes need to be disabled until linux-raspberrypi gets updated
 #       to newer than 4.14.104 to avoid lttng-modules failing to build.
 SRC_URI_append = "\

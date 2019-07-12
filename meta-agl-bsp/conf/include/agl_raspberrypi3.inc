@@ -25,14 +25,6 @@ IMAGE_FEATURES_remove = "splash"
 # Build updatable image. Only takes effect when sota.bbclass is inherited
 DISTRO_FEATURES_append = " sota"
 
-# Add overlays for 7inch touch
-# https://github.com/k-quigley/linux/commits/rpi-4.14.y
-RPI_KERNEL_DEVICETREE_OVERLAYS_append = "\
-    overlays/rpi-backlight.dtbo \
-    overlays/rpi-7inch.dtbo \
-"
-
-
 # Create WIC images to write to SD cards.
 WKS_FILE = "sdimage-raspberrypi.wks"
 AGL_EXTRA_IMAGE_FSTYPES = "wic.xz wic.bmap wic.xz.sha256sum"
