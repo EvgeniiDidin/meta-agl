@@ -4,6 +4,7 @@ pushd $METADIR 2>/dev/null
 COPY_SCRIPT="$METADIR/bsp/meta-renesas-rcar-gen3/meta-rcar-gen3/docs/sample/copyscript/copy_proprietary_softwares.sh"
 EXTRACT_DIR=$METADIR/binary-tmp
 #EBISU_BIN_PATH should contain the path where the .zip archive of E3 binaries is.
+#CUSTOM_RENESAS_CONFIG_SCRIPT should contain the custom script needed for setup. If not filled, do not failed, just warn.
 
 # Check the ebisu binaries path
 if [[ ! -d $EBISU_BIN_PATH ]] || [[ $EBISU_BIN_PATH == "" ]]; then
@@ -24,14 +25,18 @@ if [ -f $COPY_SCRIPT ]; then
 	$COPY_SCRIPT $EXTRACT_DIR
 	cd ..
 
-	#Fix libpvrWAYLAND_WSEGL.so
-	#TODO
-
-	#Clean temp dir
+	# Clean temp dir
 	rm -r $EXTRACT_DIR
 else
-	echo "ERROR: Script to copy Renesas proprietary drivers for $MACHINE not found."
+	echo "ERROR: Script to copy Renesas proprietary drivers for $MACHINE not found. No additionnal setup to do."
 	exit 1
+fi
+
+if [[ ! -z $CUSTOM_RENESAS_CONFIG_SCRIPT ]] && [[ -f $CUSTOM_RENESAS_CONFIG_SCRIPT ]]; then
+	echo "Launching Renesas custom setup script ($CUSTOM_RENESAS_CONFIG_SCRIPT)..."
+	$CUSTOM_RENESAS_CONFIG_SCRIPT
+else
+	echo "WARNING: Renesas custom setup script for $MACHINE not found."
 fi
 
 popd 2>/dev/null
