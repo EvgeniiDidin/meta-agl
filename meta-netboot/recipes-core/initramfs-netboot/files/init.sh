@@ -139,6 +139,7 @@ fi
 # also use /proc/net/pnp to generate /etc/resolv.conf
 rm -f /etc/resolv.conf
 grep -v bootserver /proc/net/pnp | sed 's/^domain/search/g' >/etc/resolv.conf
+chsmack -A /etc/resolv.conf
 
 # unmount tmp and run to let systemd remount them with correct smack labels (SPEC-2596)
 log_info "Unmounting /tmp and /run"
