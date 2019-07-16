@@ -194,6 +194,9 @@ function _getgitmanifest() {
 	# Manifest build timestamp
 	DIST_BUILD_TS="$timestamp"
 
+	# build topic from setup topic
+	DIST_BUILD_TOPIC="${DIST_SETUP_TOPIC}"
+
 	# what to retain from setup manifest?
 	# to generate the full list: cat setup.manifest  | grep = | cut -f1 -d"=" | awk '{printf("%s ",$1);}'
 	declare -A SETUP_VARS
@@ -203,9 +206,9 @@ function _getgitmanifest() {
 
 	# extra vars not coming from setup.manifest but generated here
 	declare -A EXTRA_VARS
-	EXTRA_VARS[deploy]="DIST_SETUP_MANIFEST DIST_BUILD_TS DIST_LAYERS DIST_LAYERS_MD5 DIST_BUILD_HASH DIST_BUILD_ID"
-	EXTRA_VARS[target]="DIST_LAYERS DIST_BUILD_HASH DIST_BUILD_ID DIST_BUILD_TS"
-	EXTRA_VARS[sdk]="DIST_LAYERS DIST_BUILD_HASH DIST_BUILD_ID DIST_BUILD_TS"
+	EXTRA_VARS[deploy]="DIST_SETUP_MANIFEST DIST_BUILD_TS DIST_LAYERS DIST_LAYERS_MD5 DIST_BUILD_HASH DIST_BUILD_ID DIST_BUILD_TOPIC"
+	EXTRA_VARS[target]="DIST_LAYERS DIST_BUILD_HASH DIST_BUILD_ID DIST_BUILD_TS DIST_BUILD_TOPIC"
+	EXTRA_VARS[sdk]="DIST_LAYERS DIST_BUILD_HASH DIST_BUILD_ID DIST_BUILD_TS DIST_BUILD_TOPIC"
 
 	# BITBAKE_VARS may be defined from external file to source (--source arg)
 	# this is used to dump extra vars from inside bitbake recipe

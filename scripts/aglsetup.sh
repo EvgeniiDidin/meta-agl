@@ -39,7 +39,7 @@ if [ $SOURCED -ne 1 ]; then
 	unset SOURCEDIR
 	echo "Error: this script needs to be sourced in a supported shell" >&2
 	echo "Please check that the current shell is bash, zsh or ksh and run this script as '. $0 <args>'" >&2
-	return 1
+	exit 56
 else
 	unset SOURCED
 	tmpfile=$(mktemp /tmp/aglsetup.XXXXXXXX)

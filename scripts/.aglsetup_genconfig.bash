@@ -4,7 +4,7 @@
 #
 # The MIT License (MIT)
 #
-# Copyright (c) 2016 Stéphane Desneux <sdx@iot.bzh>
+# Copyright (c) 2016-2019 Stéphane Desneux <sdx@iot.bzh>
 #           (c) 2016 Jan-Simon Möller <jsmoeller@linuxfoundation.org>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -31,11 +31,12 @@
 # turn execute (source) generated instructions back in the parent shell,
 # whether it's bash, zsh, or any other supported shell
 
-VERSION=1.1.0
+VERSION=1.2.0
 DEFAULT_MACHINE=qemux86-64
 DEFAULT_BUILDDIR=./build
 VERBOSE=0
-DEBUG=0
+SHOWVERSION=0
+: ${DEBUG:=false}
 
 #SCRIPT=$(basename $BASH_SOURCE)
 SCRIPT=aglsetup.sh
@@ -46,9 +47,9 @@ function info() { echo "$@" >&2; }
 function infon() { echo -n "$@" >&2; }
 function error() { echo "ERROR: $@" >&2; return 1; }
 function verbose() { [[ $VERBOSE == 1 ]] && echo "$@" >&2; return 0; }
-function debug() { [[ $DEBUG == 1 ]] && echo "DEBUG: $@" >&2; return 0;}
+function debug() { $DEBUG && echo "DEBUG: $@" >&2; return 0;}
 
-info "------------ $SCRIPT: Starting"
+debug "------------ $SCRIPT: starting with command line arguments: $@"
 
 #compute AGL_REPOSITORIES
 AGL_REPOSITORIES=$(for x in $(ls -d $METADIR/meta-*/templates/{machine,feature} $METADIR/bsp/*/templates/machine 2>/dev/null); do echo $(basename $(dirname $(dirname $x))); done | sort -u)
@@ -161,11 +162,22 @@ Options:
           'timestamp' : Use a generated time stamp (UTC).
           'value:<revision>' : Use <revision> explicitly.
           'none' : Do nothing.
+   -t|--topic <value>
+      Specify an optional topic for this setup.
+      If specified, the topic will be propagated in build manifests:
+         - in deployment dir: tmp/deploy/images/*/build-info
+         - in target image: /etc/platform-info/build
+         - in SDK: tmp/deploy/sdk/*.build-info
    -v|--verbose
       verbose mode
       default: false
+   -V|--version
+      display version, set AGLSETUP_VERSION variable with version value and exit
    -d|--debug
       debug mode
+      for early debug, set env variable DEBUG. 
+      for example:
+           DEBUG=true source aglsetup.sh -V
       default: false
    -h|--help
       get some help
@@ -226,7 +238,7 @@ function execute_setup() {
 	script=$1
 	debug "Executing script $script"
 	opts="-e"
-	[[ $DEBUG == 1 ]] && opts="$opts -x"
+	$DEBUG && opts="$opts -x"
 	pushd $BUILDDIR &>/dev/null
 		$BASH $opts $script \
 			&& rc=0 \
@@ -293,7 +305,7 @@ function find_feature_dependency() {
 
 GLOBAL_ARGS=( "$@" )
 debug "Parsing arguments: $@"
-TEMP=$(getopt -o m:b:r:s:fvdh --long machine:,builddir:,rpm-revision:,script:,force,verbose,debug,help -n $SCRIPT -- "$@")
+TEMP=$(getopt -o m:b:r:t:s:fvVdh --long machine:,builddir:,rpm-revision:,topic:,script:,force,verbose,version,debug,help -n $SCRIPT -- "$@")
 [[ $? != 0 ]] && { usage; exit 1; }
 eval set -- "$TEMP"
 
@@ -305,6 +317,7 @@ BUILDDIR=$DEFAULT_BUILDDIR
 SETUPSCRIPT=
 FORCE=
 RPMREVISION=
+TOPIC=
 SETUP_MANIFEST=aglsetup.manifest
 
 while true; do
@@ -314,8 +327,10 @@ while true; do
 		-s|--setupscript)  SETUPSCRIPT=$2; shift 2;;
 		-f|--force)        FORCE=1; shift;;
 		-r|--rpm-revision) RPMREVISION=$2; shift 2;;
+		-t|--topic)        TOPIC=$2; shift 2;;
 		-v|--verbose)      VERBOSE=1; shift;;
-		-d|--debug)        VERBOSE=1; DEBUG=1; shift;;
+		-V|--version)      SHOWVERSION=1; shift;;
+		-d|--debug)        VERBOSE=1; DEBUG=true; shift;;
 		-h|--help)         HELP=1; shift;;
 		--)                shift; break;;
 		*) error "Arguments parsing error"; exit 1;;
@@ -323,6 +338,24 @@ while true; do
 done
 
 [[ "$HELP" == 1 ]] && { usage; exit 0; }
+
+if [[ "$SHOWVERSION" == 1 ]]; then
+	# display version on stdout
+	echo "$VERSION"
+
+	# generate output script if requested by caller
+	if [[ -n "$SETUPSCRIPT" ]]; then
+		cat <<EOF >$SETUPSCRIPT
+AGLSETUP_VERSION=$VERSION
+EOF
+	fi
+
+	# IMPORTANT: exit successfully
+	# older aglsetup scripts with version <1.2.0 will fail with option --version
+	exit 0
+fi
+
+info "------------ $SCRIPT: Starting"
 
 verbose "Command line arguments: ${GLOBAL_ARGS[@]}"
 
@@ -509,6 +542,9 @@ DIST_METADIR="$METADIR"
 
 # timestamp
 DIST_SETUP_TS="$(date -u +%Y%m%d_%H%M%S_%Z)"
+
+# topic
+DIST_SETUP_TOPIC="$TOPIC"
 
 # ------------ end of $SCRIPT fragment --------
 EOF
