@@ -31,6 +31,7 @@ manifest=
 verbose=0
 format=bash
 sourcefile=
+timestamp="$(date -u +%Y%m%d_%H%M%S_%Z)"
 
 function info() { echo "$@" >&2; }
 function error() { echo "$BASH_SOURCE: $@" >&2; }
@@ -186,11 +187,12 @@ function _getgitmanifest() {
 	DIST_BUILD_HASH="F${DIST_FEATURES_MD5:0:8}-L${DIST_LAYERS_MD5:0:8}"
 	DIST_BUILD_ID="${DIST_DISTRO_NAME}-${DIST_MACHINE}-F${DIST_FEATURES_MD5:0:8}-L${DIST_LAYERS_MD5:0:8}"
 
+
 	# compute setup manifest path and build TS
 	DIST_SETUP_MANIFEST="$($REALPATH $manifest)"
 
 	# Manifest build timestamp
-	DIST_BUILD_TS="$(date -u +%Y%m%d_%H%M%S_%Z)"
+	DIST_BUILD_TS="$timestamp"
 
 	# what to retain from setup manifest?
 	# to generate the full list: cat setup.manifest  | grep = | cut -f1 -d"=" | awk '{printf("%s ",$1);}'
@@ -202,8 +204,8 @@ function _getgitmanifest() {
 	# extra vars not coming from setup.manifest but generated here
 	declare -A EXTRA_VARS
 	EXTRA_VARS[deploy]="DIST_SETUP_MANIFEST DIST_BUILD_TS DIST_LAYERS DIST_LAYERS_MD5 DIST_BUILD_HASH DIST_BUILD_ID"
-	EXTRA_VARS[target]="DIST_LAYERS DIST_BUILD_HASH DIST_BUILD_ID"
-	EXTRA_VARS[sdk]="DIST_LAYERS DIST_BUILD_HASH DIST_BUILD_ID"
+	EXTRA_VARS[target]="DIST_LAYERS DIST_BUILD_HASH DIST_BUILD_ID DIST_BUILD_TS"
+	EXTRA_VARS[sdk]="DIST_LAYERS DIST_BUILD_HASH DIST_BUILD_ID DIST_BUILD_TS"
 
 	# BITBAKE_VARS may be defined from external file to source (--source arg)
 	# this is used to dump extra vars from inside bitbake recipe
@@ -234,10 +236,11 @@ function getmanifest() {
 
 function __usage() {
 	cat <<EOF >&2
-Usage: $BASH_SOURCE [-v|--verbose] [-f|--format <fmt>] [-m|--mode <mode>] [-s|--source <file>] <setup_manifest_file>
+Usage: $BASH_SOURCE [-v|--verbose] [-f|--format <fmt>] [-t|--timestamp <value>] [-m|--mode <mode>] [-s|--source <file>] <setup_manifest_file>
    Options:
       -v|--verbose: generate comments in the output file
       -s|--source: extra file to source (get extra variables generated from bitbake recipe)
+      -t|--timestamp: set build timestamp (default: current date - may not be the same ts as bitbake)
       -f|--format: specify output format: 'bash' or 'json'
       -m|--mode: specify the destination for the generated manifest
          'deploy' : for the tmp/deploy/images/* directories
@@ -250,7 +253,7 @@ EOF
 
 set -e
 
-tmp=$(getopt -o h,v,m:,f:,s: --long help,verbose,mode:,format:,source: -n "$BASH_SOURCE" -- "$@") || {
+tmp=$(getopt -o h,v,m:,f:,t:,s: --long help,verbose,mode:,format:,timestamp:,source: -n "$BASH_SOURCE" -- "$@") || {
 	error "Invalid arguments."
 	__usage
 	exit 1
@@ -263,6 +266,7 @@ while true; do
 		-v|--verbose) verbose=1; shift ;;
 		-f|--format) format=$2; shift 2;;
 		-m|--mode) mode=$2; shift 2;;
+		-t|--timestamp) timestamp=$2; shift 2;;
 		-s|--source) sourcefile=$2; shift 2;;
 		--) shift; break;;
 		*) fatal "Internal error";;

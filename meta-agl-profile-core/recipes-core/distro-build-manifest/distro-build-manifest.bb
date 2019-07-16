@@ -47,6 +47,7 @@ python do_compilestep1 () {
 
 do_compilestep2 () {
     rc=99
+    timestamp=${DATETIME}
     outfile=${B}/build-info
     if [ -x "${DISTRO_MANIFEST_GENERATOR}" -a -f "${DISTRO_SETUP_MANIFEST}" ]; then
 		rc=0
@@ -57,7 +58,7 @@ do_compilestep2 () {
 				ext=""
 			fi
 			for mode in deploy target sdk; do
-				${DISTRO_MANIFEST_GENERATOR} -m $mode -f $format -s ${B}/bbinfo-${mode} ${DISTRO_SETUP_MANIFEST} >${outfile}-${mode}${ext}
+				${DISTRO_MANIFEST_GENERATOR} -m $mode -f $format -t $timestamp -s ${B}/bbinfo-${mode} ${DISTRO_SETUP_MANIFEST} >${outfile}-${mode}${ext}
 				rc=$?
 				if [ $rc -ne 0 ]; then
 					break
@@ -90,6 +91,9 @@ do_compilestep2 () {
 do_compilestep1[vardeps] += " ${BUILD_MANIFEST_FIELDS_DEPLOY}"
 do_compilestep1[vardeps] += " ${BUILD_MANIFEST_FIELDS_TARGET}"
 do_compilestep1[vardeps] += " ${BUILD_MANIFEST_FIELDS_SDK}"
+
+# avoid errors "ERROR: When reparsing .../distro-build-manifest/distro-build-manifest.bb.do_compile, the basehash value changed from .... to .... . The metadata is not deterministic and this needs to be fixed."
+do_compilestep2[vardepsexclude] = "DATETIME"
 
 # combine the two steps
 python do_compile() {
