@@ -1,0 +1,6 @@
+FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
+
+XEN_REL = "4.13"
+XEN_BRANCH = "stable"
+SRCREV = "721f2c323ca55c77857c93e7275b4a93a0e15e1f"
+
