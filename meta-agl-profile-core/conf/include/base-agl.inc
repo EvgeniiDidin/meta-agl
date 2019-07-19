@@ -16,4 +16,5 @@ ASSUME_PROVIDED_remove = "tar-native"
 # Use static IDs to enable full-filesystem updates
 USERADDEXTENSION = "useradd-staticids"
 USERADD_ERROR_DYNAMIC = "error"
-
+USERADD_GID_TABLES = "files/group"
+USERADD_UID_TABLES = "files/passwd"
