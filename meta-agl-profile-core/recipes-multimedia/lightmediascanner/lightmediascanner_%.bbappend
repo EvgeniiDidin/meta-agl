@@ -5,6 +5,7 @@ FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
 
 SRC_URI += "file://lightmediascanner.service \
             file://plugin-ogg-fix-chucksize-issue.patch \
+            file://0002-switch-from-G_BUS_TYPE_SESSION-to-G_BUS_TYPE_SYSTEM.patch \
             file://dbus-lightmediascanner.conf \
            "
 
@@ -12,28 +13,26 @@ CFLAGS_append = " -D_FILE_OFFSET_BITS=64"
 
 inherit systemd
 
+SYSTEMD_PACKAGES = "${PN}"
+SYSTEMD_SERVICE_${PN} = "lightmediascanner.service"
+SYSTEMD_AUTO_ENABLE_${PN} = "enable"
+
 do_install_append() {
        # Install LMS systemd service
        if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
-              install -m 644 -p -D ${WORKDIR}/lightmediascanner.service ${D}${systemd_user_unitdir}/lightmediascanner.service
-
-              # Execute these manually on behalf of systemctl script (from systemd-systemctl-native.bb)
-              # because it does not support systemd's user mode.
-              mkdir -p ${D}/etc/systemd/user/default.target.wants/
-              ln -sf ${systemd_user_unitdir}/lightmediascanner.service ${D}/etc/systemd/user/dbus-org.lightmediascanner.service
-              ln -sf ${systemd_user_unitdir}/lightmediascanner.service ${D}/etc/systemd/user/default.target.wants/lightmediascanner.service
+              install -d ${D}${systemd_system_unitdir}
+              install -m 644 -p -D ${WORKDIR}/lightmediascanner.service ${D}${systemd_system_unitdir}/lightmediascanner.service
        fi
 
-       install -d ${D}/etc/dbus-1/session.d
-       install -m 0644 ${WORKDIR}/dbus-lightmediascanner.conf ${D}/etc/dbus-1/session.d/lightmediascanner.conf
+       install -d ${D}/etc/dbus-1/system.d
+       install -m 0644 ${WORKDIR}/dbus-lightmediascanner.conf ${D}/etc/dbus-1/system.d/org.lightmediascanner.conf
 }
 
 FILES_${PN} += " \
-    ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', '${systemd_user_unitdir}/lightmediascanner.service', '', d)} \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', '${systemd_system_unitdir}/lightmediascanner.service', '', d)} \
     "
 
-# for DEMO
-EXTRA_OECONF = "--enable-static"
+EXTRA_OECONF = "--enable-static --with-dbus-services=${datadir}/dbus-1/system-services"
 PACKAGECONFIG[mp4] = "--enable-mp4,--disable-mp4,libmp4v2"
 
 # add support MP3 because of the format of music files for AGL CES/ALS2017 Demo
