@@ -1,7 +1,6 @@
 FILESEXTRAPATHS_prepend := "${THISDIR}/${BPN}:"
 
 require recipes-kernel/linux/linux-agl.inc
-require recipes-kernel/linux/linux-agl-4.14.inc
 
 # NOTE: Kprobes need to be disabled until linux-raspberrypi gets updated
 #       to newer than 4.14.104 to avoid lttng-modules failing to build.
