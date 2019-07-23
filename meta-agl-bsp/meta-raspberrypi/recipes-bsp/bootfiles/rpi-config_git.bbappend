@@ -1,5 +1,24 @@
 DISABLE_OVERSCAN = "1"
 
+do_deploy_append_raspberrypi4() {
+    # ENABLE CAN
+    if [ "${ENABLE_CAN}" = "1" ]; then
+        echo "# Enable CAN" >>${DEPLOYDIR}/bcm2835-bootfiles/config.txt
+        echo "dtoverlay=mcp2515-can0,oscillator=16000000,interrupt=25" >>${DEPLOYDIR}/bcm2835-bootfiles/config.txt
+    fi
+
+    # Handle setup with armstub file
+    if [ -n "${ARMSTUB}" ]; then
+        echo "\n# ARM stub configuration" >> ${DEPLOYDIR}/bcm2835-bootfiles/config.txt
+        echo "armstub=${ARMSTUB}" >> ${DEPLOYDIR}/bcm2835-bootfiles/config.txt
+        case "${ARMSTUB}" in
+            *-gic.bin)
+                echo  "enable_gic=1" >> ${DEPLOYDIR}/bcm2835-bootfiles/config.txt
+                ;;
+        esac
+    fi
+}
+
 do_deploy_append() {
     if [ "${ENABLE_CMA}" = "1" ] && [ -n "${CMA_LWM}" ]; then
         sed -i '/#cma_lwm/ c\cma_lwm=${CMA_LWM}' ${DEPLOYDIR}/bcm2835-bootfiles/config.txt
@@ -21,3 +40,4 @@ do_deploy_append_sota() {
 }
 
 ENABLE_UART_raspberrypi3 = "1"
+ENABLE_UART_raspberrypi4 = "1"
