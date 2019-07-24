@@ -4,6 +4,11 @@ DISTRO_FEATURES_append = " agl-medium-arm-compiler"
 # etnaviv support.
 MACHINEOVERRIDES .= ":use-mainline-bsp"
 
+# Disable meta-freescale package architecure mangling, as it causes
+# issues with AGL's explicit setting of DEFAULTTUNE.
+INHERIT_remove = "fsl-dynamic-packagearch"
+MACHINE_SOCARCH = "${TUNE_PKGARCH}"
+
 # Include devicetrees for SOM 1.5 and Hummingboard 2 hardware
 KERNEL_DEVICETREE_append = " \
 	imx6dl-hummingboard-som-v15.dtb imx6q-hummingboard-som-v15.dtb \ 
