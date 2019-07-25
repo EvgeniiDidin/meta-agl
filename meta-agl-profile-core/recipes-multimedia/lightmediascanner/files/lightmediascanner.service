@@ -4,9 +4,8 @@ Description=Lightmediascanner (LMS)
 [Service]
 Type=dbus
 BusName=org.lightmediascanner
-UMask=0077
 SmackProcessLabel=User::App::agl-service-mediascanner
-ExecStart=/usr/bin/lightmediascannerd --startup-scan --db-path=/run/user/%U/usrshr/lightmediascannerd.db --directory=/media --directory=/home/0/Music --directory=/home/0/Videos
+ExecStart=/usr/bin/lightmediascannerd --startup-scan --db-path=/var/volatile/tmp/lightmediascannerd.db --directory=/media --directory=/home/0/Music --directory=/home/0/Videos
 
 [Install]
 WantedBy=multi-user.target
