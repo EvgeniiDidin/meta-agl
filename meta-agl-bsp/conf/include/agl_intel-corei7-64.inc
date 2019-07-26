@@ -14,3 +14,5 @@ WKS_FILE = "systemd-intel-corei7-64-bootdisk.wks"
 
 PREFERRED_VERSION_linux-intel ?= "4.19%"
 PREFERRED_VERSION_linux-intel-rt ?= "4.19%"
+
+SERIAL_CONSOLES_remove = "115200;ttyS2"
