@@ -1,0 +1,254 @@
+From 8ea60075d5310101bebedf09c94902e9d41432ac Mon Sep 17 00:00:00 2001
+From: Veeresh Kadasani <external.vkadasani@jp.adit-jv.com>
+Date: Mon, 29 Jul 2019 17:04:12 +0900
+Subject: [PATCH 1/3] compositor: add output type to weston_output
+
+This enables weston to use multiple types of backend
+Each backends have own output structure for each functions
+To avoid invalid member access, type identifier is needed
+
+Signed-off-by: Veeresh Kadasani <external.vkadasani@jp.adit-jv.com>
+---
+ libweston/compositor-drm.c      | 78 +++++++++++++++++++++++------------------
+ libweston/compositor-fbdev.c    |  2 +-
+ libweston/compositor-headless.c |  2 +-
+ libweston/compositor-rdp.c      |  2 +-
+ libweston/compositor-wayland.c  |  2 +-
+ libweston/compositor-x11.c      |  2 +-
+ libweston/compositor.h          | 12 ++++++-
+ 7 files changed, 60 insertions(+), 40 deletions(-)
+
+diff --git a/libweston/compositor-drm.c b/libweston/compositor-drm.c
+index 3891176..26a480c 100644
+--- a/libweston/compositor-drm.c
++++ b/libweston/compositor-drm.c
+@@ -843,8 +843,9 @@ drm_output_find_by_crtc(struct drm_backend *b, uint32_t crtc_id)
+ 	struct drm_output *output;
+ 
+ 	wl_list_for_each(output, &b->compositor->output_list, base.link) {
+-		if (output->crtc_id == crtc_id)
+-			return output;
++                if(output->base.output_type == OUTPUT_DRM)
++		        if (output->crtc_id == crtc_id)
++			        return output;
+ 	}
+ 
+ 	return NULL;
+@@ -859,7 +860,8 @@ drm_head_find_by_connector(struct drm_backend *backend, uint32_t connector_id)
+ 	wl_list_for_each(base,
+ 			 &backend->compositor->head_list, compositor_link) {
+ 		head = to_drm_head(base);
+-		if (head->connector_id == connector_id)
++		if(base->output->output_type == OUTPUT_DRM)
++		        if (head->connector_id == connector_id)
+ 			return head;
+ 	}
+ 
+@@ -5728,6 +5730,7 @@ drm_output_enable(struct weston_output *base)
+ 	drmModeRes *resources;
+ 	int ret;
+ 
++        output->base.output_type = OUTPUT_DRM;
+ 	resources = drmModeGetResources(b->drm.fd);
+ 	if (!resources) {
+ 		weston_log("drmModeGetResources failed\n");
+@@ -6188,23 +6191,25 @@ drm_backend_update_heads(struct drm_backend *b, struct udev_device *drm_device)
+ 	/* Remove connectors that have disappeared. */
+ 	wl_list_for_each_safe(base, next,
+ 			      &b->compositor->head_list, compositor_link) {
+-		bool removed = true;
++                if (base->output->output_type == OUTPUT_DRM) {
++		        bool removed = true;
+ 
+-		head = to_drm_head(base);
++		        head = to_drm_head(base);
+ 
+-		for (i = 0; i < resources->count_connectors; i++) {
+-			if (resources->connectors[i] == head->connector_id) {
+-				removed = false;
+-				break;
+-			}
+-		}
++		        for (i = 0; i < resources->count_connectors; i++) {
++			        if (resources->connectors[i] == head->connector_id) {
++				        removed = false;
++				        break;
++			        }
++		        }
+ 
+-		if (!removed)
+-			continue;
++		        if (!removed)
++			        continue;
+ 
+-		weston_log("DRM: head '%s' (connector %d) disappeared.\n",
+-			   head->base.name, head->connector_id);
+-		drm_head_destroy(head);
++		        weston_log("DRM: head '%s' (connector %d) disappeared.\n",
++			           head->base.name, head->connector_id);
++		        drm_head_destroy(head);
++                }
+ 	}
+ 
+ 	drm_backend_update_unused_outputs(b, resources);
+@@ -6309,23 +6314,26 @@ session_notify(struct wl_listener *listener, void *data)
+ 		 * pending frame callbacks. */
+ 
+ 		wl_list_for_each(output, &compositor->output_list, base.link) {
+-			output->base.repaint_needed = false;
+-			if (output->cursor_plane)
+-				drmModeSetCursor(b->drm.fd, output->crtc_id,
+-						 0, 0, 0);
++		        if(output->base.output_type == OUTPUT_DRM) {
++                                output->base.repaint_needed = false;
++                                if (output->cursor_plane)
++                                        drmModeSetCursor(b->drm.fd, output->crtc_id,
++                                                        0, 0, 0);
++                        }
+ 		}
+-
+-		output = container_of(compositor->output_list.next,
+-				      struct drm_output, base.link);
+-
+-		wl_list_for_each(plane, &b->plane_list, link) {
+-			if (plane->type != WDRM_PLANE_TYPE_OVERLAY)
+-				continue;
+-
+-			drmModeSetPlane(b->drm.fd,
+-					plane->plane_id,
+-					output->crtc_id, 0, 0,
+-					0, 0, 0, 0, 0, 0, 0, 0);
++                if(output->base.output_type == OUTPUT_DRM) {
++		        output = container_of(compositor->output_list.next,
++                                struct drm_output, base.link);
++
++		        wl_list_for_each(plane, &b->plane_list, link) {
++                                if (plane->type != WDRM_PLANE_TYPE_OVERLAY)
++                                        continue;
++
++                                drmModeSetPlane(b->drm.fd,
++                                                plane->plane_id,
++                                                output->crtc_id, 0, 0,
++                                                0, 0, 0, 0, 0, 0, 0, 0);
++	                }
+ 		}
+ 	}
+ }
+@@ -6649,7 +6657,8 @@ switch_to_gl_renderer(struct drm_backend *b)
+ 	}
+ 
+ 	wl_list_for_each(output, &b->compositor->output_list, base.link)
+-		pixman_renderer_output_destroy(&output->base);
++	        if(output->base.output_type == OUTPUT_DRM)
++                        pixman_renderer_output_destroy(&output->base);
+ 
+ 	b->compositor->renderer->destroy(b->compositor);
+ 
+@@ -6661,7 +6670,8 @@ switch_to_gl_renderer(struct drm_backend *b)
+ 	}
+ 
+ 	wl_list_for_each(output, &b->compositor->output_list, base.link)
+-		drm_output_init_egl(output, b);
++		if(output->base.output_type == OUTPUT_DRM)
++		        drm_output_init_egl(output, b);
+ 
+ 	b->use_pixman = 0;
+ 
+diff --git a/libweston/compositor-fbdev.c b/libweston/compositor-fbdev.c
+index a71b7bd..8edb50b 100644
+--- a/libweston/compositor-fbdev.c
++++ b/libweston/compositor-fbdev.c
+@@ -501,7 +501,7 @@ fbdev_output_enable(struct weston_output *base)
+ 	struct fbdev_head *head;
+ 	int fb_fd;
+ 	struct wl_event_loop *loop;
+-
++        output->base.output_type = OUTPUT_FBDEV;
+ 	head = fbdev_output_get_head(output);
+ 
+ 	/* Create the frame buffer. */
+diff --git a/libweston/compositor-headless.c b/libweston/compositor-headless.c
+index 61a5bd9..f633cd7 100644
+--- a/libweston/compositor-headless.c
++++ b/libweston/compositor-headless.c
+@@ -159,7 +159,7 @@ headless_output_enable(struct weston_output *base)
+ 	loop = wl_display_get_event_loop(b->compositor->wl_display);
+ 	output->finish_frame_timer =
+ 		wl_event_loop_add_timer(loop, finish_frame_handler, output);
+-
++        output->base.output_type = OUTPUT_HEADLESS;
+ 	if (b->use_pixman) {
+ 		output->image_buf = malloc(output->base.current_mode->width *
+ 					   output->base.current_mode->height * 4);
+diff --git a/libweston/compositor-rdp.c b/libweston/compositor-rdp.c
+index 134e729..429370c 100644
+--- a/libweston/compositor-rdp.c
++++ b/libweston/compositor-rdp.c
+@@ -554,7 +554,7 @@ rdp_output_enable(struct weston_output *base)
+ 	struct rdp_output *output = to_rdp_output(base);
+ 	struct rdp_backend *b = to_rdp_backend(base->compositor);
+ 	struct wl_event_loop *loop;
+-
++        output->base.output_type = OUTPUT_RDP;
+ 	output->shadow_surface = pixman_image_create_bits(PIXMAN_x8r8g8b8,
+ 							  output->base.current_mode->width,
+ 							  output->base.current_mode->height,
+diff --git a/libweston/compositor-wayland.c b/libweston/compositor-wayland.c
+index e80ecc1..808fc8f 100644
+--- a/libweston/compositor-wayland.c
++++ b/libweston/compositor-wayland.c
+@@ -1221,7 +1221,7 @@ wayland_output_enable(struct weston_output *base)
+ 	struct wayland_backend *b = to_wayland_backend(base->compositor);
+ 	enum mode_status mode_status;
+ 	int ret = 0;
+-
++        output->base.output_type = OUTPUT_WAYLAND;
+ 	weston_log("Creating %dx%d wayland output at (%d, %d)\n",
+ 		   output->base.current_mode->width,
+ 		   output->base.current_mode->height,
+diff --git a/libweston/compositor-x11.c b/libweston/compositor-x11.c
+index 4a9d068..afbaa73 100644
+--- a/libweston/compositor-x11.c
++++ b/libweston/compositor-x11.c
+@@ -933,7 +933,7 @@ x11_output_enable(struct weston_output *base)
+ 		XCB_EVENT_MASK_STRUCTURE_NOTIFY,
+ 		0
+ 	};
+-
++        output->base.output_type = OUTPUT_X11;
+ 	if (!b->no_input)
+ 		values[0] |=
+ 			XCB_EVENT_MASK_KEY_PRESS |
+diff --git a/libweston/compositor.h b/libweston/compositor.h
+index 8b7a102..60feda3 100644
+--- a/libweston/compositor.h
++++ b/libweston/compositor.h
+@@ -169,6 +169,16 @@ enum dpms_enum {
+ 	WESTON_DPMS_OFF
+ };
+ 
++/* bit compatible with drm definitions. */
++enum output_type {
++	OUTPUT_DRM,
++	OUTPUT_FBDEV,
++	OUTPUT_HEADLESS,
++	OUTPUT_RDP,
++	OUTPUT_WAYLAND,
++	OUTPUT_X11,
++	OUTPUT_WALTHAM
++};
+ /** Represents a monitor
+  *
+  * This object represents a monitor (hardware backends like DRM) or a window
+@@ -201,7 +211,7 @@ struct weston_head {
+ struct weston_output {
+ 	uint32_t id;
+ 	char *name;
+-
++        enum output_type output_type;
+ 	/** Matches the lifetime from the user perspective */
+ 	struct wl_signal user_destroy_signal;
+ 
+-- 
+2.7.4
+

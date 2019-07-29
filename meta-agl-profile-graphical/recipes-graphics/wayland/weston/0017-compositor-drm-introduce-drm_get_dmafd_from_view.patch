@@ -1,21 +1,21 @@
-From 3dbffb783f44752ec221a2ee7a94a21934d681a2 Mon Sep 17 00:00:00 2001
-From: Wataru Mizuno <wmizuno@jp.adit-jv.com>
-Date: Tue, 10 Apr 2018 12:22:07 +0900
-Subject: [PATCH 5/5] compositor-drm: introduce drm_get_dmafd_from_view
+From 020508b35b2bf6c89d62961eb95e2f81d6381ab5 Mon Sep 17 00:00:00 2001
+From: Veeresh Kadasani <external.vkadasani@jp.adit-jv.com>
+Date: Mon, 29 Jul 2019 17:07:00 +0900
+Subject: [PATCH 2/3] compositor-drm: introduce drm_get_dmafd_from_view
 
 This API enables to get dmafd from weston_view
 
-Signed-off-by: Wataru Mizuno <wmizuno@jp.adit-jv.com>
+Signed-off-by: Veeresh Kadasani <external.vkadasani@jp.adit-jv.com>
 ---
- libweston/compositor-drm.c | 80 ++++++++++++++++++++++++++++++++++++++++++++++
- libweston/compositor-drm.h |  7 ++++
- 2 files changed, 87 insertions(+)
+ libweston/compositor-drm.c | 57 ++++++++++++++++++++++++++++++++++++++++++++++
+ libweston/compositor-drm.h |  7 ++++++
+ 2 files changed, 64 insertions(+)
 
 diff --git a/libweston/compositor-drm.c b/libweston/compositor-drm.c
-index 0b5b4c4..77f2ece 100644
+index 26a480c..2b99db5 100644
 --- a/libweston/compositor-drm.c
 +++ b/libweston/compositor-drm.c
-@@ -2430,6 +2430,85 @@ drm_output_set_seat(struct weston_output *base,
+@@ -5420,6 +5420,62 @@ drm_output_set_seat(struct weston_output *base,
  }
  
  static int
@@ -27,6 +27,7 @@ index 0b5b4c4..77f2ece 100644
 +	struct gbm_bo *bo;
 +	struct drm_fb *current;
 +	struct linux_dmabuf_buffer *dmabuf;
++	bool is_opaque = drm_view_is_opaque(ev);
 +	uint32_t format;
 +	int fd, ret;
 +
@@ -36,57 +37,34 @@ index 0b5b4c4..77f2ece 100644
 +	}
 +
 +	if(dmabuf = linux_dmabuf_buffer_get(buffer->resource)) {
-+		struct gbm_import_fd_data gbm_dmabuf = {
-+			.fd     = dmabuf->attributes.fd[0],
-+			.width  = dmabuf->attributes.width,
-+			.height = dmabuf->attributes.height,
-+			.stride = dmabuf->attributes.stride[0],
-+			.format = dmabuf->attributes.format
-+		};
-+
-+		bo = gbm_bo_import(b->gbm, GBM_BO_IMPORT_FD,
-+				   &gbm_dmabuf, GBM_BO_USE_SCANOUT);
-+		if (!bo) {
-+			weston_log("failed to get gbm_bo\n");
-+			return -1;
-+		}
-+
-+		current = zalloc(sizeof *current);
-+		current->handle = gbm_bo_get_handle(bo).s32;
-+		if (!current->handle) {
-+			fprintf(stderr, "failed to get drm_handle\n");
++		current = drm_fb_get_from_dmabuf(dmabuf, b, is_opaque);
++		if (!current)
++		{
++			fprintf(stderr, "failed to get drm_fb from dmabuf\n");
 +			return -1;
 +		}
 +	}
 +	else if(ev->surface->buffer_ref.buffer->legacy_buffer) {
 +		bo = gbm_bo_import(b->gbm, GBM_BO_IMPORT_WL_BUFFER,
 +				   buffer->resource, GBM_BO_USE_SCANOUT);
-+
 +		if (!bo) {
 +			weston_log("failed to get gbm_bo\n");
 +			return -1;
 +		}
++		current = drm_fb_get_from_bo(bo, b, is_opaque, BUFFER_CLIENT);
 +
-+		format = gbm_bo_get_format(bo);
-+		if (!format) {
-+			weston_log("failed to get format\n");
-+			gbm_bo_destroy(bo);
-+			return -1;
-+		}
-+
-+		current = drm_fb_get_from_bo(bo, b, format);
 +		if (!current) {
-+			weston_log("failed to get drm_fb\n");
-+			gbm_bo_destroy(bo);
++			weston_log("failed to get drm_fb from bo\n");
 +			return -1;
 +		}
++
 +	}
 +	else {
 +		weston_log("Buffer is not supported\n");
 +		return -1;
 +	}
 +
-+	ret = drmPrimeHandleToFD(b->drm.fd, current->handle,
++	ret = drmPrimeHandleToFD(b->drm.fd, current->handles[0],
 +				 DRM_CLOEXEC, &fd);
 +	free(current);
 +	if (ret) {
@@ -96,12 +74,11 @@ index 0b5b4c4..77f2ece 100644
 +
 +	return fd;
 +}
-+
 +static int
- drm_output_enable(struct weston_output *base)
+ drm_output_init_gamma_size(struct drm_output *output)
  {
- 	struct drm_output *output = to_drm_output(base);
-@@ -3199,6 +3278,7 @@ static const struct weston_drm_output_api api = {
+ 	struct drm_backend *backend = to_drm_backend(output->base.compositor);
+@@ -6696,6 +6752,7 @@ static const struct weston_drm_output_api api = {
  	drm_output_set_mode,
  	drm_output_set_gbm_format,
  	drm_output_set_seat,
@@ -110,7 +87,7 @@ index 0b5b4c4..77f2ece 100644
  
  static struct drm_backend *
 diff --git a/libweston/compositor-drm.h b/libweston/compositor-drm.h
-index 2e2995a..fe00bd5 100644
+index 9c37c15..a82a2a9 100644
 --- a/libweston/compositor-drm.h
 +++ b/libweston/compositor-drm.h
 @@ -78,6 +78,13 @@ struct weston_drm_output_api {
@@ -118,7 +95,7 @@ index 2e2995a..fe00bd5 100644
  	void (*set_seat)(struct weston_output *output,
  			 const char *seat);
 +
-+	/** Get the dma fd from drm view.
++        /** Get the dma fd from drm view.
 +	 *
 +         *  The dma fd is got from weston_view.
 +	 *  Returns fd on success, -1 on failure.

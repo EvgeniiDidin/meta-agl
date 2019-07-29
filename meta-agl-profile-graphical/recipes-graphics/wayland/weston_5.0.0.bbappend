@@ -18,11 +18,10 @@ SRC_URI_append = "\
     file://0014-simple-shm-remove-ivi-application-support.patch \
     file://0015-window-client-remove-ivi-application-support.patch \
     file://use-XDG_RUNTIMESHARE_DIR.patch \
+    file://0016-compositor-add-output-type-to-weston_output.patch \
+    file://0017-compositor-drm-introduce-drm_get_dmafd_from_view.patch \
+    file://0018-compositor-drm-get-stride-from-drm_get_dma_fd_from_view.patch \
     "
-
-# FIXME: The following patches need to be updated for weston 5.0.0:
-#    file://0018-compositor-add-output-type-to-weston_output.patch
-#    file://0019-compositor-drm-introduce-drm_get_dmafd_from_view.patch
 
 
 EXTRA_OECONF_append = " --enable-sys-uid"
