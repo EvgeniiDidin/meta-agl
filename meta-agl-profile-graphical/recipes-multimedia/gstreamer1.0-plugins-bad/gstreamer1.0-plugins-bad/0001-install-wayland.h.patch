@@ -1,0 +1,33 @@
+From 0adaad552a15dfb03d41774c4cf45b8c9a038640 Mon Sep 17 00:00:00 2001
+From: Veeresh Kadasani <external.vkadasani@jp.adit-jv.com>
+Date: Wed, 10 Jul 2019 14:36:37 +0900
+Subject: [PATCH 1/2] install wayland.h
+
+Signed-off-by: Veeresh Kadasani <external.vkadasani@jp.adit-jv.com>
+---
+ gst-libs/gst/wayland/Makefile.am | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
+
+diff --git a/gst-libs/gst/wayland/Makefile.am b/gst-libs/gst/wayland/Makefile.am
+index 743a489..c59b06d 100644
+--- a/gst-libs/gst/wayland/Makefile.am
++++ b/gst-libs/gst/wayland/Makefile.am
+@@ -5,6 +5,8 @@ libgstwayland_@GST_API_VERSION@_la_SOURCES = wayland.c
+ libgstwayland_@GST_API_VERSION@includedir = \
+ 	$(includedir)/gstreamer-@GST_API_VERSION@/gst/wayland
+
++libgstwayland_@GST_API_VERSION@include_HEADERS = wayland.h
++
+ libgstwayland_@GST_API_VERSION@_la_CFLAGS = \
+ 	$(GST_PLUGINS_BAD_CFLAGS) \
+ 	$(GST_PLUGINS_BASE_CFLAGS) \
+@@ -21,7 +23,3 @@ libgstwayland_@GST_API_VERSION@_la_LDFLAGS = \
+ 	$(GST_LIB_LDFLAGS) \
+ 	$(GST_ALL_LDFLAGS) \
+ 	$(GST_LT_LDFLAGS)
+-
+-noinst_HEADERS = \
+-	wayland.h
+-
+--
+2.7.4
