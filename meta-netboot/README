@@ -8,10 +8,19 @@ Content and usage
 
 This layer creates a new supplementary initrd image which can be downloaded through TFTP with the kernel.
 At boot time, the init script will try to mount the rootfs based on the following kernel command line parameters:
+
 * nbd.server: IP address to reach the NBD server
-* nbd.port: TCP port on which server is listening (default: 10809)
 * nbd.dev: nbd device to use (default: /dev/nbd0)
 * nbd.debug: activate debug mode (init script is then interruptible)
+
+For nbd v2:
+
+* nbd.port: TCP port on which server is listening (default: 10809)
+
+For nbd v3:
+
+* nbd.namev3: The name of the image served by nbd-server.
+
 
 The layer meta-netboot contains recipes for the following components:
 * busybox: activate the built-in NBD client
