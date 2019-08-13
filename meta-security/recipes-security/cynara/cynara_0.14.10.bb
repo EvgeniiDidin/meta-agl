@@ -19,9 +19,7 @@ SRC_URI += " \
 "
 
 DEPENDS = " \
-glib-2.0 \
 systemd \
-zip \
 "
 
 PACKAGECONFIG ??= ""

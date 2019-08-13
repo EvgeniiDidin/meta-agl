@@ -1,9 +1,9 @@
 FILESEXTRAPATHS_append := ":${THISDIR}/dbus"
 
-SRC_URI_append = "file://dbus.service \
-                  file://dbus.socket \
-                  file://dbus_env.conf \
-                 "
+SRC_URI += "file://dbus.service \
+            file://dbus.socket \
+            file://dbus_env.conf \
+            "
 
 inherit systemd
 
