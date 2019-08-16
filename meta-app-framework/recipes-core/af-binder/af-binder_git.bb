@@ -21,7 +21,7 @@ pkg_postinst_${PN}() {
 do_install_append_agl-devel_class-target() {
     if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
         install -d -m 0755 ${D}${systemd_system_unitdir}/multi-user.target.wants
-        ln -s ../afs-supervisor.service ${D}${systemd_system_unitdir}/multi-user.target.wants/afs-supervisor.service
+        ln -s ../afm-api-supervisor.service ${D}${systemd_system_unitdir}/multi-user.target.wants/afm-api-supervisor.service
     fi
 }
 
