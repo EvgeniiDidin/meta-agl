@@ -6,6 +6,8 @@ SRC_URI_append_class-target = "\
    file://0003-Handle-unavailability-of-policy-results-for-broadcas.patch \
    file://0004-Add-own-rule-result-unavailability-handling.patch \
    file://0005-Perform-Cynara-runtime-policy-checks-by-default.patch \
+   file://0006-Fix-gcc-8-warnings.patch \
+   file://0007-Fix-SIGSEGV-on-disconnections.patch \
 "
 
 DEPENDS_append_class-target = " cynara smack"
