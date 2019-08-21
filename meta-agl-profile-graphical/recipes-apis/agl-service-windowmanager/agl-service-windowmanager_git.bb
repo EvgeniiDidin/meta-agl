@@ -30,4 +30,4 @@ do_install_append() {
 
 FILES_${PN} += "${systemd_system_unitdir}"
 
-REDEPENDS_${PN} += "weston-ready"
+RDEPENDS_${PN} += "weston-ready"
