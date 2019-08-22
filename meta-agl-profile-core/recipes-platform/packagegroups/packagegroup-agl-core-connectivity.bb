@@ -14,7 +14,8 @@ PKGGROUP_ZEROCONF = "${@bb.utils.contains('DISTRO_FEATURES', 'zeroconf', 'packag
 RDEPENDS_${PN} += "\
     bluez5-obex \
     dhcp-server \
-    ${@bb.utils.contains('VIRTUAL-RUNTIME_net_manager','connman','connman connman-client connman-tests connman-tools connman-ncurses','',d)} \
+    ${@bb.utils.contains('VIRTUAL-RUNTIME_net_manager','connman','connman connman-client connman-tests \
+        connman-tools connman-ncurses connman-plugin-session-policy-local','',d)} \
     ${@bb.utils.contains("DISTRO_FEATURES", "3g", "libqmi", "", d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'agl-devel', '${PKGGROUP_ZEROCONF}', '', d)} \
     neard \
