@@ -38,5 +38,3 @@ SECURITY_CFLAGS_pn-libatasmart = ""
 SECURITY_LDFLAGS_pn-libatasmart = ""
 
 WKS_FILE = "sdimage-bootpart-uuid.wks"
-
-AGL_EXTRA_IMAGE_FSTYPES = "wic.xz wic.bmap wic.xz.sha256sum"

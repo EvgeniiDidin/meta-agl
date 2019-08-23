@@ -5,7 +5,6 @@ IMAGE_INSTALL_append = " \
         intel-vaapi-driver \
         gstreamer1.0-vaapi"
 
-AGL_EXTRA_IMAGE_FSTYPES = "wic.xz wic.bmap wic.xz.sha256sum ext4 wic.vmdk"
 INITRD_LIVE = "${DEPLOY_DIR_IMAGE}/${INITRD_IMAGE_LIVE}-${MACHINE}.ext4.gz"
 
 # Modify this file under meta-agl-bsp/meta-intel/wic to change the

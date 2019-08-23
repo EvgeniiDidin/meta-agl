@@ -1,7 +1,7 @@
 # This config is for the Sancloud BBE, adapted from the config provider for the
 # standard Beaglebone
 
-AGL_DEFAULT_IMAGE_FSTYPES = "tar.xz wic.xz wic.bmap"
+#AGL_DEFAULT_IMAGE_FSTYPES += "tar.xz"
 
 CORE_IMAGE_EXTRA_INSTALL += "packagegroup-machine-base"
 

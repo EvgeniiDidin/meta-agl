@@ -40,7 +40,6 @@ DISTRO_FEATURES_append = " sota"
 
 # Create WIC images to write to SD cards.
 WKS_FILE = "sdimage-raspberrypi.wks"
-AGL_EXTRA_IMAGE_FSTYPES = "wic.xz wic.bmap wic.xz.sha256sum"
 IMAGE_BOOT_FILES = "bcm2835-bootfiles/* \
                  ${@make_dtb_boot_files(d)} \
                  ${@bb.utils.contains('KERNEL_IMAGETYPE', 'uImage', \
