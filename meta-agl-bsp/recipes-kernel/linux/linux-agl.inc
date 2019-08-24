@@ -92,3 +92,6 @@ KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/iiodevice.cfg"
 SRC_URI_append = " file://rtc.cfg"
 KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/rtc.cfg"
 
+# netfilter options
+SRC_URI_append = " file://netfilter.cfg"
+KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/netfilter.cfg"
