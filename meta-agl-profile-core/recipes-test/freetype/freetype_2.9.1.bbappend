@@ -30,3 +30,6 @@ FILES_${PN}-demos = "\
    ${bindir}/ftvalid \
    ${bindir}/ttdebug \
 "
+
+# enable pixmap/libpng support to allow color emojis
+PACKAGECONFIG_append = " pixmap"
