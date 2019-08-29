@@ -25,6 +25,7 @@ QT_LITE = " \
     qtsvg-plugins \
     qtwebsockets \
     qtwebsockets-qmlplugins \
+    qtcompositor-conf \
 "
 
 RDEPENDS_${PN}_append = " \
