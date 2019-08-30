@@ -2,6 +2,8 @@
 GPU_MEM = "128"
 
 ENABLE_CMA = "1"
+# Add CMA to the kernel arguments for SOTA
+OSTREE_KERNEL_ARGS_sota_append = " cma=256M"
 CMA_LWM = "16"
 CMA_HWM = "32"
 
