@@ -1,0 +1,35 @@
+From 152c9ed968124c253f0be25b76c2a083a21af37e Mon Sep 17 00:00:00 2001
+From: Liu Wenlong <liuwl.fnst@cn.fujitsu.com>
+Date: Mon, 26 Aug 2019 17:08:22 +0800
+Subject: [PATCH] server: Fix fake "Address already in use" error
+
+In the current workflow, socket file will be deleted if it already exists.
+However, if the socket file is a symbolic link and the file that it refers
+to doesn't exist, we will got "Address already in use" because bind()
+thinks the socket file exists and won't create it.
+
+Now, use lstat() to determine whether the socket file exists.
+
+Upstream-Status: Backport [https://gitlab.freedesktop.org/wayland/wayland/merge_requests/35]
+
+Signed-off-by: Liu Wenlong <liuwl.fnst@cn.fujitsu.com>
+---
+ src/wayland-server.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/wayland-server.c b/src/wayland-server.c
+index 83b984f..3bc6ed7 100644
+--- a/src/wayland-server.c
++++ b/src/wayland-server.c
+@@ -1393,7 +1393,7 @@ wl_socket_lock(struct wl_socket *socket)
+ 		goto err_fd;
+ 	}
+ 
+-	if (stat(socket->addr.sun_path, &socket_stat) < 0 ) {
++	if (lstat(socket->addr.sun_path, &socket_stat) < 0 ) {
+ 		if (errno != ENOENT) {
+ 			wl_log("did not manage to stat file %s\n",
+ 				socket->addr.sun_path);
+-- 
+2.7.4
+
