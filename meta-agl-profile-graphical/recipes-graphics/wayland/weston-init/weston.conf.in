@@ -1,8 +1,14 @@
+[Unit]
+Conflicts=getty@tty@WESTONTTY@.service
+[Service]
 Type=notify
+User=@WESTONUSER@
+Group=@WESTONGROUP@
 Environment="XDG_RUNTIME_DIR=@XDG_RUNTIME_DIR@"
 Environment="XDG_RUNTIMESHARE_DIR=@XDG_RUNTIME_DIR@/share"
 ExecStartPre=/bin/mkdir -p @XDG_RUNTIME_DIR@/share
 ExecStartPre=+/usr/bin/chsmack -a User::App-Shared -t @XDG_RUNTIME_DIR@/share
+ExecStart=@WESTONSTART@
 TTYPath=/dev/tty@WESTONTTY@
 StandardInput=tty
 TTYReset=yes
