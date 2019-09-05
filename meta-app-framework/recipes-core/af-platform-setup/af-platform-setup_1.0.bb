@@ -10,7 +10,7 @@ S = "${WORKDIR}"
 do_install() {
 	d=${D}${systemd_system_unitdir}/systemd-udevd.service.d
 	install -d $d
-	install ${S}/udev-shared.conf $d
+	install -m 0644 ${S}/udev-shared.conf $d
 }
 
 FILES_${PN} = "${systemd_system_unitdir}"
