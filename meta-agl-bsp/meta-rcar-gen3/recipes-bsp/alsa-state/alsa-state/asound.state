@@ -98,8 +98,8 @@ state.ak4613 {
 	control.7 {
 		iface MIXER
 		name 'DVC Out Playback Volume'
-		value.0 4194304
-		value.1 4194304
+		value.0 1677721
+		value.1 1677721
 		comment {
 			access 'read write'
 			type INTEGER
@@ -220,8 +220,8 @@ state.ak4613 {
 	control.14 {
 		iface MIXER
 		name 'DVC In Capture Volume'
-		value.0 0
-		value.1 0
+		value.0 838861
+		value.1 838861
 		comment {
 			access 'read write'
 			type INTEGER
