@@ -56,6 +56,12 @@ pkg_postinst_${PN}_with-lsm-smack() {
     chsmack -t $D${sysconfdir}
     chsmack -a 'System::Shared' $D${sysconfdir}
 
+    # Same for /media. Any daemon running as "System" will get write access
+    # to everything.
+    install -d $D/media
+    chsmack -t $D/media
+    chsmack -a 'System::Shared' $D/media
+
     # Same for /var. Any daemon running as "System" will get write access
     # to everything.
     install -d $D${localstatedir}
