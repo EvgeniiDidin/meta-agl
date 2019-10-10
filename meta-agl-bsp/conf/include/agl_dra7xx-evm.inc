@@ -2,7 +2,7 @@
 #-------------------------------------------------
 ## Graphics section ##
 #-------------------------------------------------
-PACKAGES_GFX_${MACHINE} = "omapdrm-pvr"
+PACKAGES_GFX_${MACHINE} = "ti-sgx-ddk-km"
 
 # Enable Gfx Pkgs
 MACHINE_FEATURES_append = " sgx"

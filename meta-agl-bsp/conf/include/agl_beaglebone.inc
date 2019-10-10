@@ -3,7 +3,7 @@
 #-------------------------------------------------
 ## Graphics section ##
 #-------------------------------------------------
-PACKAGES_GFX = "omapdrm-pvr"
+PACKAGES_GFX = "ti-sgx-ddk-km"
 IMAGE_INSTALL_append = " ${PACKAGES_GFX}"
 
 
