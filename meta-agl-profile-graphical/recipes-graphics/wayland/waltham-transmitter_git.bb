@@ -7,7 +7,7 @@ LIC_FILES_CHKSUM = "file://waltham-transmitter/COPYING;md5=f21c9af4de068fb53b83f
 DEPENDS += "libdrm virtual/kernel wayland wayland-native waltham weston gstreamer1.0 gstreamer gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad wayland-ivi-extension"
 
 SRC_URI = "git://gerrit.automotivelinux.org/gerrit/src/weston-ivi-plugins.git;protocol=https;branch=${AGL_BRANCH}"
-SRCREV = "0fc0e974749f4ce35e14c23b050aa8fe693c3ce5"
+SRCREV = "2309102f95145d04dad67bf4d00e4c217aea8470"
 
 S = "${WORKDIR}/git/"
 
@@ -20,11 +20,11 @@ inherit pkgconfig cmake
 
 do_install_append () {
    install -d ${D}/etc/xdg/weston/
-   install ${S}/${WALTHAM_PIPELINE_TRANSMITTER} ${D}/etc/xdg/weston/pipeline.cfg
+   install ${S}/${WALTHAM_PIPELINE_TRANSMITTER} ${D}/etc/xdg/weston/transmitter_pipeline.cfg
    install ${S}/${WALTHAM_PIPELINE_RECEIVER} ${D}/etc/xdg/weston/receiver_pipeline.cfg
 
-   sed -i -e "s/YOUR_RECIEVER_IP/${WALTHAM_RECIEVER_IP}/g" ${D}/etc/xdg/weston/pipeline.cfg
-   sed -i -e "s/YOUR_RECIEVER_PORT/${WALTHAM_RECEIVER_PORT}/g" ${D}/etc/xdg/weston/pipeline.cfg
+   sed -i -e "s/YOUR_RECIEVER_IP/${WALTHAM_RECIEVER_IP}/g" ${D}/etc/xdg/weston/transmitter_pipeline.cfg
+   sed -i -e "s/YOUR_RECIEVER_PORT/${WALTHAM_RECEIVER_PORT}/g" ${D}/etc/xdg/weston/transmitter_pipeline.cfg
    sed -i -e "s/YOUR_RECIEVER_PORT/${WALTHAM_RECEIVER_PORT}/g" ${D}/etc/xdg/weston/receiver_pipeline.cfg
 
 }
