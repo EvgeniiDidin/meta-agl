@@ -10,7 +10,7 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=3b83ef96387f14655fc854ddc3c6bd57"
 
 SRC_URI = "git://gerrit.automotivelinux.org/gerrit/src/app-framework-main;protocol=https;branch=${AGL_BRANCH}"
 
-SRCREV = "4f888279f132faf35caf92d4828f134f6daeb9a1"
+SRCREV = "956e7c57d15bde67d7392aab01a9c0fc6906bbd4"
 PV = "${AGL_BRANCH}+git${SRCPV}"
 
 S = "${WORKDIR}/git"
@@ -22,4 +22,9 @@ afb_binding_dir = "${libdir}/afb"
 systemd_units_root = "/var/local/lib/systemd"
 
 CFLAGS_append_agl-devel = " -DAGL_DEVEL"
+# only install sample keys in agl-devel mode
+# for production you need to deploy real keys
+EXTRA_OECMAKE_append_agl-sign-wgts = " ${@bb.utils.contains('DISTRO_FEATURES', 'agl-devel', '-DINSTALL_SAMPLE_KEYS=ON', '-DINSTALL_SAMPLE_KEYS=OFF', d)}"
+
+
 

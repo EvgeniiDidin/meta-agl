@@ -23,5 +23,6 @@ do_install_append() {
 
 PACKAGES = "${PN}-tools ${PN}-tools-dbg"
 FILES_${PN}-tools = "${bindir}/wgtpkg-* ${afm_confdir}/*"
+FILES_${PN}-tools_append_agl-sign-wgts = " ${datadir}/afm"
 FILES_${PN}-tools-dbg = "${bindir}/.debug/wgtpkg-*"
 

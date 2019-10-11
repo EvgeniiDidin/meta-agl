@@ -16,7 +16,7 @@ RDEPENDS_${PN}_class-target += "af-binder-tools nss-localuser cynagoauth"
 
 PACKAGE_WRITE_DEPS_append_with-lsm-smack = " smack-native libcap-native"
 
-EXTRA_OECMAKE_class-native  = "\
+EXTRA_OECMAKE_append_class-native  = "\
 	-DUSE_LIBZIP=1 \
 	-DUSE_SIMULATION=1 \
 	-DUSE_SDK=1 \
@@ -26,7 +26,7 @@ EXTRA_OECMAKE_class-native  = "\
 	-Dafm_datadir=${afm_datadir} \
 "
 
-EXTRA_OECMAKE = "\
+EXTRA_OECMAKE_append_class-target = "\
 	-DUSE_LIBZIP=1 \
 	-DUSE_SIMULATION=0 \
 	-DUSE_SDK=0 \
@@ -114,6 +114,7 @@ pkg_postinst_ontarget_${PN}_append_with-lsm-smack() {
     chsmack -a 'System::Shared' -t $D${afm_datadir}/icons
 }
 FILES_${PN} += "${systemd_units_root}/* ${systemd_system_unitdir} ${systemd_user_unitdir}"
+FILES_${PN}_append_agl-sign-wgts = " ${datadir}/afm"
 
 PACKAGES =+ "${PN}-binding ${PN}-binding-dbg"
 FILES_${PN}-binding = " ${afb_binding_dir}/afm-main-binding.so "

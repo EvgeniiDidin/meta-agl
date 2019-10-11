@@ -153,4 +153,12 @@ do_install() {
 addtask aglwgt_deploy  before do_package after do_install
 addtask aglwgt_package before do_aglwgt_deploy after do_compile
 
+# Signature keys
+# These are default keys for development purposes !
+# Change it for production.
+WGTPKG_AUTOSIGN_0_agl-sign-wgts ??= "${WORKDIR}/recipe-sysroot-native/usr/share/afm/keys/developer.key.pem:${WORKDIR}/recipe-sysroot-native/usr/share/afm/certs/developer.cert.pem"
+WGTPKG_AUTOSIGN_1_agl-sign-wgts ??= "${WORKDIR}/recipe-sysroot-native/usr/share/afm/keys/platform.key.pem:${WORKDIR}/recipe-sysroot-native/usr/share/afm/certs/platform.cert.pem"
+
+export WGTPKG_AUTOSIGN_0
+export WGTPKG_AUTOSIGN_1
 
