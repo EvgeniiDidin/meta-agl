@@ -8,3 +8,7 @@ DTB_SUFFIX = "r8a7796-m3ulcb"
 BBMASK += "gles-user-module|kernel-module-gles|wayland-kms|libgbm"
 # Mask MMP recipes
 BBMASK += "kernel-module-uvcs-drv|omx-user-module"
+
+DISTRO_FEATURES_append = "${@bb.utils.contains('AGL_XEN_WANTED', '1', ' xen', '', d)}"
+IMAGE_INSTALL_append = "${@bb.utils.contains('AGL_XEN_WANTED', '1', ' xen-base xen-mkimage', '', d)}"
+
