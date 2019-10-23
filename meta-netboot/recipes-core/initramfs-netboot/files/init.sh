@@ -57,6 +57,29 @@ check_debug() {
 	esac
 }
 
+find_active_interface() {
+	[[ ! -d /sys/class/net ]] && { log_error "find_active_interface: /sys/class/net doesn't exist"; return 2; }
+	local iface
+	for x in $(ls -d /sys/class/net/* 2>/dev/null); do
+		iface=$(basename $x)
+		# find interfaces with:
+		# - type == 1 (ethernet)
+		# - not wireless
+		# - with state up
+
+		[[ $(cat $x/type) != 1 ]] && continue
+		[[ -d $x/wireless ]] && continue
+		[[ $(cat $x/operstate) != "up" ]] && continue
+
+		log_info "find_active_interface: first active interface is $iface"
+		echo $iface
+		return 0
+	done
+
+	log_error "Unable to find any active network interface."
+	return 1
+}
+
 # -------------------------------------------
 
 export PATH=/sbin:/usr/sbin:/bin:/usr/bin
@@ -131,9 +154,12 @@ pivot_root . boot/initramfs || bail_out "pivot_root failed."
 
 # workaround for connman (avoid bringing down the network interface used for booting, disable DNS proxy)
 if [[ -f /lib/systemd/system/connman.service ]]; then
-	log_info "Adjusting Connman configuration"
-	iface=$(ip -o link show up | tr ':' ' ' | awk '{print $2}' | grep -v -e "^lo$" | head -1)
-	sed -i "s|connmand -n\$|connmand -r -n -I $iface|g" /lib/systemd/system/connman.service
+	newopts="-r -n"
+	iface=$(find_active_interface)
+	[[ -n "$iface" ]] && newopts="$newopts -I $iface"
+
+	log_info "Adjusting Connman command line. Will be: 'connmand $newopts'"
+	sed -i "s|connmand -n\$|connmand $newopts|g" /lib/systemd/system/connman.service
 fi
 
 # also use /proc/net/pnp to generate /etc/resolv.conf
