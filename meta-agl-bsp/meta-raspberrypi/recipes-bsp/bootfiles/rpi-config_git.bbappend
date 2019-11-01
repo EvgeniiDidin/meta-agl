@@ -35,6 +35,11 @@ do_deploy_append() {
     echo "dtparam=audio=on" >> ${DEPLOYDIR}/bcm2835-bootfiles/config.txt
 }
 
+do_deploy_append_raspberrypi4() {
+    echo -e "\n[pi4]" >> ${DEPLOYDIR}/bcm2835-bootfiles/config.txt
+    echo "max_framebuffers=2" >> ${DEPLOYDIR}/bcm2835-bootfiles/config.txt
+}
+
 do_deploy_append_sota() {
     echo "device_tree_address=0x0c800000" >> ${DEPLOYDIR}/bcm2835-bootfiles/config.txt
 }
