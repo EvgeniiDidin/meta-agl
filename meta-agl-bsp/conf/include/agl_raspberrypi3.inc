@@ -14,7 +14,18 @@ UBOOT_MACHINE = "rpi_3_32b_config"
 
 KERNEL_IMAGETYPE = "uImage"
 
+PREFERRED_VERSION_linux-raspberrypi = "4.19%"
+RPI_KERNEL_DEVICETREE_remove_raspberrypi3 = "bcm2708-rpi-0-w.dtb"
+RPI_KERNEL_DEVICETREE_OVERLAYS_remove_raspberrypi3 = "overlays/lirc-rpi.dtbo"
+RPI_KERNEL_DEVICETREE_OVERLAYS_append_raspberrypi3 = " overlays/vc4-fkms-v3d.dtbo"
+
+# Set appropriate version of Mesa for Raspberry Pi 3 and 4
+PREFERRED_VERSION_mesa = "19.1%"
+
 MACHINE_FEATURES += "vc4graphics"
+
+# Switch to firmware KMS to support the official DSI touchscreen display
+VC4DTBO = "vc4-fkms-v3d"
 
 # For libomxil
 #LICENSE_FLAGS_WHITELIST = "commercial"
