@@ -19,7 +19,10 @@ fi
 if [ -f $COPY_SCRIPT ]; then
 	# Extract the ZIP into the tmp directory
 	mkdir -p $EXTRACT_DIR
-	unzip -q -o $EBISU_BIN_PATH/*.zip -d $EXTRACT_DIR
+	for PROPRIETARY_BIN in `ls -1 $EBISU_BIN_PATH/*.zip`
+	do
+		unzip -q -o $PROPRIETARY_BIN -d $EXTRACT_DIR
+	done
 
 	cd $METADIR/bsp/meta-renesas-rcar-gen3/
 	$COPY_SCRIPT $EXTRACT_DIR
