@@ -15,26 +15,42 @@ S = "${WORKDIR}"
 do_compile[depends] += "virtual/kernel:do_deploy"
 
 do_compile () {
-	# Official touchscreen setup (rpi3b/rpi3b dtb, vc4-kms-v3d and ft5406)
+	# Official touchscreen setup (rpi3b/rpi3b dtb, VC4DTBO and ft5406)
 	if [ -f "${DEPLOY_DIR_IMAGE}/bcm2710-rpi-3-b-plus.dtb" ]; then
-		fdtoverlay -v -i ${DEPLOY_DIR_IMAGE}/bcm2710-rpi-3-b-plus.dtb -o bcm2710-rpi-3-b-plus+vc4+ft5406.dtb ${DEPLOY_DIR_IMAGE}/rpi-ft5406.dtbo ${DEPLOY_DIR_IMAGE}/vc4-kms-v3d.dtbo
-		fdtoverlay -v -i ${DEPLOY_DIR_IMAGE}/bcm2710-rpi-3-b.dtb -o bcm2710-rpi-3-b+vc4+ft5406.dtb ${DEPLOY_DIR_IMAGE}/rpi-ft5406.dtbo ${DEPLOY_DIR_IMAGE}/vc4-kms-v3d.dtbo
+		fdtoverlay -v -i ${DEPLOY_DIR_IMAGE}/bcm2710-rpi-3-b-plus.dtb -o bcm2710-rpi-3-b-plus+vc4+ft5406.dtb ${DEPLOY_DIR_IMAGE}/rpi-ft5406.dtbo ${DEPLOY_DIR_IMAGE}/${VC4DTBO}.dtbo
+	fi
+	if [ -f "${DEPLOY_DIR_IMAGE}/bcm2710-rpi-3-b.dtb" ]; then
+		fdtoverlay -v -i ${DEPLOY_DIR_IMAGE}/bcm2710-rpi-3-b.dtb -o bcm2710-rpi-3-b+vc4+ft5406.dtb ${DEPLOY_DIR_IMAGE}/rpi-ft5406.dtbo ${DEPLOY_DIR_IMAGE}/${VC4DTBO}.dtbo
+	fi
+	if [ -f "${DEPLOY_DIR_IMAGE}/bcm2711-rpi-4-b.dtb" ]; then
+		fdtoverlay -v -i ${DEPLOY_DIR_IMAGE}/bcm2711-rpi-4-b.dtb -o bcm2711-rpi-4-b+vc4+ft5406.dtb ${DEPLOY_DIR_IMAGE}/rpi-ft5406.dtbo ${DEPLOY_DIR_IMAGE}/${VC4DTBO}.dtbo
 	fi
 
-	# HDMI screen setup (rpi3b/rpi3b dtb and vc4-kms-v3d)
+	# HDMI screen setup (rpi3b/rpi3b dtb and VC4DTBO)
 	if [ -f "${DEPLOY_DIR_IMAGE}/bcm2710-rpi-3-b-plus.dtb" ]; then
-		fdtoverlay -v -i ${DEPLOY_DIR_IMAGE}/bcm2710-rpi-3-b-plus.dtb -o bcm2710-rpi-3-b-plus+vc4.dtb ${DEPLOY_DIR_IMAGE}/vc4-kms-v3d.dtbo
-		fdtoverlay -v -i ${DEPLOY_DIR_IMAGE}/bcm2710-rpi-3-b.dtb -o bcm2710-rpi-3-b+vc4.dtb ${DEPLOY_DIR_IMAGE}/vc4-kms-v3d.dtbo
+		fdtoverlay -v -i ${DEPLOY_DIR_IMAGE}/bcm2710-rpi-3-b-plus.dtb -o bcm2710-rpi-3-b-plus+vc4.dtb ${DEPLOY_DIR_IMAGE}/${VC4DTBO}.dtbo
+	fi
+	if [ -f "${DEPLOY_DIR_IMAGE}/bcm2710-rpi-3-b.dtb" ]; then
+		fdtoverlay -v -i ${DEPLOY_DIR_IMAGE}/bcm2710-rpi-3-b.dtb -o bcm2710-rpi-3-b+vc4.dtb ${DEPLOY_DIR_IMAGE}/${VC4DTBO}.dtbo
+	fi
+	if [ -f "${DEPLOY_DIR_IMAGE}/bcm2711-rpi-4-b.dtb" ]; then
+		fdtoverlay -v -i ${DEPLOY_DIR_IMAGE}/bcm2711-rpi-4-b.dtb -o bcm2711-rpi-4-b+vc4.dtb ${DEPLOY_DIR_IMAGE}/${VC4DTBO}.dtbo
 	fi
 }
 
 do_deploy () {
 	install -d ${DEPLOY_DIR_IMAGE}
+	if [ -f "${S}/bcm2711-rpi-4-b+vc4+ft5406.dtb" ]; then
+		install -m 0644 ${S}/bcm2711-rpi-4-b+vc4+ft5406.dtb ${DEPLOY_DIR_IMAGE}
+	fi
 	if [ -f "${S}/bcm2710-rpi-3-b+vc4+ft5406.dtb" ]; then
 		install -m 0644 ${S}/bcm2710-rpi-3-b+vc4+ft5406.dtb ${DEPLOY_DIR_IMAGE}
 	fi
 	if [ -f "${S}/bcm2710-rpi-3+vc4+ft5406.dtb" ]; then
 		install -m 0644 ${S}/bcm2710-rpi-3+vc4+ft5406.dtb ${DEPLOY_DIR_IMAGE}
+	fi
+	if [ -f "${S}/bcm2711-rpi-4-b+vc4.dtb" ]; then
+		install -m 0644 ${S}/bcm2711-rpi-4-b+vc4.dtb ${DEPLOY_DIR_IMAGE}
 	fi
 	if [ -f "${S}/bcm2710-rpi-3-b+vc4.dtb" ]; then
 		install -m 0644 ${S}/bcm2710-rpi-3-b+vc4.dtb ${DEPLOY_DIR_IMAGE}
