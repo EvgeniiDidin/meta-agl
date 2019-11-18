@@ -16,7 +16,3 @@ do_install_append() {
 	install -d ${D}/etc/ti-sgx
 	install -m 0755 ${D}/etc/init.d/rc.pvr ${D}/etc/ti-sgx
 }
-
-
-# Fix for rpm metadata clash with libgbm-dev
-DIRFILES = "1"
