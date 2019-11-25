@@ -1,0 +1,36 @@
+From 40ff644ac4da90c5cf5239c6ee6051d9bb2b099a Mon Sep 17 00:00:00 2001
+From: Daniel Stone <daniels@collabora.com>
+Date: Mon, 25 Nov 2019 10:30:11 +0000
+Subject: [PATCH] config-parser: Export get_full_path and destroy
+
+Make sure we export the get_full_path() accessor (declared in the
+header, used by Weston itself) and the parser's destroy function.
+
+Signed-off-by: Daniel Stone <daniels@collabora.com>
+---
+ shared/config-parser.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/shared/config-parser.c b/shared/config-parser.c
+index 35f09f006..94eb24cc1 100644
+--- a/shared/config-parser.c
++++ b/shared/config-parser.c
+@@ -470,6 +470,7 @@ weston_config_parse(const char *name)
+ 	return config;
+ }
+ 
++WL_EXPORT
+ const char *
+ weston_config_get_full_path(struct weston_config *config)
+ {
+@@ -500,6 +501,7 @@ weston_config_next_section(struct weston_config *config,
+ 	return 1;
+ }
+ 
++WL_EXPORT
+ void
+ weston_config_destroy(struct weston_config *config)
+ {
+-- 
+2.21.0
+
