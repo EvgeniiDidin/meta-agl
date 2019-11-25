@@ -3,7 +3,7 @@ FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 inherit agl-graphical
 
 
-WESTONSTART ??= "/usr/bin/weston ${WESTONARGS}"
+WESTONSTART ??= "${@bb.utils.contains("DISTRO_FEATURES", "agl-compositor", "/usr/bin/agl-compositor", "/usr/bin/weston",d)} ${WESTONARGS}"
 WESTONSTART_append = " ${@bb.utils.contains("IMAGE_FEATURES", "debug-tweaks", " --log=${DISPLAY_XDG_RUNTIME_DIR}/weston.log", "",d)}"
 
 DROPIN_NAME = "weston-init"
