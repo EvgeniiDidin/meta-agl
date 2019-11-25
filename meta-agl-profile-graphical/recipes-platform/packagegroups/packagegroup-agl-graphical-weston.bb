@@ -17,5 +17,6 @@ RDEPENDS_${PN} += " \
                   weston-ready \
                   agl-login-manager \
                   agl-desktop-config \
+                  agl-compositor \
                   "
 
