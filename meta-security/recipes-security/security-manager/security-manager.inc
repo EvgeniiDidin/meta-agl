@@ -4,35 +4,33 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=86d3f3a95c324c9479bd8986968f4327;beginlin
 
 inherit cmake
 
-# Out-of-tree build is broken ("sqlite3 .security-manager.db <db.sql" where db.sql is in $S/db).
 B = "${S}"
 
 DEPENDS = " \
-attr \
-boost \
-cynara \
-icu \
-libcap \
-smack \
-sqlite3 \
-sqlite3-native \
-systemd \
+   attr \
+   boost \
+   cynara \
+   icu \
+   libcap \
+   smack \
+   sqlite3 \
+   systemd \
 "
 
 PACKAGECONFIG ??= ""
 PACKAGECONFIG[debug] = "-DCMAKE_BUILD_TYPE=DEBUG,-DCMAKE_BUILD_TYPE=RELEASE"
 
-TZ_SYS_DB = "/var/local/db/security-manager"
+TZ_SYS_DB ?= "/var/db/security-manager"
 
 EXTRA_OECMAKE = " \
--DCMAKE_VERBOSE_MAKEFILE=ON \
--DVERSION=${PV} \
--DSYSTEMD_INSTALL_DIR=${systemd_unitdir}/system \
--DBIN_INSTALL_DIR=${bindir} \
--DDB_INSTALL_DIR=${TZ_SYS_DB} \
--DLIB_INSTALL_DIR=${libdir} \
--DSHARE_INSTALL_PREFIX=${datadir} \
--DINCLUDE_INSTALL_DIR=${includedir} \
+   -DCMAKE_VERBOSE_MAKEFILE=ON \
+   -DVERSION=${PV} \
+   -DSYSTEMD_INSTALL_DIR=${systemd_unitdir}/system \
+   -DBIN_INSTALL_DIR=${bindir} \
+   -DDB_INSTALL_DIR=${TZ_SYS_DB} \
+   -DLIB_INSTALL_DIR=${libdir} \
+   -DSHARE_INSTALL_PREFIX=${datadir} \
+   -DINCLUDE_INSTALL_DIR=${includedir} \
 "
 
 inherit systemd
@@ -71,16 +69,11 @@ do_install_append () {
    ln -s ../security-manager.socket ${D}/${systemd_unitdir}/system/sockets.target.wants/security-manager.socket
 }
 
-RDEPENDS_${PN} += "smack"
-pkg_postinst_${PN} () {
-   set -e
-   chsmack -a System $D${TZ_SYS_DB}/.security-manager.db
-   chsmack -a System $D${TZ_SYS_DB}/.security-manager.db-journal
-}
-
+RDEPENDS_${PN} += "sqlite3 cynara"
 FILES_${PN} += " \
-${systemd_unitdir} \
-${TZ_SYS_DB} \
+   ${systemd_unitdir} \
+   ${TZ_SYS_DB} \
+   ${bindir}/.security-manager-setup \
 "
 
 PACKAGES =+ "${PN}-policy"
@@ -88,7 +81,3 @@ FILES_${PN}-policy = " \
    ${datadir}/${PN} \
    ${bindir}/security-manager-policy-reload \
 "
-RDEPENDS_${PN}-policy += "sqlite3 cynara"
-pkg_postinst_ontarget_${PN}-policy () {
-   ${bindir}/security-manager-policy-reload
-}

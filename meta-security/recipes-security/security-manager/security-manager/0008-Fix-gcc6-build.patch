@@ -1,7 +1,7 @@
-From cb9acc2b723b297ee373bf814282711f02657aa5 Mon Sep 17 00:00:00 2001
+From a1d9b40b4fa2e73d31a53e398c286bffeaae1732 Mon Sep 17 00:00:00 2001
 From: Ronan <ronan.lemartret@iot.bzh>
 Date: Wed, 12 Oct 2016 17:48:55 +0200
-Subject: [PATCH] Fix gcc6 build
+Subject: [PATCH 08/14] Fix gcc6 build
 
 Signed-off-by: ronan <ronan@ot.bzh>
 ---
@@ -18,11 +18,11 @@ index 74a6b30..347cddd 100644
  #include <security-manager.h>
  #include <client-offline.h>
 +#include <linux/xattr.h>
-
+ 
  static const char *EMPTY = "";
-
+ 
 diff --git a/src/common/include/privilege_db.h b/src/common/include/privilege_db.h
-index 03c6680..8dd39a1 100644
+index 4d73d90..08fb9d6 100644
 --- a/src/common/include/privilege_db.h
 +++ b/src/common/include/privilege_db.h
 @@ -32,6 +32,7 @@
@@ -30,9 +30,9 @@ index 03c6680..8dd39a1 100644
  #include <stdbool.h>
  #include <string>
 +#include <vector>
-
+ 
  #include <dpl/db/sql_connection.h>
-
+ #include <tzplatform_config.h>
 -- 
-2.6.6
+2.21.0
 

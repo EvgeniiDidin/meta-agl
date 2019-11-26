@@ -1,7 +1,7 @@
-From 19688cbe2ca10921a499f3fa265928dca54cf98d Mon Sep 17 00:00:00 2001
+From a5979d9d674e400ecd7fcdf5d7589cfa0cfeb492 Mon Sep 17 00:00:00 2001
 From: Alejandro Joya <alejandro.joya.cruz@intel.com>
 Date: Wed, 4 Nov 2015 19:06:23 -0600
-Subject: [PATCH 2/2] app-install: implement multiple set of smack-rules
+Subject: [PATCH 04/14] app-install: implement multiple set of smack-rules
 
 If it's need it could create load multiple set of smack rules
 related with the privileges.
@@ -30,5 +30,5 @@ index 7fd621c..ae305d3 100644
          LogError("Error while applying Smack policy for application: " << e.DumpToString());
          return SECURITY_MANAGER_API_ERROR_SETTING_FILE_LABEL_FAILED;
 -- 
-2.1.0
+2.21.0
 

@@ -1,7 +1,7 @@
-From ed1c105db9d7b1ceb52ec16f35b0a2c959c19c6d Mon Sep 17 00:00:00 2001
+From 8e93699c0f225716f3cd5eff790270ae9e3880f9 Mon Sep 17 00:00:00 2001
 From: Changhyeok Bae <changhyeok.bae@gmail.com>
 Date: Sun, 17 Dec 2017 15:40:58 +0000
-Subject: [PATCH] gcc-7 requires include <functional> for std::function
+Subject: [PATCH 10/14] gcc-7 requires include <functional> for std::function
 
 Signed-off-by: Changhyeok Bae <changhyeok.bae@gmail.com>
 ---
@@ -47,5 +47,5 @@ index 72817a6..838409f 100644
  namespace SecurityManager {
  BinaryQueue::BinaryQueue() :
 -- 
-2.7.4
+2.21.0
 

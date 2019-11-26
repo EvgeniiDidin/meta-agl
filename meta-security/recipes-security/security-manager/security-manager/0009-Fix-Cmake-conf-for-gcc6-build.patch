@@ -1,7 +1,7 @@
-From 19c99315a5dcba3b696c30d1fdd42a1dcd574a80 Mon Sep 17 00:00:00 2001
+From 382379d74221bcc60a0ab70d63430a1c0587b2ec Mon Sep 17 00:00:00 2001
 From: Ronan <ronan.lemartret@iot.bzh>
 Date: Thu, 13 Oct 2016 11:37:47 +0200
-Subject: [PATCH] Fix Cmake conf for gcc6 build
+Subject: [PATCH 09/14] Fix Cmake conf for gcc6 build
 
 Signed-off-by: Ronan <ronan.lemartret@iot.bzh>
 ---
@@ -24,7 +24,7 @@ index ee9a160..aa7a12c 100644
  INCLUDE_DIRECTORIES(
      ${INCLUDE_PATH}
 diff --git a/src/server/CMakeLists.txt b/src/server/CMakeLists.txt
-index 753eb96..8eef25d 100644
+index 6849d76..9598037 100644
 --- a/src/server/CMakeLists.txt
 +++ b/src/server/CMakeLists.txt
 @@ -8,7 +8,6 @@ FIND_PACKAGE(Threads REQUIRED)
@@ -36,5 +36,5 @@ index 753eb96..8eef25d 100644
      )
  
 -- 
-2.6.6
+2.21.0
 

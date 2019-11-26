@@ -1,16 +1,16 @@
-From 1e2f8f58d4320afa1d83a6f94822e53346108ee8 Mon Sep 17 00:00:00 2001
+From 9d0791dab4b4df086374c5c0ba2a6558e10e81c1 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Jos=C3=A9=20Bollo?= <jose.bollo@iot.bzh>
 Date: Mon, 16 Nov 2015 15:56:27 +0100
-Subject: [PATCH] removes dependency to libslp-db-utils
+Subject: [PATCH 07/14] removes dependency to libslp-db-utils
 
 Change-Id: I90471e77d20e04bae58cc42eb2639e4aef97fdec
 ---
- src/common/CMakeLists.txt         |  1 ++-
+ src/common/CMakeLists.txt         |  3 ++-
  src/dpl/db/src/sql_connection.cpp | 17 +----------------
- 2 files changed, 3 additions(+), 17 deletions(-)
+ 2 files changed, 3 insertions(+), 17 deletions(-)
 
 diff --git a/src/common/CMakeLists.txt b/src/common/CMakeLists.txt
-index 968c7c1..d1fe644 100644
+index 968c7c1..9ae376f 100644
 --- a/src/common/CMakeLists.txt
 +++ b/src/common/CMakeLists.txt
 @@ -5,7 +5,8 @@ PKG_CHECK_MODULES(COMMON_DEP
@@ -18,13 +18,13 @@ index 968c7c1..d1fe644 100644
      libsystemd
      libsmack
 -    db-util
-+    sqlite3 
++    sqlite3
 +    icu-i18n
      cynara-admin
      cynara-client
      )
 diff --git a/src/dpl/db/src/sql_connection.cpp b/src/dpl/db/src/sql_connection.cpp
-index fdb4fe4..1fb97be 100644
+index fdb4fe4..f49a6dc 100644
 --- a/src/dpl/db/src/sql_connection.cpp
 +++ b/src/dpl/db/src/sql_connection.cpp
 @@ -26,7 +26,6 @@
@@ -74,5 +74,5 @@ index fdb4fe4..1fb97be 100644
      if (result != SQLITE_OK) {
          const char *error = sqlite3_errmsg(m_connection);
 -- 
-2.1.4
+2.21.0
 

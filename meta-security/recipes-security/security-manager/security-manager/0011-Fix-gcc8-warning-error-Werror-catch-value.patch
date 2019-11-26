@@ -1,7 +1,7 @@
-From 37c63c280eaec8cae3a321d45404d6c03a68c9d9 Mon Sep 17 00:00:00 2001
+From 243b7ffee16558d7cb9b411f49380138efeffca9 Mon Sep 17 00:00:00 2001
 From: Stephane Desneux <stephane.desneux@iot.bzh>
 Date: Fri, 1 Feb 2019 12:26:17 +0000
-Subject: [PATCH] Fix gcc8 warning/error [-Werror=catch-value=]
+Subject: [PATCH 11/14] Fix gcc8 warning/error [-Werror=catch-value=]
 
 Fixes the following warning/error during compile:
 
@@ -28,5 +28,5 @@ index 63538a2..fc60ce9 100644
      }
  
 -- 
-2.11.0
+2.21.0
 

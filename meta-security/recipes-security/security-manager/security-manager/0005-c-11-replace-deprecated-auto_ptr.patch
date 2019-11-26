@@ -1,7 +1,7 @@
-From 6abeec29a0e704f4bf7084b29275b99fea0a78de Mon Sep 17 00:00:00 2001
+From 198ba9b9782fda19803e94d2afeff91189ac27af Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Jos=C3=A9=20Bollo?= <jobol@nonadev.net>
 Date: Wed, 13 Jan 2016 17:30:06 +0100
-Subject: [PATCH 2/2] c++11: replace depracated auto_ptr
+Subject: [PATCH 05/14] c++11: replace deprecated auto_ptr
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -28,5 +28,5 @@ index dd03f5e..185b6c7 100644
  /**
   * Binary stream implemented as constant size bucket list
 -- 
-2.1.4
+2.21.0
 

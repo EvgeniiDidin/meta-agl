@@ -6,32 +6,20 @@ SRC_URI += "git://github.com/Samsung/security-manager.git"
 S = "${WORKDIR}/git"
 
 SRC_URI += " \
-file://systemd-stop-using-compat-libs.patch \
-file://security-manager-policy-reload-do-not-depend-on-GNU-.patch \
-file://0001-Smack-rules-create-two-new-functions.patch \
-file://0002-app-install-implement-multiple-set-of-smack-rules.patch \
-file://c-11-replace-depracated-auto_ptr.patch \
-file://socket-manager-removes-tizen-specific-call.patch \
-file://Removing-tizen-platform-config.patch \
-file://removes-dependency-to-libslp-db-utils.patch \
-file://0001-Fix-gcc8-warning-error-Werror-catch-value.patch \
-file://0001-Avoid-casting-from-const-T-to-void.patch \
-"
-
-##########################################
-# This are patches for backward compatibility to the version dizzy of poky.
-# The dizzy version of libcap isn't providing a packconfig file.
-# This is solved by the patch libcap-without-pkgconfig.patch.
-# But after solving that issue, it appears that linux/xattr.h should
-# also be include add definitions of XATTR_NAME_SMACK... values.
-# Unfortunately, there is no explanation why linux/xattr.h should
-# also be included (patch include-linux-xattr.patch)
-##########################################
-do_patch[depends] = "libcap:do_populate_sysroot"
-APPLY = "${@str('no' if os.path.exists('${STAGING_LIBDIR}/pkgconfig/libcap.pc') else 'yes')}"
-SRC_URI += "\
-  file://libcap-without-pkgconfig.patch;apply=${APPLY} \
-  file://include-linux-xattr.patch;apply=${APPLY} \
+   file://0001-systemd-stop-using-compat-libs.patch \
+   file://0002-security-manager-policy-reload-do-not-depend-on-GNU-.patch \
+   file://0003-Smack-rules-create-two-new-functions.patch \
+   file://0004-app-install-implement-multiple-set-of-smack-rules.patch \
+   file://0005-c-11-replace-deprecated-auto_ptr.patch \
+   file://0006-socket-manager-removes-tizen-specific-call.patch \
+   file://0007-removes-dependency-to-libslp-db-utils.patch \
+   file://0008-Fix-gcc6-build.patch \
+   file://0009-Fix-Cmake-conf-for-gcc6-build.patch \
+   file://0010-gcc-7-requires-include-functional-for-std-function.patch \
+   file://0011-Fix-gcc8-warning-error-Werror-catch-value.patch \
+   file://0012-Avoid-casting-from-const-T-to-void.patch \
+   file://0013-Removing-tizen-platform-config.patch \
+   file://0014-Ensure-post-install-initialization-of-database.patch \
 "
 
 # Use make with cmake and not ninja
