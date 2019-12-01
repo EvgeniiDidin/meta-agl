@@ -10,7 +10,7 @@ SRC_URI = "git://gerrit.automotivelinux.org/gerrit/apps/app-afb-test;protocol=ht
 SRCREV = "5c3503e35c1b883e97ed6874f7683d0a7b5938b7"
 
 DEPENDS += "lua libafb-helpers libappcontroller"
-RDEPENDS_${PN} += "lua bash"
+RDEPENDS_${PN} += "lua bash jq"
 RDEPENDS_${PN}-ptest += "af-binder"
 
 PV = "${AGLVERSION}"
