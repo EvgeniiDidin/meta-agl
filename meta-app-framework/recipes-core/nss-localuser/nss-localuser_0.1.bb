@@ -10,7 +10,7 @@ LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://LICENSE.txt;md5=79ad77111c398994735201536a4749ba"
 
 SRC_URI = "git://gerrit.automotivelinux.org/gerrit/src/nss-localuser;protocol=https;branch=${AGL_BRANCH}"
-SRCREV = "d2d9e83bd9bdc3a091d6b9f1ccaec012fba2f0f4"
+SRCREV = "66803c6fdb609ed83a78b9194ecb23e9c1b773e7"
 PV = "${AGL_BRANCH}+git${SRCPV}"
 
 S = "${WORKDIR}/git"
