@@ -11,9 +11,8 @@ inherit cmake pkgconfig aglwgt ptest
 DEPENDS += "lua lua-native libappcontroller libafb-helpers"
 RDEPENDS_${PN} += "lua"
 
-SRC_URI = "gitsm://git.automotivelinux.org/apps/agl-service-signal-composer;protocol=https;branch=${AGL_BRANCH}"
-SRCREV = "fe311f49703e9691fa7d515ed84a70b996f7f3e8"
+SRC_URI = "git://git.automotivelinux.org/apps/agl-service-signal-composer;protocol=https;branch=${AGL_BRANCH}"
+SRCREV = "${AGL_APP_REVISION}"
 
 PV = "${AGLVERSION}"
 S  = "${WORKDIR}/git"
-
