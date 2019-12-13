@@ -7,7 +7,4 @@ SRC_URI_append = "\
     file://0003-compositor-drm-introduce-drm_get_dmafd_from_view.patch \
     file://0001-config-parser-Export-get_full_path-and-destroy.patch \
     "
-# Disabled until SPEC-2827 H3ULCB v3.0 + Kingfisher issue is debugged:
-#   file://0002-compositor-add-output-type-to-weston_output.patch
-
 EXTRA_OECONF_append = " --enable-sys-uid"
