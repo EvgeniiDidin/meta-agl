@@ -12,7 +12,7 @@ SECTION = "base"
 
 DEPENDS = "openssl libxml2 xmlsec1 systemd libzip json-c systemd security-manager af-binder sed m4"
 DEPENDS_class-native = "openssl libxml2 xmlsec1 libzip json-c"
-RDEPENDS_${PN}_class-target += "af-binder-tools"
+RDEPENDS_${PN}_class-target += "af-binder-tools nss-localuser cynagoauth"
 
 PACKAGE_WRITE_DEPS_append_with-lsm-smack = " smack-native libcap-native"
 
@@ -67,11 +67,6 @@ GROUPADD_PARAM_${PN} = "--system ${afm_name}"
 
 RDEPENDS_${PN}_append_with-lsm-smack = " smack bash"
 DEPENDS_append_with-lsm-smack = " smack-native"
-
-# short hacks here
-SRC_URI += "\
-	file://Hack-to-allow-the-debugging.patch \
-"
 
 do_install_append_class-target() {
     install -d ${D}${bindir}
