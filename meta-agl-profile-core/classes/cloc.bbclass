@@ -5,6 +5,10 @@
 # summary with
 # cloc --sum-reports `find . -name "*clocreport" | grep -v "\-native" ` --out summary.report
 
+# cloc needs to be installed on the host
+# FIXME: create a cloc-native
+HOSTTOOLS += "cloc"
+
 CLOC_DIRECTORY ??= "${DEPLOY_DIR}/cloc/"
 CLOCSTATEDIR = "${WORKDIR}/cloc-destdir/"
 
@@ -24,6 +28,6 @@ python do_cloc() {
 }
 
 
-addtask cloc before do_configure after do_unpack
+addtask cloc before do_configure after do_patch
 
 EXPORT_FUNCTIONS do_cloc
