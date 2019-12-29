@@ -13,7 +13,7 @@ PV = "${AGLVERSION}"
 S  = "${WORKDIR}/git"
 
 DEPENDS = "libafb-helpers"
-RDEPENDS_${PN} = "dev-mapping"
 
 inherit cmake aglwgt pkgconfig ptest
 
+RDEPENDS_${PN} = "virtual/low-can-dev-mapping"
