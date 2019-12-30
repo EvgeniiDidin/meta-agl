@@ -12,7 +12,7 @@ SRCREV = "${AGL_APP_REVISION}"
 PV = "${AGLVERSION}"
 S  = "${WORKDIR}/git"
 
-DEPENDS = "libafb-helpers"
+DEPENDS = "libafb-helpers libappcontroller"
 
 inherit cmake aglwgt pkgconfig ptest
 
