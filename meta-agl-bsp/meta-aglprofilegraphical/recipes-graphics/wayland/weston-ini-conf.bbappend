@@ -1,12 +1,7 @@
 FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 
-# OVERRIDES save us some c'n'p below ...
-OVERRIDES_prepend_qemux86 = "virtualmachine:"
-OVERRIDES_prepend_qemux86-64 = "virtualmachine:"
-
-# Switch to the Virtual section that we have when a valid DRM device is found
-SRC_URI_remove_virtualmachine = "file://hdmi-a-1-270.cfg"
-SRC_URI_append_virtualmachine = " file://virtual.cfg"
-
-# For intel-corei7-64 we want to support both the HDMI-A-1 and Virtual-1 outputs
+# For virtual machines and intel-corei7-64 we want to support both the HDMI-A-1
+# and Virtual-1 outputs. This allows us to run virtual images on real hardware
+# and vice versa.
+SRC_URI_append_qemuall = " file://virtual.cfg"
 SRC_URI_append_intel-corei7-64 = " file://virtual.cfg"

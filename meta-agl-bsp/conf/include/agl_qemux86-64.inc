@@ -21,7 +21,7 @@ QB_KERNEL_CMDLINE_APPEND_append = " quiet"
 DISTRO_FEATURES_append = " sota"
 
 # Image support
-AGL_EXTRA_IMAGE_FSTYPES = "ext4 wic.vmdk"
+AGL_EXTRA_IMAGE_FSTYPES = "ext4 wic.vmdk wic.xz wic.bmap"
 IMAGE_BOOT_FILES_sota = "u-boot-qemux86-64.rom"
 
 # Root device
@@ -31,4 +31,4 @@ ROOT_VM = "root=PARTUUID=${DISK_SIGNATURE}-02"
 QB_OPT_APPEND_append = " -vga virtio"
 
 # Use our own wks file
-WKS_FILE="directdisk.wks.in"
+WKS_FILE="systemd-intel-corei7-64-bootdisk.wks"
