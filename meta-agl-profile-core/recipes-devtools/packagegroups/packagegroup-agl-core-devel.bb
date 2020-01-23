@@ -15,7 +15,6 @@ RDEPENDS_${PN} = "\
         perf \
         htop \
         powertop \
-        systemtap \
         screen \
         usbutils \
         rsync \
