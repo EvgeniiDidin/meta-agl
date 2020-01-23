@@ -85,7 +85,9 @@ do_install_append_class-target() {
         ln -sf ../afm-system-daemon.service ${D}${systemd_system_unitdir}/multi-user.target.wants/afm-system-daemon.service
         ln -sf ../afm-system-daemon.socket ${D}${systemd_system_unitdir}/sockets.target.wants/afm-system-daemon.socket
     fi
-    echo "QT_WAYLAND_SHELL_INTEGRATION=ivi-shell" > ${D}${afm_confdir}/unit.env.d/qt-for-ivi-shell
+
+    DEFAULT_WM_SHELL="${@bb.utils.contains('DISTRO_FEATURES', 'agl-compositor', 'xdg-shell-v6', 'ivi-shell', d)}"
+    echo "QT_WAYLAND_SHELL_INTEGRATION=${DEFAULT_WM_SHELL}" > ${D}${afm_confdir}/unit.env.d/qt-shell
 }
 
 pkg_postinst_ontarget_${PN}() {
