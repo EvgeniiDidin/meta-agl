@@ -1,6 +1,6 @@
 [Unit]
 Description=Automount Disk Manager
-After=udisks.service
+After=udisks2.service
 
 [Service]
 ExecStart=/usr/libexec/automount.sh
