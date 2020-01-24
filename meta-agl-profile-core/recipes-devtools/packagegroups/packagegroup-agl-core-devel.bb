@@ -25,4 +25,5 @@ RDEPENDS_${PN} = "\
         jq \
         libxslt-bin \
         agl-service-network-tools \
+        gcc-sanitizers \
         "
