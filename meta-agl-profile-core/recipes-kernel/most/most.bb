@@ -9,6 +9,6 @@ PV = "0.1"
 SRC_URI = "git://gerrit.automotivelinux.org/gerrit/src/most;protocol=https;branch=${AGL_BRANCH}"
 
 S = "${WORKDIR}/git/driver"
-SRCREV = "dcc04c5efe2058a5796f45b7a99f1c53082dd2ca"
+SRCREV = "e4dbbaf9e7652efaed0df3e0aab4464f5f228573"
 
 KERNEL_MODULE_AUTOLOAD += "aim_cdev aim_sound aim_network aim_v4l2 hdm_i2c hdm_dim2 hdm_usb mostcore"
