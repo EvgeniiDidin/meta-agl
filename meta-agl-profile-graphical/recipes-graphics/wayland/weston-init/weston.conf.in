@@ -1,17 +1,14 @@
-[Unit]
-Conflicts=getty@tty@WESTONTTY@.service
 [Service]
 Type=notify
-User=@WESTONUSER@
-Group=@WESTONGROUP@
 Environment="XDG_RUNTIME_DIR=@XDG_RUNTIME_DIR@"
 Environment="XDG_RUNTIMESHARE_DIR=@XDG_RUNTIME_DIR@/share"
 ExecStartPre=/bin/mkdir -p @XDG_RUNTIME_DIR@/share
 ExecStartPre=+/usr/bin/chsmack -a User::App-Shared -t @XDG_RUNTIME_DIR@/share
+# Note that clearing PAMName (thus not having PAMName=login) disables
+# logind support for the session, which allows setting XDG_RUNTIME_DIR
+# to something other than /run/user/% (as is done above).
+# Without systemd-logind support, weston needs to be patched to allow
+# its direct launcher to work for non-root users in this scenario.
+PAMName=
+ExecStart=
 ExecStart=@WESTONSTART@
-TTYPath=/dev/tty@WESTONTTY@
-StandardInput=tty
-TTYReset=yes
-TTYVHangup=yes
-TTYVTDisallocate=yes
-UtmpIdentifier=tty@WESTONTTY@
