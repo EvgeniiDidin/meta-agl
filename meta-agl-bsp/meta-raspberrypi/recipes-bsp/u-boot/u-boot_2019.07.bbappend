@@ -1,6 +1,3 @@
-# Apply the same patches for rpi4 as u-boot recipe
-require u-boot-rpi4-${PV}.inc
-
 FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
 
 # Update the patch for u-boot 2019.07

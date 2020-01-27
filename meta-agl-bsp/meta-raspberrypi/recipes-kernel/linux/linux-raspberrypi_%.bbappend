@@ -2,11 +2,8 @@ FILESEXTRAPATHS_prepend := "${THISDIR}/${BPN}:"
 
 require recipes-kernel/linux/linux-agl.inc
 
-# NOTE: Kprobes need to be disabled until linux-raspberrypi gets updated
-#       to newer than 4.14.104 to avoid lttng-modules failing to build.
 SRC_URI_append = "\
     ${@oe.utils.conditional('USE_FAYTECH_MONITOR', '1', 'file://0002-faytech-fix-rpi.patch', '', d)} \
-    file://disable_kprobes.cfg \
 "
 
 CMDLINE_DEBUG = ""
