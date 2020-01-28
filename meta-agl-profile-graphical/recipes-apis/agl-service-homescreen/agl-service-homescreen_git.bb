@@ -10,5 +10,5 @@ DEPENDS = "dbus glib-2.0 af-binder json-c"
 inherit cmake aglwgt
 
 SRC_URI = "git://gerrit.automotivelinux.org/gerrit/apps/agl-service-homescreen;protocol=https;branch=${AGL_BRANCH}"
-SRCREV = "6c3015a7607c45313fa10792b9914864f8c25831"
+SRCREV = "b9969c45e5a2f01e672270fab1348c81b7ff3288"
 S = "${WORKDIR}/git"
