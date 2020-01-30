@@ -20,6 +20,7 @@ SRC_URI += " \
    file://0012-Avoid-casting-from-const-T-to-void.patch \
    file://0013-Removing-tizen-platform-config.patch \
    file://0014-Ensure-post-install-initialization-of-database.patch \
+   file://0015-Restrict-socket-accesses.patch \
 "
 
 # Use make with cmake and not ninja
