@@ -1,7 +1,7 @@
-From e7ae85429aa3e6d80df13b3a5a492d9ccbf42518 Mon Sep 17 00:00:00 2001
+From 28ada62c98d74285dc22b66650b09b6c8f2c28c4 Mon Sep 17 00:00:00 2001
 From: Jacek Bukarewicz <j.bukarewicz@samsung.com>
 Date: Thu, 27 Nov 2014 11:26:21 +0100
-Subject: Add own rule result unavailability handling
+Subject: [PATCH 4/8] Add own rule result unavailability handling
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -21,6 +21,17 @@ Updated for dbus 1.10.20 by Scott Murray and José Bollo
 
 Signed-off-by: José Bollo <jose.bollo@iot.bzh>
 Signed-off-by: Scott Murray <scott.murray@konsulko.com>
+---
+ bus/dispatch.c |  11 +-
+ bus/driver.c   | 334 ++++++++++++++++++++++++++++---------------------
+ bus/driver.h   |   2 +-
+ bus/policy.c   |  52 ++++++--
+ bus/policy.h   |   6 +-
+ bus/services.c |  26 ++--
+ bus/services.h |   3 +-
+ bus/stats.c    |  23 ++--
+ bus/stats.h    |   6 +-
+ 9 files changed, 283 insertions(+), 180 deletions(-)
 
 diff --git a/bus/dispatch.c b/bus/dispatch.c
 index 7d30ce4..4b84c21 100644
@@ -1160,7 +1171,7 @@ index d89a658..aaeb3b2 100644
 +  return BUS_RESULT_FALSE;
  }
 diff --git a/bus/driver.h b/bus/driver.h
-index ac1289d..183c28b 100644
+index a7297ad..05e9886 100644
 --- a/bus/driver.h
 +++ b/bus/driver.h
 @@ -35,7 +35,7 @@ typedef enum
@@ -1173,10 +1184,10 @@ index ac1289d..183c28b 100644
                                                DBusMessage    *message,
                                                DBusError      *error);
 diff --git a/bus/policy.c b/bus/policy.c
-index b1fab0d..27b66d1 100644
+index 483cc97..f6f4d85 100644
 --- a/bus/policy.c
 +++ b/bus/policy.c
-@@ -1388,18 +1388,21 @@ bus_client_policy_check_can_receive (BusClientPolicy     *policy,
+@@ -1390,18 +1390,21 @@ bus_client_policy_check_can_receive (BusClientPolicy     *policy,
  
  
  
@@ -1202,7 +1213,7 @@ index b1fab0d..27b66d1 100644
    link = _dbus_list_get_first_link (&rules);
    while (link != NULL)
      {
-@@ -1435,17 +1438,45 @@ bus_rules_check_can_own (DBusList *rules,
+@@ -1437,17 +1440,46 @@ bus_rules_check_can_own (DBusList *rules,
          }
  
        /* Use this rule */
@@ -1212,6 +1223,7 @@ index b1fab0d..27b66d1 100644
 +      case BUS_POLICY_RULE_ACCESS_ALLOW:
 +        result = BUS_RESULT_TRUE;
 +        break;
++      default:
 +      case BUS_POLICY_RULE_ACCESS_DENY:
 +        result = BUS_RESULT_FALSE;
 +        break;
@@ -1253,7 +1265,7 @@ index b1fab0d..27b66d1 100644
  }
  
  #ifdef DBUS_ENABLE_EMBEDDED_TESTS
-@@ -1453,7 +1484,7 @@ dbus_bool_t
+@@ -1455,7 +1487,7 @@ dbus_bool_t
  bus_policy_check_can_own (BusPolicy  *policy,
                            const DBusString *service_name)
  {
@@ -1489,5 +1501,5 @@ index dcb022c..683fa17 100644
                                                    DBusMessage    *message,
                                                    DBusError      *error);
 -- 
-2.17.2
+2.21.1
 

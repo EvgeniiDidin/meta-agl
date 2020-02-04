@@ -1,7 +1,7 @@
-From 2a1c1c3f9264f53abc439ec44b33fdca8ffbb803 Mon Sep 17 00:00:00 2001
+From 28077faa11827e1ca7a7245ffd62ee78091b6bd2 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Jos=C3=A9=20Bollo?= <jose.bollo@iot.bzh>
 Date: Fri, 16 Aug 2019 13:29:23 +0200
-Subject: [PATCH 7/8] Fix SIGSEGV on disconnections
+Subject: [PATCH 6/8] Fix SIGSEGV on disconnections
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -105,5 +105,5 @@ index 97dae96..6af7bf1 100644
  
  /* called by signals.c */
 -- 
-2.17.2
+2.21.1
 

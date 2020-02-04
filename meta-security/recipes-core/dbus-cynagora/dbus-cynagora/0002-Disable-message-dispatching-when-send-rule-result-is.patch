@@ -1,7 +1,8 @@
-From aae977a0c4bb1c25640c7056166fbc4e76ef1db6 Mon Sep 17 00:00:00 2001
+From c2f4ba585c777b731df6b6b8a165b6cc4dc5d639 Mon Sep 17 00:00:00 2001
 From: Jacek Bukarewicz <j.bukarewicz@samsung.com>
 Date: Fri, 28 Nov 2014 12:07:39 +0100
-Subject: Disable message dispatching when send rule result is not known
+Subject: [PATCH 2/8] Disable message dispatching when send rule result is not
+ known
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -23,9 +24,23 @@ Updated for dbus 1.10.20 by Scott Murray and José Bollo
 
 Signed-off-by: José Bollo <jose.bollo@iot.bzh>
 Signed-off-by: Scott Murray <scott.murray@konsulko.com>
+---
+ bus/activation.c                |  76 +++++++++++--
+ bus/check.c                     | 109 +++++++++++++++++--
+ bus/check.h                     |  10 ++
+ bus/cynara.c                    |   1 -
+ bus/dispatch.c                  | 184 ++++++++++++++++++++++++++++----
+ bus/dispatch.h                  |   2 +-
+ bus/driver.c                    |  12 ++-
+ dbus/dbus-connection-internal.h |  15 +++
+ dbus/dbus-connection.c          | 125 +++++++++++++++++++++-
+ dbus/dbus-list.c                |  29 +++++
+ dbus/dbus-list.h                |   3 +
+ dbus/dbus-shared.h              |   3 +-
+ 12 files changed, 528 insertions(+), 41 deletions(-)
 
 diff --git a/bus/activation.c b/bus/activation.c
-index f8a02eb..005047f 100644
+index f9c6c62..8301b59 100644
 --- a/bus/activation.c
 +++ b/bus/activation.c
 @@ -32,6 +32,7 @@
@@ -74,11 +89,15 @@ index f8a02eb..005047f 100644
              {
                /* If permission is denied, we just want to return the error
                 * to the original method invoker; in particular, we don't
-@@ -1266,9 +1272,40 @@ bus_activation_send_pending_auto_activation_messages (BusActivation  *activation
+@@ -1266,11 +1272,44 @@ bus_activation_send_pending_auto_activation_messages (BusActivation  *activation
                    bus_connection_send_oom_error (entry->connection,
                                                   entry->activation_message);
                  }
-+            }
+-
+               dbus_error_free (&error);
+               link = next;
+               continue;
+             }
 +          else if (res == BUS_RESULT_LATER)
 +            {
 +              DBusList *putback_message_link = link;
@@ -91,9 +110,7 @@ index f8a02eb..005047f 100644
 +                  link = next;
 +                  continue;
 +                }
- 
--              link = next;
--              continue;
++
 +              /**
 +               * Getting here means that policy check result is not yet available and dispatching
 +               * messages from entry->connection has been disabled.
@@ -114,10 +131,11 @@ index f8a02eb..005047f 100644
 +
 +                  putback_message_link = _dbus_list_get_next_link(&pending_activation->entries, putback_message_link);
 +                }
-             }
++            }
          }
  
-@@ -1286,6 +1323,19 @@ bus_activation_send_pending_auto_activation_messages (BusActivation  *activation
+       link = next;
+@@ -1287,6 +1326,19 @@ bus_activation_send_pending_auto_activation_messages (BusActivation  *activation
    return TRUE;
  
   error:
@@ -137,7 +155,7 @@ index f8a02eb..005047f 100644
    return FALSE;
  }
  
-@@ -2078,6 +2128,7 @@ bus_activation_activate_service (BusActivation  *activation,
+@@ -2079,6 +2131,7 @@ bus_activation_activate_service (BusActivation  *activation,
  
            if (service != NULL)
              {
@@ -145,7 +163,7 @@ index f8a02eb..005047f 100644
                bus_context_log (activation->context,
                                 DBUS_SYSTEM_LOG_INFO, "Activating via systemd: service name='%s' unit='%s' requested by '%s' (%s)",
                                 service_name,
-@@ -2085,8 +2136,17 @@ bus_activation_activate_service (BusActivation  *activation,
+@@ -2086,8 +2139,17 @@ bus_activation_activate_service (BusActivation  *activation,
                                 bus_connection_get_name (connection),
                                 bus_connection_get_loginfo (connection));
                /* Wonderful, systemd is connected, let's just send the msg */
@@ -945,5 +963,5 @@ index 7ab9103..e5bfbed 100644
  
  /* Bus names */
 -- 
-2.17.2
+2.21.1
 

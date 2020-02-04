@@ -1,7 +1,7 @@
-From 69ba571e0daa0a7a9aa6c6b5be5d3338a89d144a Mon Sep 17 00:00:00 2001
+From 1f7ba56c9ced669951061d13b06e31d96a170e37 Mon Sep 17 00:00:00 2001
 From: Jacek Bukarewicz <j.bukarewicz@samsung.com>
 Date: Tue, 23 Jun 2015 11:08:48 +0200
-Subject: Perform Cynara runtime policy checks by default
+Subject: [PATCH 5/8] Perform Cynara runtime policy checks by default
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -29,12 +29,17 @@ Updated for dbus 1.10.20 by Scott Murray and José Bollo
 Signed-off-by: Jacek Bukarewicz <j.bukarewicz@samsung.com>
 Signed-off-by: José Bollo <jose.bollo@iot.bzh>
 Signed-off-by: Scott Murray <scott.murray@konsulko.com>
+---
+ bus/activation.c    | 42 ++++++++++++++++++++++++++----------------
+ bus/session.conf.in | 32 ++++++++++++++++++++++++++------
+ bus/system.conf.in  | 19 +++++++++++++++----
+ 3 files changed, 67 insertions(+), 26 deletions(-)
 
 diff --git a/bus/activation.c b/bus/activation.c
-index ffdc6fc..6a95b95 100644
+index d4b597c..8aabeaa 100644
 --- a/bus/activation.c
 +++ b/bus/activation.c
-@@ -1837,22 +1837,32 @@ bus_activation_activate_service (BusActivation  *activation,
+@@ -1840,22 +1840,32 @@ bus_activation_activate_service (BusActivation  *activation,
      }
  
    if (auto_activation &&
@@ -171,5 +176,5 @@ index f139b55..19d0c04 100644
      <deny send_destination="org.freedesktop.DBus"
            send_interface="org.freedesktop.DBus"
 -- 
-2.17.2
+2.21.1
 

@@ -1,7 +1,7 @@
-From 6c498a9b0f4122d1ac49d603f9968b6d85830cdb Mon Sep 17 00:00:00 2001
+From ea4b650366261e4257e4b0fb95e7f48e30ef36f0 Mon Sep 17 00:00:00 2001
 From: Jacek Bukarewicz <j.bukarewicz@samsung.com>
 Date: Thu, 27 Nov 2014 18:11:05 +0100
-Subject: Integration of Cynara asynchronous security checks
+Subject: [PATCH 1/8] Integration of Cynara asynchronous security checks
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -20,13 +20,48 @@ Cherry picked from 4dcfb02f17247ff9de966b62182cd2e08f301238
 by José Bollo.
 
 Updated for dbus 1.10.20 by Scott Murray and José Bollo
+Updated for dbus 1.12.16 by José Bollo
 
 Change-Id: I9bcbce34577e5dc2a3cecf6233a0a2b0e43e1108
 Signed-off-by: José Bollo <jose.bollo@iot.bzh>
 Signed-off-by: Scott Murray <scott.murray@konsulko.com>
+---
+ bus/Makefile.am                               |   6 +
+ bus/activation.c                              |   5 +-
+ bus/bus.c                                     | 124 ++++--
+ bus/bus.h                                     |  22 +-
+ bus/check.c                                   | 217 ++++++++++
+ bus/check.h                                   |  68 ++++
+ bus/config-parser-common.c                    |   6 +
+ bus/config-parser-common.h                    |   1 +
+ bus/config-parser-trivial.c                   |   2 +
+ bus/config-parser.c                           |  72 +++-
+ bus/connection.c                              |  57 ++-
+ bus/connection.h                              |   4 +
+ bus/cynara.c                                  | 374 ++++++++++++++++++
+ bus/cynara.h                                  |  37 ++
+ bus/dispatch.c                                |  46 ++-
+ bus/driver.h                                  |   2 +
+ bus/policy.c                                  | 195 ++++++---
+ bus/policy.h                                  |  29 +-
+ configure.ac                                  |  12 +
+ test/Makefile.am                              |   1 +
+ .../data/invalid-config-files/badcheck-1.conf |   9 +
+ .../data/invalid-config-files/badcheck-2.conf |   9 +
+ test/data/valid-config-files/check-1.conf     |   9 +
+ .../debug-check-some.conf.in                  |  18 +
+ 24 files changed, 1181 insertions(+), 144 deletions(-)
+ create mode 100644 bus/check.c
+ create mode 100644 bus/check.h
+ create mode 100644 bus/cynara.c
+ create mode 100644 bus/cynara.h
+ create mode 100644 test/data/invalid-config-files/badcheck-1.conf
+ create mode 100644 test/data/invalid-config-files/badcheck-2.conf
+ create mode 100644 test/data/valid-config-files/check-1.conf
+ create mode 100644 test/data/valid-config-files/debug-check-some.conf.in
 
 diff --git a/bus/Makefile.am b/bus/Makefile.am
-index 9ae3071..46afb31 100644
+index c917063..2a8a72c 100644
 --- a/bus/Makefile.am
 +++ b/bus/Makefile.am
 @@ -13,6 +13,7 @@ DBUS_BUS_LIBS = \
@@ -64,10 +99,10 @@ index 9ae3071..46afb31 100644
  	desktop-file.h				\
  	$(DIR_WATCH_SOURCE)			\
 diff --git a/bus/activation.c b/bus/activation.c
-index 6f009f5..f8a02eb 100644
+index 99404b9..f9c6c62 100644
 --- a/bus/activation.c
 +++ b/bus/activation.c
-@@ -1788,14 +1788,15 @@ bus_activation_activate_service (BusActivation  *activation,
+@@ -1789,14 +1789,15 @@ bus_activation_activate_service (BusActivation  *activation,
  
    if (auto_activation &&
        entry != NULL &&
@@ -86,7 +121,7 @@ index 6f009f5..f8a02eb 100644
        _DBUS_ASSERT_ERROR_IS_SET (error);
        _dbus_verbose ("activation not authorized: %s: %s\n",
 diff --git a/bus/bus.c b/bus/bus.c
-index 30ce4e1..237efe3 100644
+index 2ad8e78..6fc45d0 100644
 --- a/bus/bus.c
 +++ b/bus/bus.c
 @@ -38,6 +38,7 @@
@@ -757,8 +792,28 @@ index 382a014..9e026d1 100644
    ELEMENT_FORK,
    ELEMENT_PIDFILE,
    ELEMENT_SERVICEDIR,
+diff --git a/bus/config-parser-trivial.c b/bus/config-parser-trivial.c
+index dd65c6d..23dedb4 100644
+--- a/bus/config-parser-trivial.c
++++ b/bus/config-parser-trivial.c
+@@ -194,6 +194,7 @@ bus_config_parser_start_element (BusConfigParser   *parser,
+     case ELEMENT_POLICY:
+     case ELEMENT_LIMIT:
+     case ELEMENT_ALLOW:
++    case ELEMENT_CHECK:
+     case ELEMENT_DENY:
+     case ELEMENT_FORK:
+     case ELEMENT_PIDFILE:
+@@ -316,6 +317,7 @@ bus_config_parser_content (BusConfigParser   *parser,
+     case ELEMENT_POLICY:
+     case ELEMENT_LIMIT:
+     case ELEMENT_ALLOW:
++    case ELEMENT_CHECK:
+     case ELEMENT_DENY:
+     case ELEMENT_FORK:
+     case ELEMENT_PIDFILE:
 diff --git a/bus/config-parser.c b/bus/config-parser.c
-index be27d38..b5f1dd1 100644
+index be27d38..7f91469 100644
 --- a/bus/config-parser.c
 +++ b/bus/config-parser.c
 @@ -1318,7 +1318,7 @@ append_rule_from_element (BusConfigParser   *parser,
@@ -965,6 +1020,14 @@ index be27d38..b5f1dd1 100644
    if (parser == NULL)
      {
        _DBUS_ASSERT_ERROR_IS_SET (&error);
+@@ -3359,6 +3408,7 @@ elements_equal (const Element *a,
+     case ELEMENT_LISTEN:
+     case ELEMENT_AUTH:
+     case ELEMENT_ALLOW:
++    case ELEMENT_CHECK:
+     case ELEMENT_DENY:
+     case ELEMENT_FORK:
+     case ELEMENT_PIDFILE:
 diff --git a/bus/connection.c b/bus/connection.c
 index 53605fa..b348d42 100644
 --- a/bus/connection.c
@@ -1197,7 +1260,7 @@ index 0000000..57a4c45
 +
 +#define USE_CYNARA_CACHE 1
 +#ifdef USE_CYNARA_CACHE
-+#define CYNARA_CACHE_SIZE 7000
++#define CYNARA_CACHE_SIZE 1000
 +#endif
 +
 +static dbus_bool_t bus_cynara_watch_callback(DBusWatch *watch,
@@ -1664,8 +1727,20 @@ index 19228be..d3867f7 100644
  
        _dbus_verbose ("Giving message to %s\n", DBUS_SERVICE_DBUS);
        if (!bus_driver_handle_message (connection, transaction, message, &error))
+diff --git a/bus/driver.h b/bus/driver.h
+index ac1289d..a7297ad 100644
+--- a/bus/driver.h
++++ b/bus/driver.h
+@@ -66,5 +66,7 @@ dbus_bool_t bus_driver_send_ack_reply     (DBusConnection  *connection,
+                                            BusTransaction  *transaction,
+                                            DBusMessage     *message,
+                                            DBusError       *error);
++dbus_bool_t bus_driver_check_message_is_for_us (DBusMessage *message,
++                                                DBusError   *error);
+ 
+ #endif /* BUS_DRIVER_H */
 diff --git a/bus/policy.c b/bus/policy.c
-index a37be80..7ee1ce5 100644
+index a37be80..7de92c6 100644
 --- a/bus/policy.c
 +++ b/bus/policy.c
 @@ -22,6 +22,7 @@
@@ -1829,7 +1904,7 @@ index a37be80..7ee1ce5 100644
                (!no_interface && 
                 strcmp (dbus_message_get_interface (message),
                         rule->d.send.interface) != 0))
-@@ -1079,33 +1093,63 @@ bus_client_policy_check_can_send (BusClientPolicy *policy,
+@@ -1079,33 +1093,64 @@ bus_client_policy_check_can_send (BusClientPolicy *policy,
          }
  
        /* Use this rule */
@@ -1840,6 +1915,7 @@ index a37be80..7ee1ce5 100644
 +          result = BUS_RESULT_TRUE;
 +          break;
 +        case BUS_POLICY_RULE_ACCESS_DENY:
++        default:
 +          result = BUS_RESULT_FALSE;
 +          break;
 +        case BUS_POLICY_RULE_ACCESS_CHECK:
@@ -1907,7 +1983,7 @@ index a37be80..7ee1ce5 100644
  
    eavesdropping =
      addressed_recipient != proposed_recipient &&
-@@ -1118,7 +1162,7 @@ bus_client_policy_check_can_receive (BusClientPolicy *policy,
+@@ -1118,7 +1163,7 @@ bus_client_policy_check_can_receive (BusClientPolicy *policy,
    _dbus_verbose ("  (policy) checking receive rules, eavesdropping = %d\n", eavesdropping);
    *toggles = 0;
    
@@ -1916,7 +1992,7 @@ index a37be80..7ee1ce5 100644
    link = _dbus_list_get_first_link (&policy->rules);
    while (link != NULL)
      {
-@@ -1141,19 +1185,21 @@ bus_client_policy_check_can_receive (BusClientPolicy *policy,
+@@ -1141,19 +1186,21 @@ bus_client_policy_check_can_receive (BusClientPolicy *policy,
              }
          }
  
@@ -1943,7 +2019,7 @@ index a37be80..7ee1ce5 100644
          {
            _dbus_verbose ("  (policy) skipping deny rule since it only applies to eavesdropping\n");
            continue;
-@@ -1162,13 +1208,14 @@ bus_client_policy_check_can_receive (BusClientPolicy *policy,
+@@ -1162,13 +1209,14 @@ bus_client_policy_check_can_receive (BusClientPolicy *policy,
        /* If it's a reply, the requested_reply flag kicks in */
        if (dbus_message_get_reply_serial (message) != 0)
          {
@@ -1963,7 +2039,7 @@ index a37be80..7ee1ce5 100644
                continue;
              }
  
-@@ -1176,7 +1223,7 @@ bus_client_policy_check_can_receive (BusClientPolicy *policy,
+@@ -1176,7 +1224,7 @@ bus_client_policy_check_can_receive (BusClientPolicy *policy,
             * when the reply was not requested. requested_reply=true means the
             * rule always applies.
             */
@@ -1972,7 +2048,7 @@ index a37be80..7ee1ce5 100644
              {
                _dbus_verbose ("  (policy) skipping deny rule since it only applies to unrequested replies\n");
                continue;
-@@ -1199,13 +1246,13 @@ bus_client_policy_check_can_receive (BusClientPolicy *policy,
+@@ -1199,13 +1247,13 @@ bus_client_policy_check_can_receive (BusClientPolicy *policy,
            /* The interface is optional in messages. For allow rules, if the message
             * has no interface we want to skip the rule (and thus not allow);
             * for deny rules, if the message has no interface we want to use the
@@ -1988,7 +2064,7 @@ index a37be80..7ee1ce5 100644
                (!no_interface &&
                 strcmp (dbus_message_get_interface (message),
                         rule->d.receive.interface) != 0))
-@@ -1295,14 +1342,42 @@ bus_client_policy_check_can_receive (BusClientPolicy *policy,
+@@ -1295,14 +1343,43 @@ bus_client_policy_check_can_receive (BusClientPolicy *policy,
          }
  
        /* Use this rule */
@@ -1999,6 +2075,7 @@ index a37be80..7ee1ce5 100644
 +          result = BUS_RESULT_TRUE;
 +          break;
 +        case BUS_POLICY_RULE_ACCESS_DENY:
++        default:
 +          result = BUS_RESULT_FALSE;
 +          break;
 +        case BUS_POLICY_RULE_ACCESS_CHECK:
@@ -2035,7 +2112,7 @@ index a37be80..7ee1ce5 100644
  }
  
  
-@@ -1354,7 +1429,7 @@ bus_rules_check_can_own (DBusList *rules,
+@@ -1354,7 +1431,7 @@ bus_rules_check_can_own (DBusList *rules,
          }
  
        /* Use this rule */
@@ -2117,10 +2194,10 @@ index ec43ffa..f839d23 100644
                                                        const DBusString *service_name);
  dbus_bool_t      bus_client_policy_append_rule       (BusClientPolicy  *policy,
 diff --git a/configure.ac b/configure.ac
-index 81028ba..f21d1b2 100644
+index d1e3a29..11b5ffd 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -1770,6 +1770,17 @@ AC_ARG_ENABLE([user-session],
+@@ -1742,6 +1742,17 @@ AC_ARG_ENABLE([user-session],
  AM_CONDITIONAL([DBUS_ENABLE_USER_SESSION],
    [test "x$enable_user_session" = xyes])
  
@@ -2138,7 +2215,7 @@ index 81028ba..f21d1b2 100644
  AC_CONFIG_FILES([
  Doxyfile
  dbus/Version
-@@ -1852,6 +1863,7 @@ echo "
+@@ -1824,6 +1835,7 @@ echo "
          Building bus stats API:   ${enable_stats}
          Building SELinux support: ${have_selinux}
          Building AppArmor support: ${have_apparmor}
@@ -2147,7 +2224,7 @@ index 81028ba..f21d1b2 100644
          Building kqueue support:  ${have_kqueue}
          Building systemd support: ${have_systemd}
 diff --git a/test/Makefile.am b/test/Makefile.am
-index 6a6e1a3..ce84dbc 100644
+index af1e13b..e6f50e1 100644
 --- a/test/Makefile.am
 +++ b/test/Makefile.am
 @@ -439,6 +439,7 @@ in_data = \
@@ -2228,5 +2305,5 @@ index 0000000..47ee854
 +  </policy>
 +</busconfig>
 -- 
-2.17.2
+2.21.1
 

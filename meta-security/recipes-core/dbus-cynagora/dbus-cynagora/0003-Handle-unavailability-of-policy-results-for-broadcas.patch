@@ -1,8 +1,8 @@
-From fdc3d7086c8f7a623e3da80e559708545b9201fc Mon Sep 17 00:00:00 2001
+From 9d39aa9dd55680529d721a0389ce9ef579bb669a Mon Sep 17 00:00:00 2001
 From: Jacek Bukarewicz <j.bukarewicz@samsung.com>
 Date: Fri, 28 Nov 2014 12:39:33 +0100
-Subject: Handle unavailability of policy results for broadcasts and receive
- rules
+Subject: [PATCH 3/8] Handle unavailability of policy results for broadcasts
+ and receive rules
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -25,9 +25,22 @@ Updated for dbus 1.10.20 by Scott Murray and José Bollo
 
 Signed-off-by: José Bollo <jose.bollo@iot.bzh>
 Signed-off-by: Scott Murray <scott.murray@konsulko.com>
+---
+ bus/activation.c |   4 +-
+ bus/bus.c        |  50 ++++++--
+ bus/bus.h        |  19 +++
+ bus/check.c      | 307 +++++++++++++++++++++++++++++++++++++++++++++++
+ bus/check.h      |  25 ++++
+ bus/connection.c | 168 ++++++++++++++++++++++++--
+ bus/connection.h |  19 ++-
+ bus/dispatch.c   | 115 +++++++++++++++---
+ bus/dispatch.h   |  11 +-
+ bus/driver.c     |   2 +-
+ bus/policy.c     |   6 +
+ 11 files changed, 683 insertions(+), 43 deletions(-)
 
 diff --git a/bus/activation.c b/bus/activation.c
-index 005047f..ffdc6fc 100644
+index 8301b59..d4b597c 100644
 --- a/bus/activation.c
 +++ b/bus/activation.c
 @@ -1259,7 +1259,7 @@ bus_activation_send_pending_auto_activation_messages (BusActivation  *activation
@@ -39,7 +52,7 @@ index 005047f..ffdc6fc 100644
            if (res == BUS_RESULT_FALSE)
              {
                /* If permission is denied, we just want to return the error
-@@ -2137,7 +2137,7 @@ bus_activation_activate_service (BusActivation  *activation,
+@@ -2140,7 +2140,7 @@ bus_activation_activate_service (BusActivation  *activation,
                                 bus_connection_get_loginfo (connection));
                /* Wonderful, systemd is connected, let's just send the msg */
                res = bus_dispatch_matches (activation_transaction, NULL,
@@ -49,7 +62,7 @@ index 005047f..ffdc6fc 100644
                if (res == BUS_RESULT_TRUE)
                  retval = TRUE;
 diff --git a/bus/bus.c b/bus/bus.c
-index 237efe3..5bb5637 100644
+index 6fc45d0..0aa700b 100644
 --- a/bus/bus.c
 +++ b/bus/bus.c
 @@ -1800,17 +1800,9 @@ bus_context_check_security_policy (BusContext     *context,
@@ -1054,10 +1067,10 @@ index f414f64..d89a658 100644
      retval = TRUE;
    else
 diff --git a/bus/policy.c b/bus/policy.c
-index 7ee1ce5..b1fab0d 100644
+index 7de92c6..483cc97 100644
 --- a/bus/policy.c
 +++ b/bus/policy.c
-@@ -1121,6 +1121,9 @@ bus_client_policy_check_can_send (DBusConnection      *sender,
+@@ -1122,6 +1122,9 @@ bus_client_policy_check_can_send (DBusConnection      *sender,
  
        result = bus_check_privilege(check, message, sender, addressed_recipient, receiver,
            privilege, BUS_DEFERRED_MESSAGE_CHECK_SEND, deferred_message);
@@ -1067,7 +1080,7 @@ index 7ee1ce5..b1fab0d 100644
      }
    else
      privilege = NULL;
-@@ -1370,6 +1373,9 @@ bus_client_policy_check_can_receive (BusClientPolicy     *policy,
+@@ -1372,6 +1375,9 @@ bus_client_policy_check_can_receive (BusClientPolicy     *policy,
  
        result = bus_check_privilege(check, message, sender, addressed_recipient, proposed_recipient,
                   privilege, BUS_DEFERRED_MESSAGE_CHECK_RECEIVE, deferred_message);
@@ -1078,5 +1091,5 @@ index 7ee1ce5..b1fab0d 100644
    else
        privilege = NULL;
 -- 
-2.17.2
+2.21.1
 
