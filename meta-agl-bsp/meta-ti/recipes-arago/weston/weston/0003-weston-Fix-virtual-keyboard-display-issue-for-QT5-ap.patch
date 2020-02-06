@@ -1,7 +1,7 @@
-From 0d15218ced5bf2e6f3d05758f0f5f21c2a0303f2 Mon Sep 17 00:00:00 2001
+From 8034bc1862bbebb332e91917c6458ef8efb5b54e Mon Sep 17 00:00:00 2001
 From: Eric Ruei <e-ruei1@ti.com>
-Date: Thu, 9 Mar 2017 14:33:08 -0500
-Subject: [PATCH 3/4] Weston: Fix virtual keyboard display issue for QT5
+Date: Fri, 8 Mar 2019 18:49:07 -0500
+Subject: [PATCH] weston: Fix virtual keyboard display issue for QT5 
  application
 
 The virtual keyboard does pop up as expected, however, it will never hide
@@ -17,16 +17,15 @@ cannot be hidden.
 It is required to set the current_panel to the text_input when the input_panel
 becomes visible at the first time.
 
-Updated for weston 5.0.0 by Scott Murray <scott.murray@konsulko.com>.
+Upstream status: Pending
 
 Signed-off-by: Eric Ruei <e-ruei1@ti.com>
-Signed-off-by: Scott Murray <scott.murray@konsulko.com>
 ---
  compositor/text-backend.c | 1 +
  1 file changed, 1 insertion(+)
 
 diff --git a/compositor/text-backend.c b/compositor/text-backend.c
-index 664c36f7..b610dfb1 100644
+index 664c36f..b610dfb 100644
 --- a/compositor/text-backend.c
 +++ b/compositor/text-backend.c
 @@ -349,6 +349,7 @@ text_input_show_input_panel(struct wl_client *client,
@@ -37,3 +36,6 @@ index 664c36f7..b610dfb1 100644
  	}
  }
  
+-- 
+1.9.1
+
