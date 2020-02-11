@@ -2,6 +2,7 @@ FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
 
 SRC_URI += "file://automount.service \
             file://automount.sh \
+            file://99-udisks2.rules \
 "
 
 SYSTEMD_AUTO_ENABLE = "enable"
@@ -15,6 +16,9 @@ do_install_append () {
 
     install -d ${D}${libexecdir}
     install -m 0755 ${WORKDIR}/automount.sh ${D}${libexecdir}/automount.sh
+
+    install -d ${D}${sysconfdir}/udev/rules.d
+    install -m 0644 ${WORKDIR}/99-udisks2.rules ${D}${sysconfdir}/udev/rules.d
 }
 
 FILES_${PN} += "${base_libdir}/systemd/system/automount.service \
