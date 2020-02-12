@@ -9,6 +9,7 @@ SRC_URI_append = "\
     file://use-XDG_RUNTIMESHARE_DIR.patch \
     file://0002-ivi-shell-Fix-crash-due-no-transmitter-screen.patch \
     file://0001-config-parser-Export-get_full_path-and-destroy.patch \
+    file://0001-libweston-Expose-weston_output_damage-in-libweston.patch \
     "
 
 EXTRA_OEMESON_append = " -Denable-user-start=true"
