@@ -1,0 +1,110 @@
+From 1e6ffb3129340291027d2690631f62eb7d0e0a78 Mon Sep 17 00:00:00 2001
+From: Matt Ranostay <matt.ranostay@konsulko.com>
+Date: Tue, 11 Feb 2020 18:13:45 -0800
+Subject: [PATCH] network: add CAN Termination tristate option
+
+Upstream-Status: Submitted
+Signed-off-by: Matt Ranostay <matt.ranostay@konsulko.com>
+---
+ src/libsystemd/sd-netlink/netlink-types.c        |  1 +
+ src/network/networkd-can.c                       | 13 +++++++++++++
+ src/network/networkd-network-gperf.gperf         |  1 +
+ src/network/networkd-network.c                   |  1 +
+ src/network/networkd-network.h                   |  1 +
+ test/fuzz/fuzz-network-parser/directives.network |  1 +
+ 6 files changed, 18 insertions(+)
+
+diff --git a/src/libsystemd/sd-netlink/netlink-types.c b/src/libsystemd/sd-netlink/netlink-types.c
+index de9b8b21ab..69ca675a8d 100644
+--- a/src/libsystemd/sd-netlink/netlink-types.c
++++ b/src/libsystemd/sd-netlink/netlink-types.c
+@@ -310,6 +310,7 @@ static const NLType rtnl_link_info_data_can_types[] = {
+         [IFLA_CAN_BITTIMING]            = { .size = sizeof(struct can_bittiming) },
+         [IFLA_CAN_RESTART_MS]           = { .type = NETLINK_TYPE_U32 },
+         [IFLA_CAN_CTRLMODE]             = { .size = sizeof(struct can_ctrlmode) },
++        [IFLA_CAN_TERMINATION]          = { .type = NETLINK_TYPE_U16 },
+ };
+ 
+ static const NLType rtnl_link_info_data_macsec_types[] = {
+diff --git a/src/network/networkd-can.c b/src/network/networkd-can.c
+index 5755df57bd..3abe8ae2ed 100644
+--- a/src/network/networkd-can.c
++++ b/src/network/networkd-can.c
+@@ -9,6 +9,8 @@
+ #include "networkd-manager.h"
+ #include "string-util.h"
+ 
++#define CAN_TERMINATION_OHM_VALUE 120
++
+ static int link_up_handler(sd_netlink *rtnl, sd_netlink_message *m, Link *link) {
+         int r;
+ 
+@@ -152,6 +154,17 @@ static int link_set_can(Link *link) {
+                         return log_link_error_errno(link, r, "Could not append IFLA_CAN_CTRLMODE attribute: %m");
+         }
+ 
++        if (link->network->can_termination >= 0) {
++
++                log_link_debug(link, "%sabling can-termination", link->network->can_termination ? "En" : "Dis");
++
++                r = sd_netlink_message_append_u16(m, IFLA_CAN_TERMINATION,
++                               link->network->can_termination ? CAN_TERMINATION_OHM_VALUE : 0);
++                if (r < 0)
++                        return log_link_error_errno(link, r, "Could not append IFLA_CAN_TERMINATION attribute: %m");
++
++        }
++
+         r = sd_netlink_message_close_container(m);
+         if (r < 0)
+                 return log_link_error_errno(link, r, "Failed to close netlink container: %m");
+diff --git a/src/network/networkd-network-gperf.gperf b/src/network/networkd-network-gperf.gperf
+index d4d108ad25..f6814c2213 100644
+--- a/src/network/networkd-network-gperf.gperf
++++ b/src/network/networkd-network-gperf.gperf
+@@ -227,6 +227,7 @@ CAN.BitRate,                            config_parse_si_size,
+ CAN.SamplePoint,                        config_parse_permille,                           0,                             offsetof(Network, can_sample_point)
+ CAN.RestartSec,                         config_parse_sec,                                0,                             offsetof(Network, can_restart_us)
+ CAN.TripleSampling,                     config_parse_tristate,                           0,                             offsetof(Network, can_triple_sampling)
++CAN.Termination,                        config_parse_tristate,                           0,                             offsetof(Network, can_termination)
+ /* backwards compatibility: do not add new entries to this section */
+ Network.IPv4LL,                         config_parse_ipv4ll,                             0,                             offsetof(Network, link_local)
+ DHCP.ClientIdentifier,                  config_parse_dhcp_client_identifier,             0,                             offsetof(Network, dhcp_client_identifier)
+diff --git a/src/network/networkd-network.c b/src/network/networkd-network.c
+index 2b8d0eb2fb..00f309b738 100644
+--- a/src/network/networkd-network.c
++++ b/src/network/networkd-network.c
+@@ -436,6 +436,7 @@ int network_load_one(Manager *manager, const char *filename) {
+                 .keep_configuration = _KEEP_CONFIGURATION_INVALID,
+ 
+                 .can_triple_sampling = -1,
++                .can_termination = -1,
+         };
+ 
+         r = config_parse_many(filename, NETWORK_DIRS, dropin_dirname,
+diff --git a/src/network/networkd-network.h b/src/network/networkd-network.h
+index bc760744e5..ed803ee746 100644
+--- a/src/network/networkd-network.h
++++ b/src/network/networkd-network.h
+@@ -170,6 +170,7 @@ struct Network {
+         unsigned can_sample_point;
+         usec_t can_restart_us;
+         int can_triple_sampling;
++        int can_termination;
+ 
+         AddressFamily ip_forward;
+         bool ip_masquerade;
+diff --git a/test/fuzz/fuzz-network-parser/directives.network b/test/fuzz/fuzz-network-parser/directives.network
+index 848d4bd187..66a7557f29 100644
+--- a/test/fuzz/fuzz-network-parser/directives.network
++++ b/test/fuzz/fuzz-network-parser/directives.network
+@@ -183,6 +183,7 @@ SamplePoint=
+ BitRate=
+ RestartSec=
+ TripleSampling=
++Termination=
+ [Address]
+ DuplicateAddressDetection=
+ AutoJoin=
+-- 
+2.25.0
+
