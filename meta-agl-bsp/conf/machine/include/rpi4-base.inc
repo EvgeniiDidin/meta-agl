@@ -57,6 +57,10 @@ KERNEL_DEVICETREE ?= " \
     ${RPI_KERNEL_DEVICETREE_OVERLAYS} \
     "
 
+# Different dtb and dtbo files are needed for Raspberry Pi 4
+# (64-bit) if feature agl-sota is enabled.
+KERNEL_DEVICETREE_raspberrypi4_sota = " broadcom/bcm2711-rpi-4-b.dtb overlays/vc4-fkms-v3d.dtbo overlays/uart0-rpi4.dtbo"
+
 # By default:
 #
 # * When u-boot is disabled use the "Image" format which can be directly loaded
