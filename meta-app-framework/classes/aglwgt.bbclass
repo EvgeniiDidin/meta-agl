@@ -32,7 +32,7 @@ do_aglwgt_package()  {
     mkdir -p ${S}/build-debug
     mkdir -p ${S}/build-coverage
 
-    pushd ${B}
+    cd ${B}
     ${S}/autobuild/agl/autobuild package BUILD_DIR=${B} DEST=${S}/widgets VERBOSE=TRUE || \
     ( ${S}/conf.d/autobuild/agl/autobuild package BUILD_DIR=${B} DEST=${B}/package VERBOSE=TRUE && \
         ( bbwarn "OBSOLETE: Your autobuild script should be located in :" ; \
@@ -52,22 +52,18 @@ do_aglwgt_package()  {
         bbwarn "Fix your package as it will not work within the SDK" ; \
         bbwarn "See: https://wiki.automotivelinux.org/troubleshooting/app-recipes"; \
         make package)
-    popd
 
-    pushd ${S}/build-test
+    cd ${S}/build-test
         ${S}/autobuild/agl/autobuild package-test BUILD_DIR=${S}/build-test DEST=${S}/widgets VERBOSE=TRUE || \
         ( bbwarn "Target: package-test failed")
-    popd
 
-    pushd ${S}/build-debug
+    cd ${S}/build-debug
         ${S}/autobuild/agl/autobuild package-debug BUILD_DIR=${S}/build-debug DEST=${S}/widgets VERBOSE=TRUE || \
         ( bbwarn "Target: package-debug failed")
-    popd
 
-    pushd ${S}/build-coverage
+    cd ${S}/build-coverage
         ${S}/autobuild/agl/autobuild package-coverage BUILD_DIR=${S}/build-coverage DEST=${S}/widgets VERBOSE=TRUE || \
         ( bbwarn "Target: package-coverage failed")
-    popd
 }
 
 python () {
