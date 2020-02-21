@@ -32,38 +32,48 @@ do_aglwgt_package()  {
     mkdir -p ${S}/build-debug
     mkdir -p ${S}/build-coverage
 
+    bldcmd=${S}/autobuild/agl/autobuild
+    if [ ! -x "$bldcmd" ]; then
+        bldcmd=${S}/conf.d/autobuild/agl/autobuild
+        if [ -x "$bldcmd" ]; then
+            bbwarn "OBSOLETE: Your autobuild script should be located in :"
+            bbwarn "autobuild/agl/ from the project root source folder"
+            bbwarn "and generate a .wgt file using wgtpack in the build"
+            bbwarn "root folder calling:"
+            bbwarn "./autobuild/agl/autobuild package DEST=<BUILDDIR>"
+            bbwarn "See: https://wiki.automotivelinux.org/troubleshooting/app-recipes"
+        else
+            bbwarn "OBSOLETE: You must have an autobuild script located in:"
+            bbwarn "autobuild/agl/ from the project root source folder"
+            bbwarn "with filename autobuild which should generate"
+            bbwarn "a .wgt file using wgtpack in the build"
+            bbwarn "root folder calling:"
+            bbwarn "./autobuild/agl/autobuild package DEST=<BUILDDIR>"
+            bbwarn "Fix your package as it will not work within the SDK"
+            bbwarn "See: https://wiki.automotivelinux.org/troubleshooting/app-recipes"
+            bldcmd=make
+        fi
+    fi
+
     cd ${B}
-    ${S}/autobuild/agl/autobuild package BUILD_DIR=${B} DEST=${S}/widgets VERBOSE=TRUE || \
-    ( ${S}/conf.d/autobuild/agl/autobuild package BUILD_DIR=${B} DEST=${B}/package VERBOSE=TRUE && \
-        ( bbwarn "OBSOLETE: Your autobuild script should be located in :" ; \
-        bbwarn "autobuild/agl/ from the project root source folder"; \
-        bbwarn "and generate a .wgt file using wgtpack in the build"; \
-        bbwarn "root folder calling:" ; \
-        bbwarn "./autobuild/agl/autobuild package DEST=<BUILDDIR>" ; \
-        bbwarn "See: https://wiki.automotivelinux.org/troubleshooting/app-recipes" \
-        )
-    ) ||
-    ( bbwarn "OBSOLETE: You must have an autobuild script located in:" ; \
-        bbwarn "autobuild/agl/ from the project root source folder"; \
-        bbwarn "with filename autobuild which should generate"; \
-        bbwarn "a .wgt file using wgtpack in the build"; \
-        bbwarn "root folder calling:" ; \
-        bbwarn "./autobuild/agl/autobuild package DEST=<BUILDDIR>" ; \
-        bbwarn "Fix your package as it will not work within the SDK" ; \
-        bbwarn "See: https://wiki.automotivelinux.org/troubleshooting/app-recipes"; \
-        make package)
+    if ! $bldcmd package BUILD_DIR=${B} DEST=${S}/widgets VERBOSE=TRUE; then
+        bbwarn "Target: package failed"
+    fi
 
     cd ${S}/build-test
-        ${S}/autobuild/agl/autobuild package-test BUILD_DIR=${S}/build-test DEST=${S}/widgets VERBOSE=TRUE || \
-        ( bbwarn "Target: package-test failed")
+    if ! $bldcmd package-test BUILD_DIR=${S}/build-test DEST=${S}/widgets VERBOSE=TRUE; then
+        bbwarn "Target: package-test failed"
+    fi
 
     cd ${S}/build-debug
-        ${S}/autobuild/agl/autobuild package-debug BUILD_DIR=${S}/build-debug DEST=${S}/widgets VERBOSE=TRUE || \
-        ( bbwarn "Target: package-debug failed")
+    if ! $bldcmd package-debug BUILD_DIR=${S}/build-debug DEST=${S}/widgets VERBOSE=TRUE; then
+        bbwarn "Target: package-debug failed"
+    fi
 
     cd ${S}/build-coverage
-        ${S}/autobuild/agl/autobuild package-coverage BUILD_DIR=${S}/build-coverage DEST=${S}/widgets VERBOSE=TRUE || \
-        ( bbwarn "Target: package-coverage failed")
+    if ! $bldcmd package-coverage BUILD_DIR=${S}/build-coverage DEST=${S}/widgets VERBOSE=TRUE; then
+        bbwarn "Target: package-coverage failed"
+    fi
 }
 
 python () {
@@ -81,16 +91,16 @@ do_aglwgt_deploy() {
     DEBUG_WGT="*-debug.wgt"
     COVERAGE_WGT="*-coverage.wgt"
     if [ "${AGLWGT_AUTOINSTALL_${PN}}" = "0" ]
-        then
-            install -d ${D}/usr/AGL/apps/manualinstall
-            install -m 0644 ${B}/*.wgt ${D}/usr/AGL/apps/manualinstall || \
-            install -m 0644 ${B}/package/*.wgt ${D}/usr/AGL/apps/manualinstall 
-        else
-            install -d ${D}/usr/AGL/apps/autoinstall
-            install -m 0644 ${B}/*.wgt ${D}/usr/AGL/apps/autoinstall || \
-            install -m 0644 ${B}/package/*.wgt ${D}/usr/AGL/apps/autoinstall
+    then
+        install -d ${D}/usr/AGL/apps/manualinstall
+        install -m 0644 ${B}/*.wgt ${D}/usr/AGL/apps/manualinstall || \
+        install -m 0644 ${B}/package/*.wgt ${D}/usr/AGL/apps/manualinstall
+    else
+        install -d ${D}/usr/AGL/apps/autoinstall
+        install -m 0644 ${B}/*.wgt ${D}/usr/AGL/apps/autoinstall || \
+        install -m 0644 ${B}/package/*.wgt ${D}/usr/AGL/apps/autoinstall
 
-            install -m 0644 ${S}/widgets/*.wgt ${D}/usr/AGL/apps/autoinstall || \
+        install -m 0644 ${S}/widgets/*.wgt ${D}/usr/AGL/apps/autoinstall || \
             ( bbwarn "no package found in widget directory")
 
         if [ "$(find ${D}/usr/AGL/apps/autoinstall -name ${TEST_WGT})" ]
