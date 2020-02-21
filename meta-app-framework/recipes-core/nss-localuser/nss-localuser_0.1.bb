@@ -13,6 +13,8 @@ SRC_URI = "git://gerrit.automotivelinux.org/gerrit/src/nss-localuser;protocol=ht
 SRCREV = "66803c6fdb609ed83a78b9194ecb23e9c1b773e7"
 PV = "${AGL_BRANCH}+git${SRCPV}"
 
+RDEPENDS_${PN} = "base-files"
+
 S = "${WORKDIR}/git"
 
 do_compile() {

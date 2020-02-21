@@ -14,6 +14,9 @@ def find_cfgs(d):
 
 do_configure_append () {
     [ ! -f .config ] && cp -a ${WORKDIR}/defconfig .config
+    # Need to clear CONFIG_LSM for 5.1+ kernels to ensure it'll get
+    # regenerated to reflect configuration changes (e.g. SMACK).
+    sed -i '/^CONFIG_LSM/d' .config
     merge_config.sh -m .config ${@" ".join(find_cfgs(d))}
     yes '' | make oldconfig
 }
