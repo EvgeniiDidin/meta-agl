@@ -6,7 +6,7 @@ LICENSE     = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=5de84541278ea4e62cacfdc0f890c459"
 
 SRC_URI = "gitsm://github.com/iotbzh/high-level-viwi-service.git;protocol=https"
-SRCREV  = "e9d304eb5ac99b3ba6b72022458f09fcd713b584"
+SRCREV  = "e7080819d7cabc7b58ed550e41af086927cac32c"
 
 PV = "4.0+git${SRCPV}"
 S  = "${WORKDIR}/git"

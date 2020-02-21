@@ -7,7 +7,7 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/Apache-2.0;md5=89aea4e17d99a7ca
 SECTION = "apps"
 
 SRC_URI = "git://gerrit.automotivelinux.org/gerrit/src/cmake-apps-module;protocol=https;branch=${AGL_BRANCH}"
-SRCREV = "bd9e1c988ec7237964c466c65792d4c77960625e"
+SRCREV = "9e3724bca1587ad7063e91683e787bb250cd90a6"
 
 PV = "${AGLVERSION}"
 S  = "${WORKDIR}/git"
