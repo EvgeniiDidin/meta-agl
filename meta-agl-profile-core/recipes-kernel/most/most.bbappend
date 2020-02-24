@@ -11,4 +11,5 @@ SRC_URI_append = " \
         file://0009-dim2-use-device-for-coherent-memory-allocation.patch \
         file://0010-backport-usb-setup-timer.patch \
         file://0011-handle-snd_pcm_lib_mmap_vmalloc-removal.patch \
+        file://0012-Fix-build-with-5.4-kernel.patch \
 "
