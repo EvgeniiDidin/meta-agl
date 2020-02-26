@@ -1,6 +1,6 @@
 ---
 description: Machine h3-salvator-x
-authors: Jan-Simon Möller <jsmoeller@linuxfoundation.org>, Martin Kelly <mkelly@xevo.com>
+authors: Jan-Simon Möller <jsmoeller@linuxfoundation.org>, Martin Kelly <mkelly@xevo.com>, Ronan Le Martret <ronan.lemartret@iot.bzh> Duy Dang <duy.dang.yw@renesas.com>
 ---
 	
 ### Machine h3-salvator-x

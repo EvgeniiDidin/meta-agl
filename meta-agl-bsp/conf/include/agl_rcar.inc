@@ -1,10 +1,7 @@
-require conf/include/agl_ulcb-nogfx.inc
+require conf/include/agl_rcar-nogfx.inc
 
 # Enable AGL virtualization features
 MACHINE_FEATURES_append = " agl-egvirt"
-
-# for Wayland/Weston weston-laucher
-DISTRO_FEATURES_append = " pam"
 
 # Enable Gfx Pkgs
 MACHINE_FEATURES_append = " gsx"

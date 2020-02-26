@@ -1,4 +1,4 @@
-require conf/include/agl_ulcb-nogfx.inc
+require conf/include/agl_rcar-nogfx.inc
 SOC_FAMILY = "r8a7796"
 BOARD_NAME = "m3ulcb"
 

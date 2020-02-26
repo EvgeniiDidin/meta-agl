@@ -1,1 +1,1 @@
-DEPENDS_append_ulcb = " gstreamer1.0-plugins-base"
+DEPENDS_append_rcar-gen3 = " gstreamer1.0-plugins-base"

@@ -1,4 +1,4 @@
-require conf/include/agl_ulcb.inc
+require conf/include/agl_rcar.inc
 SOC_FAMILY = "r8a77990"
 BOARD_NAME = "ebisu"
 

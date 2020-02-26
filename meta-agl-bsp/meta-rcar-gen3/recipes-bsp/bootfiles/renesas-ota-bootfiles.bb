@@ -4,13 +4,14 @@ LIC_FILES_CHKSUM = "file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384
 
 inherit deploy
 
-COMPATIBLE_MACHINE = "(m3ulcb|h3ulcb|ebisu)"
+COMPATIBLE_MACHINE = "(salvator-x|m3ulcb|h3ulcb|ebisu)"
 
 S = "${WORKDIR}"
 
 SRC_URI_append_sota = "file://uEnv-ota-m3ulcb.txt \
-                       file://uEnv-ota-h3ulcb.txt"
-
+                       file://uEnv-ota-h3ulcb.txt \
+                       file://uEnv-ota-h3-salvator-xs \
+                       file://uEnv-ota-m3-salvator-xs"
 do_deploy() {
     install -d ${DEPLOYDIR}/${PN}
 }
