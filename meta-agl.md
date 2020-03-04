@@ -118,25 +118,3 @@ design:
 
   Additional tools used in QA tests (for agl-image*-qa).
 
-<!--
-* packagegroup-ivi-common*
-
-        packagegroup-ivi-common-core-automotive.bb
-        packagegroup-ivi-common-core.bb
-        packagegroup-ivi-common-core-connectivity.bb
-        packagegroup-ivi-common-core-graphics.bb
-        packagegroup-ivi-common-core-kernel.bb
-        packagegroup-ivi-common-core-multimedia.bb
-        packagegroup-ivi-common-core-navi-lbs.bb
-        packagegroup-ivi-common-core-os-commonlibs.bb
-        packagegroup-ivi-common-core-security.bb
-        packagegroup-ivi-common-core-speech-services.bb
-        packagegroup-ivi-common-test.bb
-
-The previous Packagegroups pick up some packages from upstream
-locations such as
-[GENIVI Alliance](https://www.genivi.org/) and others.
-The `meta-ivi-common` layer produces no image.
-All the Packagegroups in this layer are aggregated to `packagegroup-ivi-common-core`,
-which is included by the images and the two recipes  `agl-image-ivi.bb` and `agl-demo-platform.bb`.
--->
