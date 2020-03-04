@@ -125,7 +125,7 @@ try=5
 while :;do
 	log_info "Starting NBD client"
 	if [ -z "${NBD_NAMEV3}" ]; then
-		nbd-client $NBD_SERVER $NBD_PORT $NBD_DEV && { log_info "NBD client successfully started"; break; }
+		nbd-client -persist $NBD_SERVER $NBD_PORT $NBD_DEV && { log_info "NBD client successfully started"; break; }
 		log_info "NBD client failed"
 	else
 		nbd3-client $NBD_SERVER $NBD_DEV --name $NBD_NAMEV3 && { log_info "NBD3 client successfully started"; break; }
