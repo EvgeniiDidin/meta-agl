@@ -18,7 +18,7 @@ index 0b128556..bd2be6b6 100644
      request.setUrl(QUrl(mapboxTilesApiPath +
 -                        ((spec.mapId() >= m_mapIds.size()) ? QStringLiteral("mapbox.streets") : m_mapIds[spec.mapId() - 1]) + QLatin1Char('/') +
 +                        m_mapIds[m_mapIds.size() - 1] +
-+                        QStringLiteral("/tiles/") +
++                        QStringLiteral("/tiles/256/") +
                          QString::number(spec.zoom()) + QLatin1Char('/') +
                          QString::number(spec.x()) + QLatin1Char('/') +
                          QString::number(spec.y()) +
