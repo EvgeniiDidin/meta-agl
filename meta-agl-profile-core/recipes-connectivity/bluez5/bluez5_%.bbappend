@@ -19,7 +19,7 @@ do_install_append() {
         install -m 0644 ${WORKDIR}/tmpdir.conf ${D}${systemd_user_unitdir}/obex.service.d/tmpdir.conf
         mkdir -p ${D}/etc/systemd/user
         ln -sf ${systemd_user_unitdir}/obex.service ${D}/etc/systemd/user/dbus-org.bluez.obex.service
-        mkdir -p ${systemd_system_unitdir}
+        mkdir -p ${D}${systemd_system_unitdir}
         install -m 0644 ${WORKDIR}/bluetooth.service ${D}${systemd_system_unitdir}
     fi
 }
