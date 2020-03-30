@@ -36,7 +36,7 @@ EXTRA_OECMAKE = " \
 inherit systemd
 SYSTEMD_SERVICE_${PN} = "security-manager.service"
 
-inherit distro_features_check
+inherit features_check
 REQUIRED_DISTRO_FEATURES += "smack"
 
 # The upstream source code contains the Tizen-specific policy configuration files.
