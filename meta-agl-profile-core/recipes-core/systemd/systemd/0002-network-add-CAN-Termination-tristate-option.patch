@@ -15,10 +15,10 @@ Signed-off-by: Matt Ranostay <matt.ranostay@konsulko.com>
  6 files changed, 18 insertions(+)
 
 diff --git a/src/libsystemd/sd-netlink/netlink-types.c b/src/libsystemd/sd-netlink/netlink-types.c
-index de9b8b21ab..69ca675a8d 100644
+index a55460f034..96e211dcf0 100644
 --- a/src/libsystemd/sd-netlink/netlink-types.c
 +++ b/src/libsystemd/sd-netlink/netlink-types.c
-@@ -310,6 +310,7 @@ static const NLType rtnl_link_info_data_can_types[] = {
+@@ -316,6 +316,7 @@ static const NLType rtnl_link_info_data_can_types[] = {
          [IFLA_CAN_BITTIMING]            = { .size = sizeof(struct can_bittiming) },
          [IFLA_CAN_RESTART_MS]           = { .type = NETLINK_TYPE_U32 },
          [IFLA_CAN_CTRLMODE]             = { .size = sizeof(struct can_ctrlmode) },
@@ -58,34 +58,34 @@ index 5755df57bd..3abe8ae2ed 100644
          if (r < 0)
                  return log_link_error_errno(link, r, "Failed to close netlink container: %m");
 diff --git a/src/network/networkd-network-gperf.gperf b/src/network/networkd-network-gperf.gperf
-index d4d108ad25..f6814c2213 100644
+index f7e68be181..b3df4f3960 100644
 --- a/src/network/networkd-network-gperf.gperf
 +++ b/src/network/networkd-network-gperf.gperf
-@@ -227,6 +227,7 @@ CAN.BitRate,                            config_parse_si_size,
+@@ -245,6 +245,7 @@ CAN.BitRate,                            config_parse_si_size,
  CAN.SamplePoint,                        config_parse_permille,                           0,                             offsetof(Network, can_sample_point)
  CAN.RestartSec,                         config_parse_sec,                                0,                             offsetof(Network, can_restart_us)
  CAN.TripleSampling,                     config_parse_tristate,                           0,                             offsetof(Network, can_triple_sampling)
 +CAN.Termination,                        config_parse_tristate,                           0,                             offsetof(Network, can_termination)
- /* backwards compatibility: do not add new entries to this section */
- Network.IPv4LL,                         config_parse_ipv4ll,                             0,                             offsetof(Network, link_local)
- DHCP.ClientIdentifier,                  config_parse_dhcp_client_identifier,             0,                             offsetof(Network, dhcp_client_identifier)
+ TrafficControlQueueingDiscipline.Parent,                             config_parse_tc_qdiscs_parent,                     0,                             0
+ TrafficControlQueueingDiscipline.NetworkEmulatorDelaySec,            config_parse_tc_network_emulator_delay,            0,                             0
+ TrafficControlQueueingDiscipline.NetworkEmulatorDelayJitterSec,      config_parse_tc_network_emulator_delay,            0,                             0
 diff --git a/src/network/networkd-network.c b/src/network/networkd-network.c
-index 2b8d0eb2fb..00f309b738 100644
+index 6e443975f1..0ea5c05db7 100644
 --- a/src/network/networkd-network.c
 +++ b/src/network/networkd-network.c
-@@ -436,6 +436,7 @@ int network_load_one(Manager *manager, const char *filename) {
+@@ -448,6 +448,7 @@ int network_load_one(Manager *manager, OrderedHashmap **networks, const char *fi
                  .keep_configuration = _KEEP_CONFIGURATION_INVALID,
  
                  .can_triple_sampling = -1,
 +                .can_termination = -1,
+                 .ip_service_type = -1,
          };
  
-         r = config_parse_many(filename, NETWORK_DIRS, dropin_dirname,
 diff --git a/src/network/networkd-network.h b/src/network/networkd-network.h
-index bc760744e5..ed803ee746 100644
+index aa74bb4ae7..6a1f094156 100644
 --- a/src/network/networkd-network.h
 +++ b/src/network/networkd-network.h
-@@ -170,6 +170,7 @@ struct Network {
+@@ -193,6 +193,7 @@ struct Network {
          unsigned can_sample_point;
          usec_t can_restart_us;
          int can_triple_sampling;
@@ -94,10 +94,10 @@ index bc760744e5..ed803ee746 100644
          AddressFamily ip_forward;
          bool ip_masquerade;
 diff --git a/test/fuzz/fuzz-network-parser/directives.network b/test/fuzz/fuzz-network-parser/directives.network
-index 848d4bd187..66a7557f29 100644
+index 5bd80dece8..781269d960 100644
 --- a/test/fuzz/fuzz-network-parser/directives.network
 +++ b/test/fuzz/fuzz-network-parser/directives.network
-@@ -183,6 +183,7 @@ SamplePoint=
+@@ -194,6 +194,7 @@ SamplePoint=
  BitRate=
  RestartSec=
  TripleSampling=
@@ -105,6 +105,3 @@ index 848d4bd187..66a7557f29 100644
  [Address]
  DuplicateAddressDetection=
  AutoJoin=
--- 
-2.25.0
-
