@@ -4,7 +4,6 @@ SRC_URI_append = " \
     file://tmpdir.conf \
     file://obex.service \
     file://bluetooth.service \
-    file://0001-obex-report-notification-status-on-incoming-message.patch \
 "
 
 FILES_${PN} += "${systemd_user_unitdir}/obex.service.d/tmpdir.conf"
