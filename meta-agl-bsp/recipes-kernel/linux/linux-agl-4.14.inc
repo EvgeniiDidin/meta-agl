@@ -10,4 +10,5 @@ SRC_URI_append_with-lsm-smack = "\
 
 SRC_URI_append = "\
        file://net-sch_generic-add-if_afp.h-header-to-get-ARPHRD_CA.patch \
+       file://net-sch_generic-Use-pfifo_fast-as-fallback-scheduler.patch \
        "
