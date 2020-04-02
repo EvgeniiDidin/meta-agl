@@ -1,0 +1,48 @@
+Add memfd-create option
+
+Add a meson build option, memfd-create, that controls whether the
+memfd_create system call support will be enabled.  The default value
+is true so that it will be enabled, but it allows users like AGL
+that currently has issues with security labels and memfd to disable
+it.
+
+Upstream-Status: Pending
+
+Signed-off-by: Scott Murray <scott.murray@konsulko.com>
+
+diff --git a/meson.build b/meson.build
+index 82107e1..9d042ca 100644
+--- a/meson.build
++++ b/meson.build
+@@ -78,8 +78,12 @@ elif cc.has_header_symbol('sys/mkdev.h', 'major')
+ endif
+ 
+ optional_libc_funcs = [
+-	'mkostemp', 'strchrnul', 'initgroups', 'posix_fallocate', 'memfd_create'
++	'mkostemp', 'strchrnul', 'initgroups', 'posix_fallocate'
+ ]
++if get_option('memfd-create')
++	optional_libc_funcs += [ 'memfd_create' ]
++endif
++
+ foreach func : optional_libc_funcs
+ 	if cc.has_function(func)
+ 		config_h.set('HAVE_' + func.to_upper(), 1)
+diff --git a/meson_options.txt b/meson_options.txt
+index 80a2ad7..4a93472 100644
+--- a/meson_options.txt
++++ b/meson_options.txt
+@@ -99,6 +99,13 @@ option(
+ 	description: 'systemd service plugin: state notify, watchdog, socket activation'
+ )
+ 
++option(
++	'memfd-create',
++	type: 'boolean',
++	value: true,
++	description: 'Use memfd_create system call'
++)
++
+ option(
+ 	'remoting',
+ 	type: 'boolean',
