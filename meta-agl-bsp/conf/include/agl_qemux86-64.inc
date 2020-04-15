@@ -21,7 +21,10 @@ QB_KERNEL_CMDLINE_APPEND_append = " quiet"
 DISTRO_FEATURES_append = " sota"
 
 # Image support
-AGL_EXTRA_IMAGE_FSTYPES = "${@bb.utils.contains('DISTRO_FEATURES', 'AGLCI', 'wic.vmdk.xz', 'wic.vmdk', d)}"
+# NOTE: wic.{xz,bmap} are here since qemu targets override
+#       AGL_DEFAULT_IMAGE_FSTYPES to not include them, but for Intel
+#       we actually do want them for use on physical hardware.
+AGL_EXTRA_IMAGE_FSTYPES = "wic.xz wic.bmap ${@bb.utils.contains('DISTRO_FEATURES', 'AGLCI', 'wic.vmdk.xz', 'wic.vmdk', d)}"
 IMAGE_BOOT_FILES_sota = "u-boot-qemux86-64.rom"
 
 # Root device
