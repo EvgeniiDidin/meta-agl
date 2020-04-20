@@ -11,11 +11,11 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=fac6abe0003c4d142ff8fa1f18316df0"
 DEPENDS = "wayland wayland-protocols wayland-native weston"
 
 SRC_URI = "git://gerrit.automotivelinux.org/gerrit/src/agl-compositor.git;protocol=https;branch=${AGL_BRANCH}"
-SRCREV = "dbba1adda7fd9aaaa46263d8c878132a523327e4"
+SRCREV = "fcd71e034d378921e0408a69dedcd8d0f4836401"
 
 PV = "0.0.10+git${SRCPV}"
 S = "${WORKDIR}/git"
 
 inherit meson pkgconfig python3native
 
-FILES_${PN} = "${bindir}/agl-compositor ${datadir}/${PN}/protocols/agl-shell.xml"
+FILES_${PN} = "${bindir}/agl-compositor ${datadir}/${PN}/protocols/agl-shell.xml ${datadir}/${PN}/protocols/agl-shell-desktop.xml"
