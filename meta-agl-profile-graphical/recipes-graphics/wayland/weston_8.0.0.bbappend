@@ -8,8 +8,9 @@ SRC_URI_append = "\
     file://0001-Allow-regular-users-to-launch-Weston_7.0.0.patch \
     file://use-XDG_RUNTIMESHARE_DIR.patch \
     file://0002-ivi-shell-Fix-crash-due-no-transmitter-screen.patch \
-    file://0001-config-parser-Export-get_full_path-and-destroy.patch \
     file://0001-libweston-Expose-weston_output_damage-in-libweston.patch \
+    file://0004-unconditionally-include-mman.h.patch \
+    file://0005-add-memfd-create-option.patch \
     "
 
-EXTRA_OEMESON_append = " -Denable-user-start=true"
+EXTRA_OEMESON_append = " -Denable-user-start=true -Dmemfd-create=false"

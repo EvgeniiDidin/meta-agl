@@ -17,6 +17,7 @@ PREFERRED_PROVIDER_libgbm = "libgbm"
 PREFERRED_RPROVIDER_libgbm-dev = "libgbm"
 
 PREFERRED_RPROVIDER_libomxil = "omx-user-module"
+PREFERRED_PROVIDER_virtual/libomxil = "omx-user-module"
 
 # Add for gstreamer plugins ugly
 LICENSE_FLAGS_WHITELIST = "commercial"

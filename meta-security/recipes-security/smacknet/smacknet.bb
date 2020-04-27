@@ -12,7 +12,7 @@ S = "${WORKDIR}"
 
 inherit systemd
 
-inherit distro_features_check
+inherit features_check
 REQUIRED_DISTRO_FEATURES = "smack"
 
 #netlabel configuration service
