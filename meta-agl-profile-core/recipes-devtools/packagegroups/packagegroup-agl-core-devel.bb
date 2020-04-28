@@ -4,7 +4,6 @@ LICENSE = "MIT"
 inherit packagegroup
 
 RDEPENDS_${PN} = "\
-	afb-test \
         strace \
         ldd \
         less \
