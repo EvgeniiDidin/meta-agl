@@ -11,7 +11,7 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=fac6abe0003c4d142ff8fa1f18316df0"
 DEPENDS = "wayland wayland-protocols wayland-native weston"
 
 SRC_URI = "git://gerrit.automotivelinux.org/gerrit/src/agl-compositor.git;protocol=https;branch=${AGL_BRANCH}"
-SRCREV = "fcd71e034d378921e0408a69dedcd8d0f4836401"
+SRCREV = "1956bd3bfb0c85e3eb3413dd465a1a2fb1ae78bb"
 
 PV = "0.0.10+git${SRCPV}"
 S = "${WORKDIR}/git"
