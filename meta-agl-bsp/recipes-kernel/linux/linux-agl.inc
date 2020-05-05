@@ -76,6 +76,22 @@ OVERRIDES_prepend_qemux86-64 = "virtualmachine:"
 SRC_URI_append_virtualmachine = " file://vbox-vmware-sata.cfg"
 KERNEL_CONFIG_FRAGMENTS_append_virtualmachine = " ${WORKDIR}/vbox-vmware-sata.cfg"
 
+# Extra configuration for using qemux86-64 image on physical hardware
+SRC_URI_append_qemux86-64 = "\
+    file://x86-extra-graphic-devices.cfg \
+    file://x86-net-devices.cfg \
+    file://x86-security-tpm.cfg \
+    file://x86-usb-devices.cfg \
+    file://x86-upsquare.cfg \
+"
+KERNEL_CONFIG_FRAGMENTS_append_qemux86-64 = "\
+    ${WORKDIR}/x86-extra-graphic-devices.cfg \
+    ${WORKDIR}/x86-net-devices.cfg \
+    ${WORKDIR}/x86-security-tpm.cfg \
+    ${WORKDIR}/x86-usb-devices.cfg \
+    ${WORKDIR}/x86-upsquare.cfg \
+"
+
 # Enable support for smack
 KERNEL_CONFIG_FRAGMENTS_append_with-lsm-smack = "\
        ${WORKDIR}/audit.cfg \
