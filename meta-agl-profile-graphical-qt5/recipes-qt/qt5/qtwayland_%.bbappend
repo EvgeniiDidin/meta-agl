@@ -23,3 +23,12 @@ FILESEXTRAPATHS_append := ":${THISDIR}/${PN}"
 SRC_URI_append = "\
     file://0010-Added-manifest-file-according-to-smack-3-domain-mode.patch \
     "
+
+DEFAULT_WM_SHELL = "${@bb.utils.contains('DISTRO_FEATURES', 'agl-compositor', 'xdg-shell', 'ivi-shell', d)}"
+AFM_CONF_DIR = "${D}${sysconfdir}/afm/unit.env.d"
+QT_SHELL_FILE = "${AFM_CONF_DIR}/qt-shell"
+
+do_install_append_class-target() {
+	mkdir -p ${AFM_CONF_DIR}
+	echo "QT_WAYLAND_SHELL_INTEGRATION=${DEFAULT_WM_SHELL}" > ${QT_SHELL_FILE}
+}
