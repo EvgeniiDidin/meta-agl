@@ -31,4 +31,5 @@ QT_SHELL_FILE = "${AFM_CONF_DIR}/qt-shell"
 do_install_append_class-target() {
 	mkdir -p ${AFM_CONF_DIR}
 	echo "QT_WAYLAND_SHELL_INTEGRATION=${DEFAULT_WM_SHELL}" > ${QT_SHELL_FILE}
+	echo "QT_WAYLAND_RESIZE_AFTER_SWAP=1" >> ${QT_SHELL_FILE}
 }
