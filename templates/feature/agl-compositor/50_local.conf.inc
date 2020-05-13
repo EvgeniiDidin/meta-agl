@@ -5,17 +5,17 @@ DISTRO_FEATURES_append = " agl-compositor"
 
 # shell client
 AGL_BRANCH_pn-homescreen = "sandbox/mvlad/agl-compositor"
-SRCREV_pn-homescreen = "745f1d9e86e8cbd83c5ae84aba2513341da5ad7a"
+SRCREV_pn-homescreen = "c1b3b05d436d270b0b6df6ef718309b1f0b82be3"
 DEPENDS_append_pn-homescreen = " wayland-native wayland qtwayland qtwayland-native"
 
 # normal apps
 AGL_BRANCH_pn-launcher = "sandbox/mvlad/agl-compositor"
-SRCREV_pn-launcher = "0b53ebc5e8c0df2fad64ea5b60fda05ae0aafb3b"
+SRCREV_pn-launcher = "83496d2f6968f7d12a183581d320065bdba52132"
 DEPENDS_append_pn-launcher = " wayland-native wayland qtwayland qtwayland-native"
 AGL_BRANCH_pn-hvac = "sandbox/mvlad/agl-compositor"
 SRCREV_pn-hvac = "2afae8c55678cf070ee1a41137be48019ea4872c"
 DEPENDS_append_pn-hvac = " libafb-helpers-qt"
-AGL_BRANCH_pn-navigation-demo = "sandbox/mvlad/agl-compositor"
-SRCREV_pn-navigation-demo = "d98e5a070e4109e28289000a7d99ff6fc91b5670"
+AGL_BRANCH_pn-ondemandnavi = "sandbox/mvlad/agl-compositor"
+SRCREV_pn-ondemandnavi = "10acae987db859bace7d2dcf4913a21073d65990"
 AGL_BRANCH_pn-mediaplayer = "sandbox/mvlad/agl-compositor"
-SRCREV_pn-mediaplayer = "9d3d0bfa6de3c21b1c770d18f4e3ea6dba6a68db"
+SRCREV_pn-mediaplayer = "4518cdde5ddb053a4759f7b50f038c53bc41a45e"
