@@ -4,6 +4,7 @@ inherit agl-graphical
 
 WESTONSTART ??= "${@bb.utils.contains("DISTRO_FEATURES", "agl-compositor", "/usr/bin/agl-compositor", "/usr/bin/weston",d)} ${WESTONARGS}"
 WESTONSTART_append = " ${@bb.utils.contains("IMAGE_FEATURES", "debug-tweaks", " --log=${DISPLAY_XDG_RUNTIME_DIR}/weston.log", "",d)}"
+WESTONSTART_append = " ${@bb.utils.contains("DISTRO_FEATURES", "agl-compositor", " --config ${sysconfdir}/xdg/weston/weston.ini", "",d)}"
 
 WIFILES = " \
     file://weston.conf.in \
