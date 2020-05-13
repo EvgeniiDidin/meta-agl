@@ -2,10 +2,6 @@
 # Comment this out to be able to select the kernel modules yourself.
 IMAGE_INSTALL_append = " kernel-modules"
 
-# Base image feature package definitions for agl-test-wgt and agl-devel-wgt
-FEATURE_PACKAGES_agl-test-wgt = "packagegroup-agl-core-services-test"
-FEATURE_PACKAGES_agl-devel-wgt = "packagegroup-agl-core-services-devel"
-
 # Likewise as we included all kernel modules by default in the filesystem,
 # we do not need a separate tarball stored.
 # Comment this out to receive the separate modules tarball again.

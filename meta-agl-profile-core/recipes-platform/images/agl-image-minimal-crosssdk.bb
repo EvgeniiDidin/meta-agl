@@ -8,23 +8,7 @@ require agl-image-minimal.bb
 
 LICENSE = "MIT"
 
-IMAGE_FEATURES_append = " dev-pkgs"
-IMAGE_INSTALL_append = " kernel-dev kernel-devsrc"
-
-# required dependencies for app and test builds
-# also in the minimal image (SPEC-1678)
-TOOLCHAIN_HOST_TASK += " \
-    nativesdk-lua \
-    "
-
-# required dependencies for app and test builds
-# also in the minimal image (SPEC-1678)
-TOOLCHAIN_TARGET_TASK += " \
-    lua-dev \
-    lua-staticdev \
-    libafb-helpers-staticdev \
-    libappcontroller-staticdev \
-    "
+require agl-image-minimal-crosssdk.inc
 
 inherit populate_sdk
 
@@ -32,4 +16,3 @@ inherit populate_sdk
 # Both exec "createrepo" on the same directory, and so one of them
 # can failed (randomly).
 addtask do_populate_sdk after do_rootfs
-

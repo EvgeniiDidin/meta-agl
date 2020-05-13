@@ -47,6 +47,7 @@ AGLWGT_PACKAGE_WARN = "false"
 # NOTE: This should revisited after a round of autobuild script rework
 #       to address SPEC-3300.
 ALLOW_EMPTY_${PN}-coverage = "1"
+ALLOW_EMPTY_${PN}-debug = "1"
 ALLOW_EMPTY_${PN}-test = "1"
 
 
@@ -145,7 +146,7 @@ do_install() {
 addtask aglwgt_deploy  before do_package after do_install
 addtask aglwgt_package before do_aglwgt_deploy after do_compile
 
-PACKAGES += "${PN}-test ${PN}-coverage"
+PACKAGES += "${PN}-test ${PN}-debug ${PN}-coverage"
 
 FILES_${PN} += " \
     /usr/AGL/apps/release/*.wgt \
@@ -154,11 +155,11 @@ FILES_${PN} += " \
     ${sysconfdir}/agl-postinsts/${POST_INSTALL_SCRIPT} \
 "
 FILES_${PN}-test = "/usr/AGL/apps/test/*.wgt"
-FILES_${PN}-dbg = "/usr/AGL/apps/debug/*.wgt"
+FILES_${PN}-debug = "/usr/AGL/apps/debug/*.wgt"
 FILES_${PN}-coverage = "/usr/AGL/apps/coverage/*.wgt"
 
-# Test widgets need the base widget
-RDEPENDS_${PN}-test = "${PN}"
+# Test widgets need the parent widget and the test framework
+RDEPENDS_${PN}-test = "${PN} afb-test"
 
 # Signature keys
 # These are default keys for development purposes !
