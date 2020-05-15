@@ -1,4 +1,5 @@
 DISABLE_OVERSCAN = "1"
+TOTAL_BOARD_MEM = "3072"
 
 do_deploy_append_raspberrypi4() {
     # ENABLE CAN
@@ -16,6 +17,10 @@ do_deploy_append_raspberrypi4() {
                 echo  "enable_gic=1" >> ${DEPLOYDIR}/bcm2835-bootfiles/config.txt
                 ;;
         esac
+    fi
+
+    if [ "${AGL_XEN_WANTED}" = "1" ]; then
+        echo "total_mem=${TOTAL_BOARD_MEM}" >> ${DEPLOYDIR}/bcm2835-bootfiles/config.txt
     fi
 }
 

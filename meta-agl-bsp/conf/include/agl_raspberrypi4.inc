@@ -17,3 +17,12 @@ IMAGE_FEATURES_remove = "splash"
 
 # Build updatable image. Only takes effect when sota.bbclass is inherited
 DISTRO_FEATURES_append = " sota"
+
+# Add xen build, if the xen feature activated
+DISTRO_FEATURES_append = " ${@bb.utils.contains('AGL_XEN_WANTED', '1', ' xen', '', d)}"
+
+# add xen-tools to build
+IMAGE_INSTALL_append = " ${@bb.utils.contains('AGL_XEN_WANTED', '1', 'xen-tools xen-mkimage-rpi4', '', d)}"
+
+# Add xen-raspberry binary to boot files
+IMAGE_BOOT_FILES_append = " ${@bb.utils.contains('AGL_XEN_WANTED','1', 'xen-${MACHINE}', '',d)}"

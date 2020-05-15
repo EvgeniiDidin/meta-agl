@@ -5,8 +5,18 @@ require recipes-kernel/linux/linux-agl.inc
 SRC_URI_append = "\
     ${@oe.utils.conditional('USE_FAYTECH_MONITOR', '1', 'file://0002-faytech-fix-rpi.patch', '', d)} \
 "
+#take in account that linux under xen should use the hvc0 console
+SERIAL_OPTION = "${@bb.utils.contains('AGL_XEN_WANTED','1','hvc0','115200;ttyS0',d)}"
+SERIAL = "${@oe.utils.conditional("ENABLE_UART", "1", "console=${SERIAL_OPTION}", "", d)}"
 
 CMDLINE_DEBUG = ""
+
+#XEN related option
+CMDLINE_append = ' ${@bb.utils.contains('AGL_XEN_WANTED','1','clk_ignore_unused','',d)}'
+
+#workaround for crash during brcmfmac loading. Disable it at this moment
+CMDLINE_append = ' ${@bb.utils.contains('AGL_XEN_WANTED','1','modprobe.blacklist=brcmfmac','',d)}'
+
 CMDLINE_append = " usbhid.mousepoll=0"
 
 # Add options to allow CMA to operate
