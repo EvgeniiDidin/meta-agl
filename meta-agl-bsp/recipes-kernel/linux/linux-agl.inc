@@ -33,10 +33,13 @@ SRC_URI_append = "\
             file://drm.cfg \
             file://btusb.cfg \
             file://usbaudio.cfg \
-	    file://usbmodem.cfg \
-	    file://i2c-led.cfg \
-	    file://nfc.cfg \
-            "
+            file://usbmodem.cfg \
+            file://i2c-led.cfg \
+            file://nfc.cfg \
+        "
+
+SRC_URI_append = " ${@bb.utils.contains('AGL_XEN_GUEST_WANTED','1','file://xen_domu.cfg','',d)}"
+
 KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/can-bus.cfg"
 # Enable support for usb video class for usb camera devices
 KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/uvc.cfg"
@@ -55,6 +58,8 @@ KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/usbaudio.cfg"
 KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/i2c-led.cfg"
 # Enable NFC devices
 KERNEL_CONFIG_FRAGMENTS_append = " ${WORKDIR}/nfc.cfg"
+# Enable XEN support of the guest
+KERNEL_CONFIG_FRAGMENTS_append = " ${@bb.utils.contains('AGL_XEN_GUEST_WANTED','1','${WORKDIR}/xen_domu.cfg','',d)}"
 
 # Enable required features for the agl-netboot feature
 SRC_URI_append_netboot = " file://nbd.cfg \
