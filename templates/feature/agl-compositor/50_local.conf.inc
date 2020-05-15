@@ -25,3 +25,23 @@ AGL_BRANCH_pn-onscreenapp = "sandbox/mvlad/agl-compositor"
 SRCREV_pn-onscreenapp = "98dab0eebc3dc0f567be3f80ab129cbcc71738db"
 AGL_BRANCH_pn-settings = "sandbox/mvlad/agl-compositor"
 SRCREV_pn-settings = "ff650ab8c60a6cd218f4e981740ca41014cce7cc"
+
+# other apps
+AGL_BRANCH_pn-radio = "sandbox/mvlad/agl-compositor"
+SRCREV_pn-radio = "1d542581205725de446376707dff7c31c61d04d8"
+AGL_BRANCH_pn-dashboard = "sandbox/mvlad/agl-compositor"
+SRCREV_pn-dashboard = "ea01446bbc5a9bfe739da10869f08b0bd2e82174"
+AGL_BRANCH_pn-taskmanager = "sandbox/mvlad/agl-compositor"
+SRCREV_pn-taskmanager = "516c53197ff82297ddf7ee1a55497f657e4abc19"
+AGL_BRANCH_pn-phone = "sandbox/mvlad/agl-compositor"
+SRCREV_pn-phone = "e29b1f9d6d7b17645c4ab65250520b1df612fd7c"
+AGL_BRANCH_pn-poiapp = "sandbox/mvlad/agl-compositor"
+SRCREV_pn-poiapp = "f7a0bc184e53ba5c756de079891d690eed0fc51e"
+AGL_BRANCH_pn-mixer = "sandbox/mvlad/agl-compositor"
+SRCREV_pn-mixer = "b6638c65ad9af59abfb2a571e11be5a73dc662b8"
+AGL_BRANCH_pn-messaging = "sandbox/mvlad/agl-compositor"
+SRCREV_pn-messaging = "eaa3566554111ad335cb73a219f920989ffcb70f"
+
+# use agl-service-homescreen
+AGL_BRANCH_pn-agl-service-homescreen = "sandbox/mvlad/agl-compositor"
+SRCREV_pn-agl-service-homescreen = "79c9fb4fb8a8c8f6ebfbf0299f16e2ca4ddb56c6"
