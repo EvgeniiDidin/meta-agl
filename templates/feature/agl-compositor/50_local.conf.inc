@@ -5,7 +5,7 @@ DISTRO_FEATURES_append = " agl-compositor"
 
 # shell client
 AGL_BRANCH_pn-homescreen = "sandbox/mvlad/agl-compositor"
-SRCREV_pn-homescreen = "c1b3b05d436d270b0b6df6ef718309b1f0b82be3"
+SRCREV_pn-homescreen = "df79e3e5d9c6443d486c26fd98d48e0ca6fc95ef"
 DEPENDS_append_pn-homescreen = " wayland-native wayland qtwayland qtwayland-native"
 
 # normal apps
