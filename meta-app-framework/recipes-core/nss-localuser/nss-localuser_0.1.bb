@@ -25,7 +25,7 @@ do_install() {
 	make nssdir=${D}${libdir} install
 }
 
-pkg_postinst_${PN} () {
+pkg_postinst_ontarget_${PN} () {
 	sed -e '/^hosts:/s/\<localuser\>\s*//' \
 		-e 's/\(^hosts:\s\s*\)\(.*\)/\1localuser \2/' \
 		-i $D${sysconfdir}/nsswitch.conf
