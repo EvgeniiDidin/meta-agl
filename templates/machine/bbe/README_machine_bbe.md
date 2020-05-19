@@ -1,9 +1,12 @@
 ---
-description: Machine bbe
-authors: Paul Barker <paul.barker@sancloud.co.uk>
+description: SanCloud BeagleBone Enhanced (BBE)
+authors: SanCloud Ltd <yocto@sancloud.co.uk>
 ---
 	
-### Machine bbe
-	 
-*Description is missing - please complete file meta-agl/templates/machine/bbe/README_machine_bbe.md*
+### SanCloud BeagleBone Enhanced (BBE)
 
+* [SanCloud website](https://www.sancloud.co.uk/)
+
+* [BeagleBone Enhanced Description](https://www.sancloud.co.uk/beaglebone-enhanced-bbe)
+
+* [Sancloud repositories on GitHub](https://github.com/SanCloudLtd)
