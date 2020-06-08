@@ -28,7 +28,7 @@ EXTRA_OECMAKE_append = " -DCMAKE_BUILD_TYPE=RELEASE"
 # FIXME: Remove once CMake+ninja issues are resolved
 OECMAKE_GENERATOR = "Unix Makefiles"
 
-AGLWGT_EXTRA_BUILD_ARGS = "VERBOSE=TRUE ${PARALLEL_MAKE}"
+AGLWGT_EXTRA_BUILD_ARGS = 'VERBOSE=TRUE BUILD_ARGS="${PARALLEL_MAKE}"'
 
 # Only widgets with recipe names starting with agl-service- are
 # assumed to have tests by default, set this to "true" to force
@@ -62,24 +62,24 @@ do_aglwgt_package()  {
         bbwarn "Target: package failed"
     fi
 
-    if echo ${BPN} | grep -q '^agl-service-' || [ "${AGLWGT_HAVE_TESTS}" = "true" ]; then
-        mkdir -p ${S}/build-test
-        cd ${S}/build-test
-        if ! $bldcmd package-test BUILD_DIR=${S}/build-test DEST=${B}/build-test ${AGLWGT_EXTRA_BUILD_ARGS}; then
-            bbwarn "Target: package-test failed"
-        fi
-    fi
-
     mkdir -p ${S}/build-debug
     cd ${S}/build-debug
     if ! $bldcmd package-debug BUILD_DIR=${S}/build-debug DEST=${B}/build-debug ${AGLWGT_EXTRA_BUILD_ARGS}; then
         bbwarn "Target: package-debug failed"
     fi
 
-    mkdir -p ${S}/build-coverage
-    cd ${S}/build-coverage
-    if ! $bldcmd package-coverage BUILD_DIR=${S}/build-coverage DEST=${B}/build-coverage ${AGLWGT_EXTRA_BUILD_ARGS}; then
-        bbwarn "Target: package-coverage failed"
+    if echo ${BPN} | grep -q '^agl-service-' || [ "${AGLWGT_HAVE_TESTS}" = "true" ]; then
+        mkdir -p ${S}/build-test
+        cd ${S}/build-test
+        if ! $bldcmd package-test BUILD_DIR=${S}/build-test DEST=${B}/build-test ${AGLWGT_EXTRA_BUILD_ARGS}; then
+            bbwarn "Target: package-test failed"
+        fi
+
+        mkdir -p ${S}/build-coverage
+        cd ${S}/build-coverage
+        if ! $bldcmd package-coverage BUILD_DIR=${S}/build-coverage DEST=${B}/build-coverage ${AGLWGT_EXTRA_BUILD_ARGS}; then
+            bbwarn "Target: package-coverage failed"
+        fi
     fi
 }
 
@@ -98,19 +98,19 @@ do_aglwgt_deploy() {
         DEST=manualinstall
     fi
 
-    if [ "$(find ${B}/build-release -name '*.wgt')" ]; then
+    if [ "$(find ${B}/build-release -name '*.wgt' -maxdepth 1)" ]; then
         install -d ${D}/usr/AGL/apps/$DEST
         install -m 0644 ${B}/build-release/*.wgt ${D}/usr/AGL/apps/$DEST/
     else
-        bberror "no package found in widget directory"
+        bbfatal "no package found in widget directory"
     fi
 
     for t in test debug coverage; do
-        if [ "$(find ${B}/build-${t} -name *-${t}.wgt)" ]; then
+        if [ "$(find ${B}/build-${t} -name *-${t}.wgt -maxdepth 1)" ]; then
             install -d ${D}/usr/AGL/apps/${t}
             install -m 0644 ${B}/build-${t}/*-${t}.wgt ${D}/usr/AGL/apps/${t}/
         elif [ "${AGLWGT_PACKAGE_WARN}" = "true" ]; then
-            if [ "$t" != "test" ]; then
+            if [ "$t" != "test" -a "$t" != "coverage" ]; then
                 bbwarn "no package found in ${t} widget directory"
             elif echo ${BPN} | grep -q '^agl-service-' || [ "${AGLWGT_HAVE_TESTS}" = "true" ]; then
                 bbwarn "no package found in ${t} widget directory"
