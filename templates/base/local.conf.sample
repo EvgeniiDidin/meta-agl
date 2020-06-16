@@ -223,9 +223,9 @@ BB_DISKMON_DIRS ??= "\
 #file://.* file:///some/local/dir/sstate/PATH"
 
 #
-# Yocto Project SState Mirror
+# AGL Project SState Mirror
 #
-# The Yocto Project has prebuilt artefacts available for its releases, you can enable
+# The AGL Project has prebuilt artefacts available for its releases, you can enable
 # use of these by uncommenting the following line. This will mean the build uses
 # the network to check for artefacts at the start of builds, which does slow it down
 # equally, it will also speed up the builds by not having to build things if they are
@@ -233,6 +233,8 @@ BB_DISKMON_DIRS ??= "\
 # which will depend on your network.
 #
 #SSTATE_MIRRORS ?= "file://.* http://sstate.yoctoproject.org/2.5/PATH;downloadfilename=PATH"
+# For AGL:
+#SSTATE_MIRRORS += "file://.* http://download.automotivelinux.org/sstate-mirror/${AGL_BRANCH}/${DEFAULTTUNE}/PATH;downloadfilename=PATH"
 
 #
 # Qemu configuration
@@ -249,6 +251,28 @@ PACKAGECONFIG_append_pn-qemu-system-native = " sdl"
 #PACKAGECONFIG_append_pn-qemu-system-native = " gtk+"
 
 #
+# Parallelism Options
+#
+# These two options control how much parallelism BitBake should use. The first
+# option determines how many tasks bitbake should run in parallel:
+#
+#BB_NUMBER_THREADS ?= "4"
+#
+# Default to setting automatically based on cpu count
+#BB_NUMBER_THREADS ?= "${@oe.utils.cpu_count()}"
+#
+# The second option controls how many processes make should run in parallel when
+# running compile tasks:
+#
+#PARALLEL_MAKE ?= "-j 4"
+#
+# Default to setting automatically based on cpu count
+#PARALLEL_MAKE ?= "-j ${@oe.utils.cpu_count()}"
+#
+# For a quad-core machine, BB_NUMBER_THREADS = "4", PARALLEL_MAKE = "-j 4" would
+# be appropriate for example.
+
+#
 # Hash Equivalence
 #
 # Enable support for automatically running a local hash equivalence server and
@@ -261,6 +285,57 @@ PACKAGECONFIG_append_pn-qemu-system-native = " sdl"
 #
 #BB_HASHSERVE = "auto"
 #BB_SIGNATURE_HANDLER = "OEEquivHash"
+
+
+# The network based PR service host and port
+# Uncomment the following lines to enable PRservice.
+# Set PRSERV_HOST to 'localhost:0' to automatically
+# start local PRService.
+# Set to other values to use remote PRService.
+#PRSERV_HOST = "localhost:0"
+
+
+# Archive the source and put them to ${DEPLOY_DIR}/sources/.
+#
+#INHERIT += "archiver"
+#
+# The tarball for the patched source will be created by default, and you
+# can configure the archiver as follow:
+#
+# Create archive for:
+# 1) original (or unpacked) source:
+#ARCHIVER_MODE[src] = "original"
+# 2) patched source: (default)
+#ARCHIVER_MODE[src] = "patched"
+# 3) configured source:
+#ARCHIVER_MODE[src] = "configured"
+#
+# 4) the patches between do_unpack and do_patch:
+#ARCHIVER_MODE[diff] = "1"
+# set the files that you'd like to exclude from the diff:
+#ARCHIVER_MODE[diff-exclude] ?= ".pc autom4te.cache patches"
+#
+# 5) the environment data, similar to 'bitbake -e recipe':
+#ARCHIVER_MODE[dumpdata] = "1"
+#
+# 6) the recipe (.bb and .inc):
+#ARCHIVER_MODE[recipe] = "1"
+#
+# 7) Whether output the .src.rpm package:
+#ARCHIVER_MODE[srpm] = "1"
+#
+# 8) Filter the license, the recipe whose license in
+#    COPYLEFT_LICENSE_INCLUDE will be included, and in
+#    COPYLEFT_LICENSE_EXCLUDE will be excluded.
+#COPYLEFT_LICENSE_INCLUDE = 'GPL* LGPL*'
+#COPYLEFT_LICENSE_EXCLUDE = 'CLOSED Proprietary'
+#
+# 9) Config the recipe type that will be archived, the type can be
+#    target, native, nativesdk, cross, crosssdk and cross-canadian,
+#    you can set one or more types. Archive all types by default.
+#COPYLEFT_RECIPE_TYPES = 'target'
+#
+
 
 # CONF_VERSION is increased each time build/conf/ changes incompatibly and is used to
 # track the version of this file when it was generated. This can safely be ignored if
