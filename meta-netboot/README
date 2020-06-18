@@ -66,7 +66,7 @@ setenv 'bootkfile' 'Image'
 setenv 'bootkload_net' 'tftp ${bootkaddr} h3ulcb/${bootkfile}'
 setenv 'bootiaddr' '0x5C3F9520'
 setenv 'bootifile' 'initramfs-netboot-image-h3ulcb.ext4.gz'
-setenv 'bootiload_net' 'tftp ${bootraddr} h3ulcb/${bootrfile}'
+setenv 'bootiload_net' 'tftp ${bootiaddr} h3ulcb/${bootifile}'
 setenv 'load_net' 'run bootkload_net; run bootdload_net; run bootiload_net; setenv initrd_size ${filesize}'
 
 setenv 'bootcmd' 'setenv bootargs ${bootargs_console} ${bootargs_video} ${bootargs_root} ${bootargs_extra} nbd.server=${serverip}; run load_net; booti ${bootkaddr} ${bootiaddr}:${initrd_size} ${bootdaddr}'
