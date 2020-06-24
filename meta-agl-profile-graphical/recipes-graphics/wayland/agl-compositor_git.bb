@@ -18,4 +18,8 @@ S = "${WORKDIR}/git"
 
 inherit meson pkgconfig python3native
 
-FILES_${PN} = "${bindir}/agl-compositor ${datadir}/${PN}/protocols/agl-shell.xml ${datadir}/${PN}/protocols/agl-shell-desktop.xml"
+FILES_${PN} = " \
+               ${bindir}/agl-compositor \
+               ${datadir}/${PN}/protocols/agl-shell.xml \
+               ${datadir}/${PN}/protocols/agl-shell-desktop.xml \
+              "
