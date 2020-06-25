@@ -29,6 +29,17 @@ DISTRO_FEATURES_append = " use_eva_pkg"
 #DISTRO_FEATURES_append = " h265dec_lib mpeg2dec_lib"
 DISTRO_FEATURES_append = " h264dec_lib h264enc_lib aaclcdec_lib aaclcdec_mdw"
 
+# Mask out meta-renesas-rcar-gen3's tweaks to weston-init, as they do
+# not seem necessary for anything in AGL, and the addition of
+# dbus.service and multi-user.target dependencies to the weston systemd
+# unit that is done is problematic with respect to potentially blocking
+# weston if any user units like application framework "platform"
+# services fail. They also likely affect boot up speed with respect to
+# getting weston started.  There is no clear rationale expressed in the
+# meta-renesas-rcar-gen3 commit history for the extra dependencies, and
+# testing shows no issues on H3ULCB when not having them.
+BBMASK += "meta-rcar-gen3/recipes-graphics/wayland/weston-init.bbappend"
+
 IMAGE_INSTALL_append_rcar-gen3 = " \
     kernel-devicetree \
     kernel-module-pvrsrvkm \
