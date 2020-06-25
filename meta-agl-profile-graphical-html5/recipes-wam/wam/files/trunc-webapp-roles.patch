@@ -1,0 +1,53 @@
+From 870dd9c0e80d2f7ce843399f606299629ae7b570 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Jacobo=20Aragunde=20P=C3=A9rez?= <jaragunde@igalia.com>
+Date: Thu, 23 Jan 2020 11:57:23 +0100
+Subject: [PATCH] Set webapp roles that are max 12 characters long.
+
+This is a workaround for SPEC-3127. To prevent repeated roles as much
+as possible, I'm using the appid as a basis instead of "Webapp-" +
+host + port, which has many chances to be redundant in the first 12
+chars.
+
+Bug-AGL: SPEC-3127
+---
+ src/agl/WebRuntimeAGL.cpp | 10 +++-------
+ 1 file changed, 3 insertions(+), 7 deletions(-)
+
+diff --git a/src/agl/WebRuntimeAGL.cpp b/src/agl/WebRuntimeAGL.cpp
+index a919759..baa2708 100644
+--- a/src/agl/WebRuntimeAGL.cpp
++++ b/src/agl/WebRuntimeAGL.cpp
+@@ -162,7 +162,6 @@ int WebAppLauncherRuntime::run(int argc, const char** argv) {
+   bool isWaitHostService = isWaitForHostService(args);
+   m_id = getAppId(args);
+   m_url = getAppUrl(args);
+-  m_role = "WebApp";
+ 
+   if(isWaitHostService) {
+     while(!WebAppManagerServiceAGL::instance()->isHostServiceRunning()) {
+@@ -220,15 +219,9 @@ bool WebAppLauncherRuntime::init() {
+       if (n != std::string::npos) {
+         std::string sport = authority.substr(n+1);
+         m_host = authority.substr(0, n);
+-        m_role.push_back('-');
+-        m_role.append(m_host);
+-        m_role.push_back('-');
+-        m_role.append(sport);
+         m_port = stringTo<int>(sport);
+       } else {
+         m_host = authority;
+-        m_role.push_back('-');
+-        m_role.append(m_host);
+       }
+     }
+ 
+@@ -265,6 +258,9 @@ bool WebAppLauncherRuntime::init() {
+       m_role = "homescreen";
+     else if (m_id.rfind("webapps-homescreen", 0) == 0)
+       m_role = "homescreen";
++    else {
++      m_role = m_id.substr(0,12);
++    }
+ 
+     LOG_DEBUG("id=[%s], name=[%s], role=[%s], url=[%s], host=[%s], port=%d, token=[%s]",
+             m_id.c_str(), m_name.c_str(), m_role.c_str(), m_url.c_str(),

@@ -1,0 +1,94 @@
+{
+    "areas": [
+        {
+            "name": "fullscreen",
+            "rect": {
+                "x": 0,
+                "y": 0,
+                "w": 1920,
+                "h": 1080
+            }
+        },
+        {
+            "name": "normal.full",
+            "rect": {
+                "x": 218,
+                "y": 0,
+                "w": 1702,
+                "h": 1080
+            }
+        },
+        {
+            "name": "split.main",
+            "rect": {
+                "x": 218,
+                "y": 0,
+                "w": 744,
+                "h": 1080
+            }
+        },
+        {
+            "name": "split.sub",
+            "rect": {
+                "x": 962,
+                "y": 0,
+                "w": 744,
+                "h": 1080
+            }
+        },
+        {
+            "name": "software_keyboard",
+            "rect": {
+                "x": 962,
+                "y": 0,
+                "w": 744,
+                "h": 1080
+            }
+        },
+        {
+            "name": "restriction.normal",
+            "rect": {
+                "x": 218,
+                "y": 0,
+                "w": 1488,
+                "h": 1080
+            }
+        },
+        {
+            "name": "restriction.split.main",
+            "rect": {
+                "x": 218,
+                "y": 0,
+                "w": 744,
+                "h": 1080
+            }
+        },
+        {
+            "name": "restriction.split.sub",
+            "rect": {
+                "x": 962,
+                "y": 0,
+                "w": 744,
+                "h": 1080
+            }
+        },
+        {
+            "name": "on_screen",
+            "rect": {
+                "x": 218,
+                "y": 0,
+                "w": 1488,
+                "h": 1080
+            }
+        },
+        {
+            "name": "remote.fullscreen",
+            "rect": {
+                "x": 0,
+                "y": 0,
+                "w": 720,
+                "h": 640
+            }
+        }
+    ]
+}
