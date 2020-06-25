@@ -11,80 +11,101 @@
 # 'wgtpkg-pack' in af-main-native is required.
 DEPENDS_append = " af-main-native"
 
-# for bindings  af-binder is required.
+# for bindings af-binder is required.
 DEPENDS_append = " af-binder"
 
-# for bindings  that use the cmake-apps-module
+# for bindings that use the cmake-apps-module
 DEPENDS_append = " cmake-apps-module-native"
 
 # for hal bindings genskel is required.
 DEPENDS_append = " af-binder-devtools-native"
 
-# Set the default build type for cmake based projects
-# NOTE: This can be removed after switching to using the autobuild
-#       script to do compilation
-EXTRA_OECMAKE_append = " -DCMAKE_BUILD_TYPE=RELEASE"
+# Re-enable strip for qmake based projects (default value is "echo")
+OE_QMAKE_STRIP = "${STRIP}"
 
-# FIXME: Remove once CMake+ninja issues are resolved
-OECMAKE_GENERATOR = "Unix Makefiles"
+# Extra build arguments passed to the autobuild script invocations
+AGLWGT_EXTRA_BUILD_ARGS ?= 'VERBOSE=TRUE BUILD_ARGS="${PARALLEL_MAKE}"'
 
-AGLWGT_EXTRA_BUILD_ARGS = 'VERBOSE=TRUE BUILD_ARGS="${PARALLEL_MAKE}"'
+# CMake based widgets that inherit cmake.bbclass will have the
+# following automatically appended to AGLWGT_EXTRA_BUILD_ARGS as
+# the value of CONFIGURE_FLAGS.  This definition may need to be
+# extended to include more of what is passed in cmake.bbclass's
+# do_configure if it is found insufficient.  Using the generated
+# toolchain.cmake file does fix issues with respect to finding the
+# Qt5 CMake modules that seem difficult to fix otherwise, so at the
+# very minimum it should be present.
+AGLWGT_CMAKE_CONFIGURE_ARGS ?= "-DCMAKE_TOOLCHAIN_FILE=${WORKDIR}/toolchain.cmake ${EXTRA_OECMAKE}"
 
 # Only widgets with recipe names starting with agl-service- are
-# assumed to have tests by default, set this to "true" to force
+# assumed to have tests by default, set this to "1" to force
 # building/packaging of the test widget for other widgets.
-AGLWGT_HAVE_TESTS = "false"
+AGLWGT_HAVE_TESTS ?= "0"
 
 # Warning on missing test/debug/coverage packages disabled by default
 # for now to reduce build output clutter.
-AGLWGT_PACKAGE_WARN = "false"
+AGLWGT_PACKAGE_WARN ?= "0"
 
-# There are some widgets with build issues wrt test/debug/coverage
-# that are currently non-fatal but do not yield a widget, allow empty
-# test and coverage packages for now to allow the build to proceed.
-# This matches the default behavior for -dbg packages.
-#
-# NOTE: This should revisited after a round of autobuild script rework
-#       to address SPEC-3300.
-ALLOW_EMPTY_${PN}-coverage = "1"
-ALLOW_EMPTY_${PN}-debug = "1"
-ALLOW_EMPTY_${PN}-test = "1"
+# Whether the widget should be auto-installed on first boot
+AGLWGT_AUTOINSTALL ?= "1"
 
+# Signature keys
+# These are default keys for development purposes !
+# Change it for production.
+WGTPKG_AUTOSIGN_0_agl-sign-wgts ??= "${WORKDIR}/recipe-sysroot-native/usr/share/afm/keys/developer.key.pem:${WORKDIR}/recipe-sysroot-native/usr/share/afm/certs/developer.cert.pem"
+WGTPKG_AUTOSIGN_1_agl-sign-wgts ??= "${WORKDIR}/recipe-sysroot-native/usr/share/afm/keys/platform.key.pem:${WORKDIR}/recipe-sysroot-native/usr/share/afm/certs/platform.cert.pem"
 
-do_aglwgt_package()  {
+export WGTPKG_AUTOSIGN_0
+export WGTPKG_AUTOSIGN_1
+
+python __anonymous () {
+    # NOTE: AGLWGT_CMAKE_CONFIGURE_ARGS is not updated directly here,
+    #       but via the prefunc below to avoid issues around anonymous
+    #       python ordering conflicts with e.g. externalsrc.bbclass.
+    if bb.data.inherits_class("cmake", d):
+        d.appendVarFlag('do_compile', 'prefuncs', ' aglwgt_cmake_configure')
+}
+
+python aglwgt_cmake_configure () {
+    # Define CONFIGURE_FLAGS appropriately if cmake.bbclass has been
+    # inherited, see description of AGLWGT_CMAKE_CONFIGURE_ARGS above
+    # for more details.
+    cmake_config_args = d.getVar("AGLWGT_CMAKE_CONFIGURE_ARGS")
+    if bb.data.inherits_class("cmake", d) and cmake_config_args:
+        d.appendVar("AGLWGT_EXTRA_BUILD_ARGS", ' CONFIGURE_ARGS="' + cmake_config_args + '"')
+        d.appendVarFlag("AGLWGT_EXTRA_BUILD_ARGS", "vardeps", " AGLWGT_CMAKE_CONFIGURE_ARGS")
+}
+
+do_configure[noexec] = "1"
+
+aglwgt_do_compile() {
     bldcmd=${S}/autobuild/agl/autobuild
     if [ ! -x "$bldcmd" ]; then
         bbfatal "Missing autobuild/agl/autobuild script"
     fi
 
-    cd ${B}
-    if ! $bldcmd package BUILD_DIR=${B} DEST=${B}/build-release ${AGLWGT_EXTRA_BUILD_ARGS}; then
+    if [ "${S}" != "${B}" ]; then
+        rm -rf ${B}
+        mkdir -p ${B}
+        cd ${B}
+    fi
+
+    if ! $bldcmd package BUILD_DIR=${B}/build-release ${AGLWGT_EXTRA_BUILD_ARGS}; then
         bbwarn "Target: package failed"
     fi
 
-    mkdir -p ${S}/build-debug
-    cd ${S}/build-debug
-    if ! $bldcmd package-debug BUILD_DIR=${S}/build-debug DEST=${B}/build-debug ${AGLWGT_EXTRA_BUILD_ARGS}; then
+    if ! $bldcmd package-debug BUILD_DIR_DEBUG=${B}/build-debug ${AGLWGT_EXTRA_BUILD_ARGS}; then
         bbwarn "Target: package-debug failed"
     fi
 
-    if echo ${BPN} | grep -q '^agl-service-' || [ "${AGLWGT_HAVE_TESTS}" = "true" ]; then
-        mkdir -p ${S}/build-test
-        cd ${S}/build-test
-        if ! $bldcmd package-test BUILD_DIR=${S}/build-test DEST=${B}/build-test ${AGLWGT_EXTRA_BUILD_ARGS}; then
+    if echo ${BPN} | grep -q '^agl-service-' || [ "${AGLWGT_HAVE_TESTS}" = "1" ]; then
+        if ! $bldcmd package-test BUILD_DIR_TEST=${B}/build-test ${AGLWGT_EXTRA_BUILD_ARGS}; then
             bbwarn "Target: package-test failed"
         fi
 
-        mkdir -p ${S}/build-coverage
-        cd ${S}/build-coverage
-        if ! $bldcmd package-coverage BUILD_DIR=${S}/build-coverage DEST=${B}/build-coverage ${AGLWGT_EXTRA_BUILD_ARGS}; then
+        if ! $bldcmd package-coverage BUILD_DIR_COVERAGE=${B}/build-coverage ${AGLWGT_EXTRA_BUILD_ARGS}; then
             bbwarn "Target: package-coverage failed"
         fi
     fi
-}
-
-python () {
-    d.setVarFlag('do_aglwgt_deploy', 'fakeroot', '1')
 }
 
 POST_INSTALL_LEVEL ?= "10"
@@ -92,7 +113,7 @@ POST_INSTALL_SCRIPT ?= "${POST_INSTALL_LEVEL}-${PN}.sh"
 
 EXTRA_WGT_POSTINSTALL ?= ""
 
-do_aglwgt_deploy() {
+aglwgt_do_install() {
     DEST=release
     if [ "${AGLWGT_AUTOINSTALL_${PN}}" = "0" ]; then
         DEST=manualinstall
@@ -109,16 +130,16 @@ do_aglwgt_deploy() {
         if [ "$(find ${B}/build-${t} -name *-${t}.wgt -maxdepth 1)" ]; then
             install -d ${D}/usr/AGL/apps/${t}
             install -m 0644 ${B}/build-${t}/*-${t}.wgt ${D}/usr/AGL/apps/${t}/
-        elif [ "${AGLWGT_PACKAGE_WARN}" = "true" ]; then
+        elif [ "${AGLWGT_PACKAGE_WARN}" = "1" ]; then
             if [ "$t" != "test" -a "$t" != "coverage" ]; then
                 bbwarn "no package found in ${t} widget directory"
-            elif echo ${BPN} | grep -q '^agl-service-' || [ "${AGLWGT_HAVE_TESTS}" = "true" ]; then
+            elif echo ${BPN} | grep -q '^agl-service-' || [ "${AGLWGT_HAVE_TESTS}" = "1" ]; then
                 bbwarn "no package found in ${t} widget directory"
             fi
         fi
     done
 
-    if [ "${AGLWGT_AUTOINSTALL_${PN}}" != "0" ]; then
+    if [ "${AGLWGT_AUTOINSTALL}" != "0" ]; then
         # For now assume autoinstall of the release versions
         rm -rf ${D}/usr/AGL/apps/autoinstall
         ln -sf release ${D}/usr/AGL/apps/autoinstall
@@ -140,12 +161,6 @@ EOF
     fi
 }
 
-do_install() {
-}
-
-addtask aglwgt_deploy  before do_package after do_install
-addtask aglwgt_package before do_aglwgt_deploy after do_compile
-
 PACKAGES += "${PN}-test ${PN}-debug ${PN}-coverage"
 
 FILES_${PN} += " \
@@ -161,12 +176,4 @@ FILES_${PN}-coverage = "/usr/AGL/apps/coverage/*.wgt"
 # Test widgets need the parent widget and the test framework
 RDEPENDS_${PN}-test = "${PN} afb-test"
 
-# Signature keys
-# These are default keys for development purposes !
-# Change it for production.
-WGTPKG_AUTOSIGN_0_agl-sign-wgts ??= "${WORKDIR}/recipe-sysroot-native/usr/share/afm/keys/developer.key.pem:${WORKDIR}/recipe-sysroot-native/usr/share/afm/certs/developer.cert.pem"
-WGTPKG_AUTOSIGN_1_agl-sign-wgts ??= "${WORKDIR}/recipe-sysroot-native/usr/share/afm/keys/platform.key.pem:${WORKDIR}/recipe-sysroot-native/usr/share/afm/certs/platform.cert.pem"
-
-export WGTPKG_AUTOSIGN_0
-export WGTPKG_AUTOSIGN_1
-
+EXPORT_FUNCTIONS do_compile do_install
