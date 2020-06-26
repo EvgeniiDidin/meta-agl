@@ -34,7 +34,6 @@ RDEPENDS_${PN} = "\
     base-files \
     base-passwd \
     busybox \
-    distro-build-manifest \
     rng-tools \
     run-agl-postinsts \
     ${@bb.utils.contains("DISTRO_FEATURES", "sysvinit", "${SYSVINIT_SCRIPTS}", "", d)} \
