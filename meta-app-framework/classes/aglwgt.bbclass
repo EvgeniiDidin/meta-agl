@@ -75,7 +75,11 @@ python aglwgt_cmake_configure () {
         d.appendVarFlag("AGLWGT_EXTRA_BUILD_ARGS", "vardeps", " AGLWGT_CMAKE_CONFIGURE_ARGS")
 }
 
-do_configure[noexec] = "1"
+# Placeholder to keep things like externalsrc that prefunc or append
+# do_configure working as expected.
+aglwgt_do_configure() {
+    true
+}
 
 aglwgt_do_compile() {
     bldcmd=${S}/autobuild/agl/autobuild
@@ -176,4 +180,4 @@ FILES_${PN}-coverage = "/usr/AGL/apps/coverage/*.wgt"
 # Test widgets need the parent widget and the test framework
 RDEPENDS_${PN}-test = "${PN} afb-test"
 
-EXPORT_FUNCTIONS do_compile do_install
+EXPORT_FUNCTIONS do_configure do_compile do_install
