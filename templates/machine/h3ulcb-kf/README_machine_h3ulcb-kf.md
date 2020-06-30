@@ -1,9 +1,9 @@
 ---
-description: Machine h3ulcb
+description: Machine h3ulcb-kf
 authors: Jan-Simon Möller <jsmoeller@linuxfoundation.org>, Ronan Le Martret <ronan.lemartret@iot.bzh>
 ---
 	
-### Machine h3ulcb
+### Machine h3ulcb-kf
 	 
-This is the Renesas RCar Gen3 h3ulcb board.
+Renesas RCar Gen3 H3ULCB board with Kingfisher baseboard
 
