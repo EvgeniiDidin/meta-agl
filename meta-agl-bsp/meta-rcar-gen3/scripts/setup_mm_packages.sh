@@ -3,7 +3,7 @@
 ZIP_1="R-Car_Gen3_Series_Evaluation_Software_Package_for_Linux-weston8-20191206.zip"
 ZIP_2="R-Car_Gen3_Series_Evaluation_Software_Package_of_Linux_Drivers-weston8-20191021.zip"
 
-COPY_SCRIPT="$METADIR/bsp/meta-renesas-rcar-gen3/meta-rcar-gen3/docs/sample/copyscript/copy_evaproprietary_softwares.sh"
+COPY_SCRIPT="$METADIR/bsp/meta-renesas/meta-rcar-gen3/docs/sample/copyscript/copy_evaproprietary_softwares.sh"
 
 test -f ${XDG_CONFIG_HOME:-~/.config}/user-dirs.dirs && source ${XDG_CONFIG_HOME:-~/.config}/user-dirs.dirs
 DOWNLOAD_DIR=${XDG_DOWNLOAD_DIR:-$HOME/Downloads}
@@ -70,7 +70,7 @@ function copy_mm_packages() {
     fi
 
     if [ -f $COPY_SCRIPT ]; then
-        cd $METADIR/bsp/meta-renesas-rcar-gen3/
+        cd $METADIR/bsp/meta-renesas/
         $COPY_SCRIPT -d -f $EXTRACT_DIR
         cd ..
     else

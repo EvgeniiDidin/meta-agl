@@ -1,7 +1,7 @@
 # setup proprietary gfx drivers and multimedia packages
 pushd $METADIR 2>/dev/null
 
-COPY_SCRIPT="$METADIR/bsp/meta-renesas-rcar-gen3/meta-rcar-gen3/docs/sample/copyscript/copy_proprietary_softwares.sh"
+COPY_SCRIPT="$METADIR/bsp/meta-rcar-gen3/meta-rcar-gen3/docs/sample/copyscript/copy_proprietary_softwares.sh"
 EXTRACT_DIR=$METADIR/binary-tmp
 #EBISU_BIN_PATH should contain the path where the .zip archive of E3 binaries is.
 #CUSTOM_RENESAS_CONFIG_SCRIPT should contain the custom script needed for setup. If not filled, do not failed, just warn.
@@ -24,7 +24,7 @@ if [ -f $COPY_SCRIPT ]; then
 		unzip -q -o $PROPRIETARY_BIN -d $EXTRACT_DIR
 	done
 
-	cd $METADIR/bsp/meta-renesas-rcar-gen3/
+	cd $METADIR/bsp/meta-rcar-gen3/
 	$COPY_SCRIPT $EXTRACT_DIR
 	cd ..
 
