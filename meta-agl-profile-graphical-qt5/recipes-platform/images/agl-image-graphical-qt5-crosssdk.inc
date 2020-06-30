@@ -9,3 +9,6 @@ TOOLCHAIN_TARGET_TASK += "libafb-helpers-qt-staticdev"
 TOOLCHAIN_HOST_TASK_append = " nativesdk-wayland nativesdk-wayland-dev"
 
 TOOLCHAIN_HOST_TASK_append = " nativesdk-perl-modules "
+
+# Add qtwaylandscanner to the SDK
+TOOLCHAIN_HOST_TASK_append = " nativesdk-qtwayland "
