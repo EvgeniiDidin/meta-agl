@@ -5,5 +5,5 @@ authors: Jan-Simon Möller <jsmoeller@linuxfoundation.org>, Ronan Le Martret <ro
 	
 ### Machine m3ulcb
 	 
-Renesas RCar Gen3 m3ulcb
+M3ULCB with Kingfisher baseboard
 

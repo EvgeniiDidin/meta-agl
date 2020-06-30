@@ -5,5 +5,4 @@ authors: Jan-Simon Möller <jsmoeller@linuxfoundation.org>, Kevin Hilman <khilma
 	
 ### Machine m3ulcb-nogfx
 	 
-*Description is missing - please complete file meta-agl/templates/machine/m3ulcb-nogfx/README_machine_m3ulcb-nogfx.md*
-
+Renesas RCar Gen3 m3ulcb w/o graphic driver blobs
