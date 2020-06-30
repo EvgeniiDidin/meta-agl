@@ -1,3 +1,7 @@
+require checksum_control.inc
+
+PROVIDES += "virtual/libomxil"
+
 setup_build_tree() {
     for omxmc in ${OMX_COMMON_SRC} ${OMX_VIDEO_DEC_COMMON_SRC} ${OMX_VIDEO_ENC_COMMON_SRC}
     do
