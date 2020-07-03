@@ -16,6 +16,8 @@ SRCREV = "39ea644837dd29cd47a579a9703b43458187f82b"
 PV = "0.0.10+git${SRCPV}"
 S = "${WORKDIR}/git"
 
+PACKAGECONFIG[policy-deny-all] = "-Dpolicy-default=deny-all,,"
+
 inherit meson pkgconfig python3native
 
 FILES_${PN} = " \
