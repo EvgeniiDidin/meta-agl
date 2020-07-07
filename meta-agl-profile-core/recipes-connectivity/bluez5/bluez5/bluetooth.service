@@ -6,7 +6,7 @@ ConditionPathIsDirectory=/sys/class/bluetooth
 [Service]
 Type=dbus
 BusName=org.bluez
-ExecStartPre=/usr/bin/hciconfig hci0 aclmtu 930:10
+ExecStartPre=-/usr/bin/hciconfig hci0 aclmtu 930:10
 ExecStart=/usr/libexec/bluetooth/bluetoothd
 NotifyAccess=main
 #WatchdogSec=10
