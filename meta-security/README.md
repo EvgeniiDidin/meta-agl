@@ -27,5 +27,5 @@ Please submit any patches against the meta-security layer via gerrit
 reviews.
 
 For discussion use the discussion mailing list
-mailto:automotive-discussions@lists.linuxfoundation.org
+https://lists.automotivelinux.org/g/agl-dev-community
 
